@@ -5,6 +5,11 @@ spring:
   # (see compose.yaml) or from Testcontainers in tests and in TestKopiApplication.
   flyway:
     locations: classpath:db/migration
+  messages:
+    # One bundle per adapter that shows text to people (the REST adapter will add its own).
+    basename: i18n/web/messages
+    # Unknown language -> messages.properties (English), never the server's OS language.
+    fallback-to-system-locale: false
 
 server:
   port: 8080

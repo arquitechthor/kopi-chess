@@ -213,14 +213,16 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
 - [x] **Arranque en desarrollo sin Compose:** `TestKopiApplication` (en
       `src/test` de `kopi-bootstrap`) levanta la app con un PostgreSQL de
       Testcontainers; solo necesita Docker en marcha.
-- [ ] **Página web inicial** en `kopi-adapter-web` (Thymeleaf) en `/`, para
+- [x] **Página web inicial** en `kopi-adapter-web` (Thymeleaf) en `/`, para
       comprobar que el adaptador web funciona.
-- [ ] **i18n desde el principio** (diseño §11.4):
+- [x] **i18n desde el principio** (diseño §11.4):
   - `messages.properties` (inglés, por defecto) y `messages_es.properties`.
   - `CookieLocaleResolver` + `LocaleChangeInterceptor` (`?lang=`), con
     `Accept-Language` como valor inicial.
   - Selector EN/ES en la cabecera de la página inicial.
   - Prueba que falla si una clave existe en un idioma y no en el otro.
+  - Pendiente para la fase 3: detectar texto literal sin `#{...}` en las
+    plantillas.
 - [ ] **Módulo `kopi-labs`** compilado con `--enable-preview`, sin
       dependientes (regla ArchUnit). Un primer ejemplo: *structured
       concurrency* lanzando dos tareas y cancelando ambas si una falla.

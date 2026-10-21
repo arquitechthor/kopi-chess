@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · ' + #{app.name}">Kopi Chess</title>
+    <link rel="stylesheet" th:href="@{/css/kopi.css}">
+</head>
+<body>
+
+<header th:fragment="header" class="site-header">
+    <a class="brand" th:href="@{/}" th:text="#{app.name}">Kopi Chess</a>
+    <nav class="language-switch" th:aria-label="#{language.label}">
+        <a href="?lang=en" hreflang="en" lang="en"
+           th:aria-current="${#locale.language == 'en'} ? 'true'"
+           th:text="#{language.en}">English</a>
+        <a href="?lang=es" hreflang="es" lang="es"
+           th:aria-current="${#locale.language == 'es'} ? 'true'"
+           th:text="#{language.es}">Español</a>
+    </nav>
+</header>
+
+<footer th:fragment="footer" class="site-footer">
+    <span th:text="#{footer.license}">Free software under GPL-3.0</span>
+    ·
+    <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{footer.source}">Source code</a>
+</footer>
+
+</body>
+</html>

@@ -37,6 +37,12 @@ class KopiApplicationIT {
     }
 
     @Test
+    void servesTheHomePageInBothLanguages() {
+        assertThat(mvc.get().uri("/?lang=en")).hasStatusOk().bodyText().contains("Play chess.");
+        assertThat(mvc.get().uri("/?lang=es")).hasStatusOk().bodyText().contains("Juega al ajedrez.");
+    }
+
+    @Test
     void flywayAppliedTheBaselineMigration() {
         var versions = jdbc.sql("select version from flyway_schema_history where success order by installed_rank")
                 .query(String.class)
