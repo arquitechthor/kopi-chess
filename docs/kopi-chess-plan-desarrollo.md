@@ -130,7 +130,8 @@ fricción.
     sirve para documentos y plantillas.
   - **Stockfish** como `.zip` portable (binario oficial), en `tools/` (está
     en `.gitignore`) o en cualquier carpeta del usuario.
-- [ ] **Experimentar con UCI a mano** (30 minutos, muy recomendable)
+- [x] **Experimentar con UCI a mano** (30 minutos, muy recomendable).
+      Resultado: [`notas/stockfish-opciones.md`](notas/stockfish-opciones.md).
   - Abrir Stockfish en la terminal y escribir: `uci`, `isready`,
     `position startpos moves e2e4`, `go depth 15`.
   - Anotar el formato de las líneas `info ... score cp ... pv ...` y

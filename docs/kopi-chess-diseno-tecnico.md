@@ -110,9 +110,9 @@ con pruebas que demuestran su corrección.
 ### 2.3 Cinco bots
 
 - **Propuesta original:** todos con Stockfish y `UCI_Elo` / `Skill Level`.
-- **Cuestionamiento:** `UCI_Elo` tiene un **mínimo alrededor de 1320**
-  (comprobar con el comando `uci` de la versión fijada), demasiado fuerte
-  para un principiante real. Y un `Skill Level` bajo juega «raro» más que
+- **Cuestionamiento:** `UCI_Elo` tiene un **mínimo de 1320** (comprobado
+  en Stockfish 19, ver [`notas/stockfish-opciones.md`](notas/stockfish-opciones.md)),
+  demasiado fuerte para un principiante real. Y un `Skill Level` bajo juega «raro» más que
   «humano».
 - **Decisión:** los dos niveles bajos son **bots propios** (escritos por
   nosotros, buen ejercicio) y los tres altos usan Stockfish. Todos detrás
@@ -245,7 +245,7 @@ De la propuesta original se conserva, porque es acertado:
 - **Acceso a datos — Spring Data JDBC o `JdbcClient`.** Sin JPA: evita la
   tentación de anotar el dominio y encaja mejor con agregados DDD.
 - **Migraciones — Flyway.** Esquema versionado desde el primer commit.
-- **Motor — Stockfish 18 (o la estable vigente) vía UCI.** Fijar versión y
+- **Motor — Stockfish 19 (o la estable vigente) vía UCI.** Fijar versión y
   hash del binario en el `Dockerfile`.
 - **Aperturas — lichess-org/chess-openings (CC0).** Cargado con una
   migración Flyway o al arrancar.
@@ -655,8 +655,8 @@ producción y se aprende sin añadir RabbitMQ/Kafka.
 
 Por qué así:
 
-- `UCI_Elo` no baja de cierto umbral (~1320 en versiones recientes; leer el
-  rango exacto de la salida de `uci` de la versión fijada y registrarlo).
+- `UCI_Elo` no baja de **1320** (rango 1320–3190 en Stockfish 19; valores
+  menores se ajustan al mínimo sin avisar).
   Por debajo, **escribir bots propios es a la vez la solución y un ejercicio
   excelente**: generar jugadas, evaluar, buscar. Además, el bot `KNIGHT`
   reutiliza el dominio entero, lo que valida su API.
@@ -1185,9 +1185,10 @@ El plan detallado por fases está en
 Comprobados durante esta revisión, pero conviene confirmarlos contra la
 versión exacta que se fije:
 
-- Rango de `UCI_Elo` y opciones disponibles: ejecutar `stockfish` → `uci`.
-- Última versión estable de Stockfish (18 publicada el 31-01-2026) y de
-  Spring Boot 4.x.
+- ~~Rango de `UCI_Elo` y opciones disponibles~~: comprobado con Stockfish
+  19 (`UCI_Elo` 1320–3190). Detalle en
+  [`notas/stockfish-opciones.md`](notas/stockfish-opciones.md).
+- Última versión estable de Spring Boot 4.x al arrancar la fase 1.
 - Licencia de la librería que se use como oráculo de pruebas.
 
 ---
@@ -1217,7 +1218,7 @@ web vive en el mismo Spring Boot como un adaptador más.
 - Chessground (GPL-3.0): <https://github.com/lichess-org/chessground>
 - htmx (extensión SSE): <https://htmx.org/extensions/sse/>
 - Opciones UCI de Stockfish (código): <https://github.com/official-stockfish/Stockfish/blob/master/src/engine.cpp>
-- Stockfish 18: <https://ramachess.com/stockfish-18>
+- Descargas de Stockfish: <https://stockfishchess.org/download/>
 - Spring Boot 4 / compatibilidad con Java: <https://www.baeldung.com/java-weekly-622>,
   <https://stevenpg.com/references/spring-version-compatibility/>
 - Chess Programming Wiki — *Perft Results*: <https://www.chessprogramming.org/Perft_Results>
