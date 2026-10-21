@@ -204,7 +204,9 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
   - `./mvnw -B verify` (Testcontainers funciona en los *runners* Ubuntu).
   - Publicar el informe de JaCoCo como artefacto.
   - Proteger `main`: exigir que la CI pase antes de fusionar (aplazado desde
-    la fase 0).
+    la fase 0). **Hecho:** PR obligatoria, *check* «Build and test»,
+    conversaciones resueltas, sin *force push* ni borrado. Sin aprobaciones
+    obligatorias, porque GitHub no permite aprobar una PR propia.
 - [ ] **Dockerfile del backend** *multi-stage* (JDK 25 para compilar, JRE 25
       para ejecutar, usuario no root). Stockfish todavía no.
 - [ ] **Servicio `app` en Compose** que arranca y conecta a Postgres.
