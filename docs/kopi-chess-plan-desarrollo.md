@@ -115,7 +115,7 @@ fricción.
 
 ### Tareas
 
-- [ ] **Instalar herramientas** (todo funciona **sin permisos de
+- [x] **Instalar herramientas** (todo funciona **sin permisos de
       administrador**):
   - **JDK 25:** descargarlo desde IntelliJ (*File → Project Structure → SDKs
     → + → Download JDK*, versión 25, Temurin) o como `.zip` portable de
@@ -172,7 +172,7 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
 
 ### Tareas (en orden)
 
-- [ ] **POM padre en `backend/`**
+- [x] **POM padre en `backend/`**
   - `packaging pom`, `maven.compiler.release=25`.
   - Importar el BOM de Spring Boot 4.x en `dependencyManagement` (no usar
     `spring-boot-starter-parent` como padre: así el módulo `kopi-domain` no
@@ -180,7 +180,7 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
   - Plugins comunes: `maven-surefire-plugin`, `maven-failsafe-plugin`
     (pruebas de integración `*IT.java`), `jacoco-maven-plugin`.
   - Maven *wrapper* (`mvn wrapper:wrapper`).
-- [ ] **Crear los módulos vacíos**: `kopi-domain`, `kopi-application`,
+- [x] **Crear los módulos vacíos**: `kopi-domain`, `kopi-application`,
       `kopi-adapter-rest`, `kopi-adapter-web`, `kopi-adapter-persistence`,
       `kopi-adapter-stockfish`, `kopi-adapter-bots`, `kopi-adapter-openings`,
       `kopi-bootstrap`, `kopi-architecture-tests`.
@@ -192,19 +192,21 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
       `.env.example` con `POSTGRES_PASSWORD`.
 - [ ] **Flyway** en `kopi-adapter-persistence` con una migración `V1__baseline.sql`
       vacía (o una tabla `schema_info`). El arranque debe aplicarla.
-- [ ] **Reglas ArchUnit** en `kopi-architecture-tests`:
+- [x] **Reglas ArchUnit** en `kopi-architecture-tests`:
   - El paquete de dominio no depende de `org.springframework..`,
     `jakarta..`, `java.sql..`, ni de paquetes de aplicación/adaptadores.
   - La aplicación no depende de Spring ni de adaptadores.
   - Ningún adaptador depende de otro adaptador.
   - Truco: añadir temporalmente un `import org.springframework...` en el
     dominio y **comprobar que la build falla**. Luego quitarlo.
-- [ ] **CI en GitHub Actions** (`.github/workflows/ci.yml`)
+- [x] **CI en GitHub Actions** (`.github/workflows/ci.yml`)
   - `actions/setup-java` con Java 25 y caché de Maven.
   - `./mvnw -B verify` (Testcontainers funciona en los *runners* Ubuntu).
   - Publicar el informe de JaCoCo como artefacto.
   - Proteger `main`: exigir que la CI pase antes de fusionar (aplazado desde
-    la fase 0).
+    la fase 0). **Hecho:** PR obligatoria, *check* «Build and test»,
+    conversaciones resueltas, sin *force push* ni borrado. Sin aprobaciones
+    obligatorias, porque GitHub no permite aprobar una PR propia.
 - [ ] **Dockerfile del backend** *multi-stage* (JDK 25 para compilar, JRE 25
       para ejecutar, usuario no root). Stockfish todavía no.
 - [ ] **Servicio `app` en Compose** que arranca y conecta a Postgres.

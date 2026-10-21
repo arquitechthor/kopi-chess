@@ -41,6 +41,23 @@ Testcontainers
 
 Llegará en la fase 1: `docker compose up` y abrir `http://localhost:8080`.
 
+## Compilar desde el código fuente
+
+Requiere **JDK 25**. No hace falta Maven: el repositorio incluye el *wrapper*.
+
+```shell
+cd backend
+./mvnw verify        # Windows: mvnw.cmd verify
+```
+
+Si tu `JAVA_HOME` apunta a otro JDK, cámbialo solo para la terminal actual;
+por ejemplo, en PowerShell: `$env:JAVA_HOME = "C:\ruta\al\jdk-25"`.
+
+Si tu `~/.m2/settings.xml` redirige todo a un *mirror* privado no accesible,
+compila con un archivo de *settings* vacío:
+`./mvnw -s ruta/a/settings-vacio.xml verify`, donde el archivo solo contiene
+`<settings/>`.
+
 ## Contribuir
 
 El código, los *commits*, los *issues* y las *pull requests* van en

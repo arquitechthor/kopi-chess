@@ -39,6 +39,24 @@ Testcontainers
 
 Coming in phase 1: `docker compose up`, then open `http://localhost:8080`.
 
+## Building from source
+
+Requires **JDK 25**. Maven is not needed: the repository ships the Maven
+wrapper.
+
+```shell
+cd backend
+./mvnw verify        # Windows: mvnw.cmd verify
+```
+
+If your `JAVA_HOME` points to another JDK, set it for the current shell only,
+e.g. in PowerShell: `$env:JAVA_HOME = "C:\path\to\jdk-25"`.
+
+If your `~/.m2/settings.xml` routes everything through a private mirror that
+is not reachable, build with an empty settings file:
+`./mvnw -s path/to/empty-settings.xml verify`, where the file contains only
+`<settings/>`.
+
 ## Contributing
 
 The code, commits, issues and pull requests are in **English**. Design
