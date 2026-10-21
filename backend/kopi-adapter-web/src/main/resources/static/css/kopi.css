@@ -1,0 +1,87 @@
+/* Kopi Chess — base styles. Colours are tokens so light and dark share one sheet. */
+:root {
+    --bg: #faf8f5;
+    --surface: #ffffff;
+    --text: #1f1d1a;
+    --muted: #6b665e;
+    --accent: #7a4e2d;
+    --border: #e4ded4;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1816;
+        --surface: #24211e;
+        --text: #ece7df;
+        --muted: #a39d93;
+        --accent: #d9a273;
+        --border: #3a3530;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+a { color: var(--accent); }
+
+.site-header,
+.site-footer,
+.page {
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: var(--text);
+}
+
+.language-switch { display: flex; gap: 0.75rem; }
+.language-switch a { text-decoration: none; }
+.language-switch a[aria-current="true"] {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+}
+
+.page { flex: 1; }
+h1 { font-size: 2rem; line-height: 1.2; margin: 2rem 0 0.5rem; }
+.lead { font-size: 1.125rem; color: var(--muted); }
+
+.notice {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+}
+.notice h2 { margin: 0 0 0.25rem; font-size: 1.125rem; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.875rem;
+}

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{home.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="page">
+    <h1 th:text="#{home.title}">Play chess. Understand your games.</h1>
+    <p class="lead" th:text="#{home.intro}">Play against five bots and review every game afterwards.</p>
+
+    <section class="notice" aria-labelledby="status-title">
+        <h2 id="status-title" th:text="#{home.status.title}">Under construction</h2>
+        <p th:text="#{home.status.body}">Kopi Chess is being built in the open, one phase at a time.</p>
+        <p class="muted" th:text="#{home.status.phase(1, 7)}">Current phase: 1 of 7.</p>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

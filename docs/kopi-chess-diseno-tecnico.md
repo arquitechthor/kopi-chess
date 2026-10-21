@@ -896,9 +896,10 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
 
 ### 11.4 Idiomas (inglés y español)
 
-- **Archivos de mensajes:** `messages.properties` (inglés, idioma por
-  defecto) y `messages_es.properties` en `kopi-adapter-web`; el adaptador
-  REST tiene los suyos para los errores.
+- **Archivos de mensajes:** `i18n/web/messages.properties` (inglés, idioma
+  por defecto) y `i18n/web/messages_es.properties` en `kopi-adapter-web`; el
+  adaptador REST tendrá los suyos (`i18n/rest/...`) para los errores.
+  `kopi-bootstrap` los declara en `spring.messages.basename` (ADR-011).
 - **Elección de idioma:** `CookieLocaleResolver` + `LocaleChangeInterceptor`
   (`?lang=es` / `?lang=en`). Primera visita: `Accept-Language` del
   navegador. Selector EN/ES visible en la cabecera de todas las páginas.
