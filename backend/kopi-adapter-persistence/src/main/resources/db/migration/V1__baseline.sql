@@ -1,0 +1,4 @@
+-- Baseline migration.
+--
+-- Intentionally empty: it proves Flyway runs against PostgreSQL on startup.
+-- The first tables (game, game_move) arrive in phase 3 as V2.

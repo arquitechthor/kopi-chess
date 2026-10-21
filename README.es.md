@@ -39,7 +39,23 @@ Testcontainers
 
 ## Ejecución en local
 
-Llegará en la fase 1: `docker compose up` y abrir `http://localhost:8080`.
+Requiere **Docker**.
+
+```shell
+docker compose up --build
+```
+
+Después comprueba `http://localhost:8080/actuator/health` (la interfaz de
+ajedrez llega en las próximas fases). Si el puerto 8080 está ocupado, usa
+otro: `KOPI_PORT=8090 docker compose up --build` (PowerShell:
+`$env:KOPI_PORT=8090; docker compose up --build`).
+
+Para parar: `docker compose down`; con `-v` también se borran las partidas
+guardadas.
+
+**Durante el desarrollo**, ejecuta en su lugar `TestKopiApplication` (en
+`backend/kopi-bootstrap/src/test`) desde el IDE: levanta la app con un
+PostgreSQL desechable mediante Testcontainers. Solo necesita Docker.
 
 ## Compilar desde el código fuente
 

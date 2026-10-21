@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: kopi-chess
+  # The datasource comes from SPRING_DATASOURCE_* environment variables
+  # (see compose.yaml) or from Testcontainers in tests and in TestKopiApplication.
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      # Local app: listing which components are up (db, disk…) is useful and harmless.
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState, db
+  info:
+    java:
+      enabled: true

@@ -186,11 +186,11 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
       `kopi-bootstrap`, `kopi-architecture-tests`.
   - Dependencias entre módulos según la regla del diseño (§4 del diseño).
   - `kopi-domain`: **ninguna** dependencia de compilación.
-- [ ] **`kopi-bootstrap`** con `@SpringBootApplication`, `spring-boot-maven-plugin`
+- [x] **`kopi-bootstrap`** con `@SpringBootApplication`, `spring-boot-maven-plugin`
       y Actuator. Endpoint `GET /actuator/health` respondiendo `UP`.
-- [ ] **Docker Compose** con `postgres` (versión fijada, volumen, *healthcheck*).
+- [x] **Docker Compose** con `postgres` (versión fijada, volumen, *healthcheck*).
       `.env.example` con `POSTGRES_PASSWORD`.
-- [ ] **Flyway** en `kopi-adapter-persistence` con una migración `V1__baseline.sql`
+- [x] **Flyway** en `kopi-adapter-persistence` con una migración `V1__baseline.sql`
       vacía (o una tabla `schema_info`). El arranque debe aplicarla.
 - [x] **Reglas ArchUnit** en `kopi-architecture-tests`:
   - El paquete de dominio no depende de `org.springframework..`,
@@ -207,9 +207,12 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
     la fase 0). **Hecho:** PR obligatoria, *check* «Build and test»,
     conversaciones resueltas, sin *force push* ni borrado. Sin aprobaciones
     obligatorias, porque GitHub no permite aprobar una PR propia.
-- [ ] **Dockerfile del backend** *multi-stage* (JDK 25 para compilar, JRE 25
+- [x] **Dockerfile del backend** *multi-stage* (JDK 25 para compilar, JRE 25
       para ejecutar, usuario no root). Stockfish todavía no.
-- [ ] **Servicio `app` en Compose** que arranca y conecta a Postgres.
+- [x] **Servicio `app` en Compose** que arranca y conecta a Postgres.
+- [x] **Arranque en desarrollo sin Compose:** `TestKopiApplication` (en
+      `src/test` de `kopi-bootstrap`) levanta la app con un PostgreSQL de
+      Testcontainers; solo necesita Docker en marcha.
 - [ ] **Página web inicial** en `kopi-adapter-web` (Thymeleaf) en `/`, para
       comprobar que el adaptador web funciona.
 - [ ] **i18n desde el principio** (diseño §11.4):
