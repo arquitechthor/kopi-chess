@@ -240,7 +240,7 @@ De la propuesta original se conserva, porque es acertado:
   (`SseEmitter`), Actuator, null-safety con JSpecify.
 - **Build — Maven multi-módulo.** Gradle también vale; Maven por ser más
   explícito para la separación de módulos.
-- **Persistencia — PostgreSQL 17+.** `JSONB` para variantes y detalles de
+- **Persistencia — PostgreSQL 18.** `JSONB` para variantes y detalles de
   análisis.
 - **Acceso a datos — Spring Data JDBC o `JdbcClient`.** Sin JPA: evita la
   tentación de anotar el dominio y encaja mejor con agregados DDD.
@@ -325,8 +325,7 @@ kopi-chess/
 │   ├── kopi-bootstrap/               @SpringBootApplication, configuración, wiring.
 │   ├── kopi-architecture-tests/      Reglas ArchUnit sobre todos los módulos.
 │   └── kopi-labs/                    Ejemplos con features preview (--enable-preview). Nadie depende de él.
-├── deployment/
-│   └── docker-compose.yml
+├── compose.yaml                       docker compose up --build
 └── docs/
     ├── kopi-chess-diseno-tecnico.md
     └── adr/                           Architecture Decision Records
@@ -925,26 +924,30 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
 
 ## 12. Docker Compose
 
+El archivo real es [`compose.yaml`](../compose.yaml), en la raíz del repo, para
+que baste con `docker compose up --build`. Forma prevista una vez integrado
+Stockfish:
+
 ```yaml
 services:
   postgres:
-    image: postgres:17-alpine          # fijar versión exacta
+    image: postgres:18.6-alpine3.24
     environment:
       POSTGRES_DB: kopi
       POSTGRES_USER: kopi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define en .env}
-    volumes: [pgdata:/var/lib/postgresql/data]
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kopi}   # local: valor por defecto
+    volumes: [pgdata:/var/lib/postgresql]             # PG 18+: un nivel por encima de /data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kopi -d kopi"]
     # sin "ports": solo accesible desde la red interna de Compose
 
   app:
-    build: ../backend
-    ports: ["127.0.0.1:8080:8080"]     # interfaz web + API REST, solo en local
+    build: ./backend
+    ports: ["127.0.0.1:${KOPI_PORT:-8080}:8080"]     # interfaz web + API REST, solo en local
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kopi
       SPRING_DATASOURCE_USERNAME: kopi
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-kopi}
       KOPI_ENGINE_PATH: /opt/stockfish/stockfish
       KOPI_ENGINE_POOL_SIZE: 2
       KOPI_ANALYSIS_MAX_CONCURRENT: 1

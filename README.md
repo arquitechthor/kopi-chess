@@ -37,7 +37,22 @@ Testcontainers
 
 ## Running locally
 
-Coming in phase 1: `docker compose up`, then open `http://localhost:8080`.
+Requires **Docker**.
+
+```shell
+docker compose up --build
+```
+
+Then check `http://localhost:8080/actuator/health` (the chess UI arrives in the
+next phases). If port 8080 is taken, pick another one:
+`KOPI_PORT=8090 docker compose up --build` (PowerShell:
+`$env:KOPI_PORT=8090; docker compose up --build`).
+
+Stop with `docker compose down`; add `-v` to also delete the saved games.
+
+**While developing**, run `TestKopiApplication` (in
+`backend/kopi-bootstrap/src/test`) from your IDE instead: it starts the app
+with a throwaway PostgreSQL via Testcontainers. Only Docker is needed.
 
 ## Building from source
 

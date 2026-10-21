@@ -6,6 +6,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 
 - [ADR-001](001-arquitectura-hexagonal-modulos-maven.md) — Arquitectura hexagonal con módulos Maven y ArchUnit
 - [ADR-002](002-casos-de-uso-sin-spring.md) — Casos de uso sin dependencia de Spring
+- [ADR-003](003-postgresql-en-lugar-de-mongodb.md) — PostgreSQL en lugar de MongoDB
 
 ## Plantilla
 
