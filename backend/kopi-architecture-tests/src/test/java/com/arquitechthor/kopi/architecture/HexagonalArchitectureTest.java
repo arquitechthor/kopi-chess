@@ -33,8 +33,7 @@ class HexagonalArchitectureTest {
             .should().dependOnClassesThat().resideInAnyPackage(
                     APPLICATION, ADAPTERS, BOOTSTRAP,
                     "org.springframework..", "jakarta..", "java.sql..", "javax.sql..")
-            .because("the domain is the innermost ring and must stay plain Java")
-            .allowEmptyShould(true);
+            .because("the domain is the innermost ring and must stay plain Java");
 
     @ArchTest
     static final ArchRule applicationDependsOnlyOnTheDomain = noClasses()

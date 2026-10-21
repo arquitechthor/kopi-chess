@@ -268,19 +268,20 @@ ejecutable como archivo fuente compacto (`java Perft.java "<fen>" 4`).
 
 ### 5.1 Tipos básicos
 
-- [ ] `Color` (enum con `opposite()`).
-- [ ] `PieceType` (enum) y `Piece` (record `color + type`, o enum de 12
-      valores; elegir uno y justificarlo en un comentario).
-- [ ] `Square` (record con índice 0–63 o 0x88; `fromAlgebraic("e4")`,
+- [x] `Color` (enum con `opposite()`).
+- [x] `PieceType` (enum) y `Piece` (record `color + type`; justificado en su
+      Javadoc y en ADR-004).
+- [x] `Square` (record con índice 0–63; `parse("e4")`, `of(file, rank)`,
       `toString()`).
-- [ ] `Move` (record: `from`, `to`, `promotion` opcional, `MoveFlag`:
-      `NORMAL`, `DOUBLE_PAWN_PUSH`, `EN_PASSANT`, `CASTLE_KINGSIDE`,
-      `CASTLE_QUEENSIDE`, `PROMOTION`). `toUci()` y `parseUci()` (este último
-      solo sintaxis; la semántica la decide la posición).
+- [x] `Move` (record `from`, `to`, `kind`) con `MoveKind` como *sealed
+      interface* de seis records (`Quiet`, `Capture`, `DoublePawnPush`,
+      `EnPassant`, `Castling`, `Promotion`) y `toUci()`. En lugar de
+      `parseUci()`, el texto UCI se buscará entre las jugadas legales de la
+      posición (ADR-004).
 
 ### 5.2 Tablero y posición
 
-- [ ] **Decidir representación** (0x88 recomendado) y escribir **ADR-004**
+- [x] **Decidir representación** (0x88 recomendado) y escribir **ADR-004**
       (reglas propias verificadas con *perft*).
 - [ ] `Board`: colocar/quitar/consultar pieza por casilla. Inmutable o con
       copia barata; documentar la decisión.
