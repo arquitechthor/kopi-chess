@@ -35,6 +35,8 @@
         <module>kopi-adapter-openings</module>
         <module>kopi-bootstrap</module>
         <module>kopi-architecture-tests</module>
+        <!-- Preview-feature examples, outside the hexagon: nothing depends on it (ADR-012). -->
+        <module>kopi-labs</module>
     </modules>
 
     <properties>

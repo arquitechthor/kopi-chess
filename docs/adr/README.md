@@ -8,6 +8,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-002](002-casos-de-uso-sin-spring.md) — Casos de uso sin dependencia de Spring
 - [ADR-003](003-postgresql-en-lugar-de-mongodb.md) — PostgreSQL en lugar de MongoDB
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
+- [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)
 
 ## Plantilla
 

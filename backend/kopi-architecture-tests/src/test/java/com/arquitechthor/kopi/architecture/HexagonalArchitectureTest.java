@@ -25,6 +25,7 @@ class HexagonalArchitectureTest {
     private static final String APPLICATION = ROOT + ".application..";
     private static final String ADAPTERS = ROOT + ".adapter..";
     private static final String BOOTSTRAP = ROOT + ".bootstrap..";
+    private static final String LABS = ROOT + ".labs..";
 
     @ArchTest
     static final ArchRule domainDependsOnNothingOutsideItself = noClasses()
@@ -57,4 +58,10 @@ class HexagonalArchitectureTest {
             .should().dependOnClassesThat().resideInAPackage(BOOTSTRAP)
             .because("bootstrap is the outermost ring: it wires everything and nobody uses it")
             .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule nothingDependsOnLabs = noClasses()
+            .that().resideOutsideOfPackage(LABS)
+            .should().dependOnClassesThat().resideInAPackage(LABS)
+            .because("kopi-labs uses preview features and must never leak into the application (ADR-012)");
 }

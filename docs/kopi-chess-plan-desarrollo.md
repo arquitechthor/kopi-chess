@@ -223,10 +223,10 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
   - Prueba que falla si una clave existe en un idioma y no en el otro.
   - Pendiente para la fase 3: detectar texto literal sin `#{...}` en las
     plantillas.
-- [ ] **Módulo `kopi-labs`** compilado con `--enable-preview`, sin
+- [x] **Módulo `kopi-labs`** compilado con `--enable-preview`, sin
       dependientes (regla ArchUnit). Un primer ejemplo: *structured
       concurrency* lanzando dos tareas y cancelando ambas si una falla.
-- [ ] **ADR-003** (PostgreSQL en lugar de MongoDB), **ADR-011** (i18n) y
+- [x] **ADR-003** (PostgreSQL en lugar de MongoDB), **ADR-011** (i18n) y
       **ADR-012** (política de *preview*).
 
 ### Criterio de aceptación
