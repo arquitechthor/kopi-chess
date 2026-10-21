@@ -1,0 +1,1222 @@
+# Kopi Chess — Documento de diseño técnico
+
+**Estado:** propuesta revisada (v2), sustituye a `chess-arena-diseno-tecnico.md`
+**Fecha:** 2026-10-21
+**Licencia del proyecto:** GPL-3.0 (ya definida en el repositorio)
+**Lema:** *Open source educational project in Chess and Code.*
+
+---
+
+## 0. Cómo leer este documento
+
+Este documento parte de la propuesta original («Chess Arena») y la
+**reformula** con tres criterios:
+
+1. **El código también es producto.** Kopi Chess es un proyecto educativo:
+   además de servir para jugar y aprender ajedrez, debe servir para aprender
+   **Java 25, Spring Boot y Arquitectura Hexagonal**. Las decisiones se toman
+   pensando en qué enseña cada pieza, no solo en qué es más rápido.
+2. **Útil desde el día uno**, sin depender de servicios externos.
+3. **Honestidad técnica:** no prometer métricas («precisión», «Elo»,
+   «brillante») que no podamos definir y probar.
+
+La sección 2 resume los cuestionamientos a la propuesta original; el resto es
+el diseño nuevo.
+
+### Premisas del proyecto
+
+- **Foco de aprendizaje:** Java (con preferencia por las *features*
+  recientes), Spring Boot y Arquitectura Hexagonal. Cualquier decisión puede
+  cuestionarse, pero se evalúa por cuánto aporta a ese foco.
+- **Ejecución local:** se ejecuta en la máquina de quien lo use
+  (`docker compose up`). No se diseña para un despliegue público: sin
+  cuentas, sin *rate limiting*, sin protección frente a otros usuarios.
+- **Código público:** el repositorio es abierto (GPL-3.0). Nada de secretos
+  en el repo y la documentación se escribe para lectores externos.
+- **Interfaz bilingüe:** inglés y español desde la primera pantalla.
+
+---
+
+## 1. Visión
+
+Kopi Chess es una aplicación web que se ejecuta en local con un solo
+`docker compose up`, en inglés y español, para:
+
+- **Jugar** contra cinco bots con personalidades y niveles diferenciados.
+- **Revisar** cada partida al terminar: evaluación por jugada, clasificación
+  explicable (inexactitud / error / error grave), mejor alternativa y mates
+  desaprovechados.
+- **Importar un PGN** de cualquier partida (Lichess, Chess.com, OTB) y
+  analizarla igual que una partida propia. *(Esto es lo que convierte el
+  proyecto en algo realmente útil: el análisis no queda limitado a partidas
+  contra nuestros bots.)*
+
+Y, como proyecto de código, ser un **ejemplo de referencia** de un dominio
+rico (las reglas del ajedrez) protegido por una arquitectura hexagonal real,
+con pruebas que demuestran su corrección.
+
+### Objetivos del MVP
+
+1. Reglas completas del ajedrez implementadas en un dominio Java puro,
+   verificadas con *perft*.
+2. Cinco bots diferenciables.
+3. Persistencia de partidas y movimientos.
+4. Análisis posterior asíncrono con progreso en vivo.
+5. Clasificación de jugadas basada en una fórmula pública y documentada.
+6. Detección de mates desaprovechados.
+7. Etiqueta de apertura (nombre + ECO) sin conexión a internet.
+8. Entorno completo con Docker Compose.
+9. Interfaz en inglés y español, con selector de idioma.
+
+### Fuera del alcance del MVP
+
+- Despliegue público en internet (y lo que conlleva: autenticación,
+  *rate limiting*, protección entre usuarios).
+- Cuentas de usuario, multijugador humano, torneos, chat.
+- Control de tiempo (reloj). *Se puede añadir en v2 como regla del dominio.*
+- Análisis en tiempo real durante la partida.
+- Etiquetas «brillante», «excelente», «gran jugada» (ver §8.5).
+- Rating propio o equivalencias de Elo.
+- App móvil nativa.
+
+---
+
+## 2. Cuestionamientos a la propuesta original
+
+### 2.1 Base de datos
+
+- **Propuesta original:** MongoDB, un documento por partida.
+- **Cuestionamiento:** el modelo **es relacional**: partidas → movimientos →
+  análisis, y las consultas útiles a futuro («mis errores graves por
+  apertura», «resultados contra cada bot») son agregaciones SQL naturales.
+  Además necesitamos una cola de trabajos duradera, que en Mongo exige más
+  artificio.
+- **Decisión:** **PostgreSQL** + `JSONB` para los datos de análisis
+  semiestructurados. Cola de trabajos en la propia BD con
+  `FOR UPDATE SKIP LOCKED`.
+
+### 2.2 Reglas del ajedrez
+
+- **Propuesta original:** usar una librería Java de terceros.
+- **Cuestionamiento:** en hexagonal, el **dominio es el corazón**; si el
+  corazón es una librería externa, el dominio queda vacío y la arquitectura
+  no enseña nada. Las reglas del ajedrez son el dominio perfecto: finito,
+  bien especificado y verificable al 100 % con *perft*.
+- **Decisión:** **implementación propia** en `kopi-domain`, sin
+  dependencias. Una librería (p. ej. chesslib) solo como **oráculo en
+  pruebas** diferenciales.
+
+### 2.3 Cinco bots
+
+- **Propuesta original:** todos con Stockfish y `UCI_Elo` / `Skill Level`.
+- **Cuestionamiento:** `UCI_Elo` tiene un **mínimo alrededor de 1320**
+  (comprobar con el comando `uci` de la versión fijada), demasiado fuerte
+  para un principiante real. Y un `Skill Level` bajo juega «raro» más que
+  «humano».
+- **Decisión:** los dos niveles bajos son **bots propios** (escritos por
+  nosotros, buen ejercicio) y los tres altos usan Stockfish. Todos detrás
+  del mismo puerto `BotPlayer`.
+
+### 2.4 Clasificación de jugadas
+
+- **Propuesta original:** umbrales de pérdida en centipeones (CPL),
+  configurables «a validar».
+- **Cuestionamiento:** el CPL castiga igual perder 200 cp en +0,5 que en +9
+  (en el segundo caso la partida sigue ganada). Dejar los umbrales «por
+  validar» posterga una decisión central.
+- **Decisión:** usar **probabilidad de victoria (Win %)** con la fórmula
+  pública de Lichess y sus umbrales (§8.3). Es explicable, está documentada
+  y es reproducible.
+
+### 2.5 Jugadas de libro
+
+- **Propuesta original:** API Lichess Opening Explorer (opcional).
+- **Cuestionamiento:** dependencia de red, límites de uso y condiciones
+  cambiantes para algo que puede resolverse en local.
+- **Decisión:** dataset **lichess-org/chess-openings** (CC0, ~3.500
+  aperturas con su EPD) cargado en la BD. Búsqueda por posición, sin red.
+
+### 2.6 Progreso del análisis
+
+- **Propuesta original:** *polling* a `GET /analysis`.
+- **Cuestionamiento:** funciona, pero Spring trae soporte nativo para
+  *Server-Sent Events*, que es más simple para el cliente y más didáctico.
+- **Decisión:** `202 Accepted` + **SSE** en `/analysis/events`.
+  `GET /analysis` se mantiene como alternativa.
+
+### 2.7 Cola de análisis
+
+- **Propuesta original:** en memoria («se pierde al reiniciar»).
+- **Cuestionamiento:** perder trabajos es un defecto, no una simplificación,
+  y la solución duradera no cuesta infraestructura extra si ya tenemos
+  PostgreSQL.
+- **Decisión:** tabla `analysis_job` con *workers* que toman trabajos con
+  `SKIP LOCKED`. Recuperación tras reinicio incluida.
+
+### 2.8 Arquitectura del backend
+
+- **Propuesta original:** módulos por capa técnica (`api`, `persistence`,
+  `engine`…).
+- **Cuestionamiento:** es un monolito en capas con nombres de hexagonal.
+  Nada impide que el dominio importe Spring o JDBC.
+- **Decisión:** **módulos Maven separados** por anillo hexagonal +
+  **ArchUnit** para que la regla de dependencias falle la compilación si se
+  viola.
+
+### 2.9 Etiquetas especiales
+
+- **Propuesta original:** `BRILLIANT`, `EXCELLENT`, `FORCED`, `MISSED_WIN`
+  en el MVP.
+- **Cuestionamiento:** son heurísticas difíciles de definir sin falsos
+  positivos y empujan a imitar a Chess.com.
+- **Decisión:** MVP con `BEST`, `GOOD`, `INACCURACY`, `MISTAKE`, `BLUNDER`,
+  `BOOK` y `MISSED_MATE`. El resto queda en el roadmap.
+
+### 2.10 Propiedad de la partida
+
+- **Propuesta original:** sin usuarios; cualquiera con el `gameId` puede
+  mover.
+- **Cuestionamiento:** sería un problema en una demo pública, pero Kopi Chess
+  se ejecuta en local para una sola persona: un *token* por partida añadiría
+  complejidad sin aportar al foco de aprendizaje.
+- **Decisión:** **sin *tokens* ni autenticación.** Lo que sí se mantiene es
+  el **control optimista por versión**, porque protege frente a dobles clics
+  y peticiones duplicadas, que ocurren igual en local.
+
+### 2.11 Utilidad
+
+- **Propuesta original:** solo partidas contra bots.
+- **Cuestionamiento:** limita mucho el valor del análisis.
+- **Decisión:** **importación de PGN** en el MVP (entregable 5).
+
+### 2.12 Licencias
+
+- **Propuesta original:** «revisar GPLv3 de Stockfish».
+- **Cuestionamiento:** el repo **ya es GPL-3.0**, igual que Stockfish y
+  Chessground: la duda desaparece.
+- **Decisión:** mantener GPL-3.0; añadir `NOTICE` con atribuciones.
+
+### 2.13 Frontend
+
+- **Propuesta original:** SPA en Angular servida por Nginx.
+- **Cuestionamiento:** el objetivo de aprendizaje es Java, Spring y
+  hexagonal; un SPA añade otro lenguaje, otro *toolchain* (Node) y otro
+  contenedor sin aportar a ese objetivo.
+- **Decisión:** **Thymeleaf + htmx** renderizado por Spring Boot, como
+  segundo adaptador de entrada (`kopi-adapter-web`) junto al REST. Solo JS
+  mínimo para el tablero (Chessground).
+
+### 2.14 Idiomas
+
+- **Propuesta original:** solo español, sin mención a internacionalización.
+- **Cuestionamiento:** la interfaz debe estar en inglés y español. Si se deja
+  para el final, los textos acaban incrustados en plantillas, excepciones y
+  dominio.
+- **Decisión:** **i18n desde la fase 1** con `MessageSource` de Spring. El
+  dominio nunca produce textos para personas, solo **códigos** (enums,
+  records); la traducción ocurre en los adaptadores de entrada (§11.4).
+
+### 2.15 Lo que se mantiene
+
+De la propuesta original se conserva, porque es acertado:
+
+- El backend es la autoridad sobre el estado y la legalidad.
+- El análisis es un proceso posterior e independiente de la partida.
+- Stockfish como proceso hijo gestionado por el backend, detrás de una
+  interfaz, con pool limitado, *timeouts* y reinicio ante fallos.
+- Normalizar todas las evaluaciones a una sola perspectiva.
+- «El motor encontró mate en N», nunca «existe mate en N».
+- Versiones fijadas y parámetros del análisis registrados con el resultado.
+
+---
+
+## 3. Stack tecnológico
+
+- **Lenguaje — Java 25 (LTS).** Records, *sealed interfaces*, *pattern
+  matching* en `switch`, hilos virtuales, `ScopedValue` (final en 25).
+- **Framework — Spring Boot 4.x (Spring Framework 7).** Fijar la última 4.x
+  estable al arrancar. Usar `ProblemDetail` (RFC 9457), `RestClient`, SSE
+  (`SseEmitter`), Actuator, null-safety con JSpecify.
+- **Build — Maven multi-módulo.** Gradle también vale; Maven por ser más
+  explícito para la separación de módulos.
+- **Persistencia — PostgreSQL 17+.** `JSONB` para variantes y detalles de
+  análisis.
+- **Acceso a datos — Spring Data JDBC o `JdbcClient`.** Sin JPA: evita la
+  tentación de anotar el dominio y encaja mejor con agregados DDD.
+- **Migraciones — Flyway.** Esquema versionado desde el primer commit.
+- **Motor — Stockfish 18 (o la estable vigente) vía UCI.** Fijar versión y
+  hash del binario en el `Dockerfile`.
+- **Aperturas — lichess-org/chess-openings (CC0).** Cargado con una
+  migración Flyway o al arrancar.
+- **Interfaz web — Thymeleaf + htmx (servidas por Spring Boot).** HTML
+  generado en el servidor; htmx para interacciones parciales sin escribir un
+  SPA. Sin Node en el flujo principal.
+- **Tablero — Chessground (GPL-3.0, sin dependencias).** Es el tablero de
+  Lichess. Se incluye como módulo ES ya compilado (fijado por versión) y se
+  controla con un script propio pequeño.
+- **Pruebas — JUnit 5, AssertJ, ArchUnit, Testcontainers, jqwik** (opcional,
+  *property-based*). Ver §13.
+- **Contenedores — Docker + Docker Compose.** `app` (Boot + Stockfish +
+  interfaz web) y `postgres`.
+- **Observabilidad — Actuator + Micrometer** (+ Prometheus/Grafana
+  opcional).
+
+> **Por qué no MongoDB, en una línea:** el único argumento a su favor era
+> «la partida es un documento», y eso se cubre con una columna `JSONB` sin
+> renunciar a transacciones, *joins*, consultas agregadas ni a una cola
+> duradera. Y como en hexagonal la persistencia es un adaptador, si algún día
+> se quisiera Mongo, sería un módulo más, sin tocar el dominio.
+
+---
+
+## 4. Arquitectura hexagonal
+
+### 4.1 Vista general
+
+```text
+                   ┌─────────────────────────── Adaptadores de entrada ───┐
+                   │  Web (Thymeleaf+htmx)  REST  SSE  Worker de análisis │
+                   └───────────────┬──────────────────────────────────────┘
+                                   │ llama a puertos de entrada (use cases)
+                   ┌───────────────▼──────────────────────────────────────┐
+                   │                 kopi-application                     │
+                   │  CreateGame · PlayMove · Resign · ImportPgn          │
+                   │  RequestAnalysis · RunAnalysisJob · GetGame          │
+                   │                                                      │
+                   │        ┌────────────────────────────────┐            │
+                   │        │          kopi-domain           │            │
+                   │        │  Board · Position · Move       │            │
+                   │        │  MoveGenerator · Rules · SAN   │            │
+                   │        │  FEN · PGN · Game (agregado)   │            │
+                   │        │  Evaluation · WinChance        │            │
+                   │        │  MoveClassifier · BotProfile   │            │
+                   │        └────────────────────────────────┘            │
+                   │                                                      │
+                   │  Puertos de salida: GameRepository, ChessEngine,     │
+                   │  BotPlayer, OpeningBook, AnalysisJobQueue, Clock,    │
+                   │  AnalysisEvents                                      │
+                   └───────────────┬──────────────────────────────────────┘
+                                   │ implementados por
+                   ┌───────────────▼─────────────── Adaptadores de salida ┐
+                   │ PostgreSQL (JDBC) · Stockfish (UCI) · Bots propios   │
+                   │ Opening book (tabla) · SSE publisher                 │
+                   └──────────────────────────────────────────────────────┘
+```
+
+**Regla de dependencias:** las flechas solo apuntan hacia dentro.
+`kopi-domain` no conoce a nadie; `kopi-application` solo conoce al dominio;
+los adaptadores conocen a la aplicación; `kopi-bootstrap` lo conecta todo.
+
+### 4.2 Módulos Maven
+
+```text
+kopi-chess/
+├── backend/
+│   ├── pom.xml                       (parent, BOM de Spring Boot)
+│   ├── kopi-domain/                  Java puro. Cero dependencias (solo JUnit en test).
+│   ├── kopi-application/             Casos de uso + puertos. Depende de domain.
+│   ├── kopi-adapter-rest/            API JSON pública: controladores, DTO, ProblemDetail, SSE.
+│   ├── kopi-adapter-web/             Interfaz web: controladores Thymeleaf, plantillas, htmx, JS del tablero.
+│   ├── kopi-adapter-persistence/     Spring Data JDBC / JdbcClient + Flyway.
+│   ├── kopi-adapter-stockfish/       Cliente UCI, pool de procesos.
+│   ├── kopi-adapter-bots/            Bots propios (niveles 1 y 2).
+│   ├── kopi-adapter-openings/        Libro de aperturas (tabla cargada desde TSV).
+│   ├── kopi-bootstrap/               @SpringBootApplication, configuración, wiring.
+│   ├── kopi-architecture-tests/      Reglas ArchUnit sobre todos los módulos.
+│   └── kopi-labs/                    Ejemplos con features preview (--enable-preview). Nadie depende de él.
+├── deployment/
+│   └── docker-compose.yml
+└── docs/
+    ├── kopi-chess-diseno-tecnico.md
+    └── adr/                           Architecture Decision Records
+```
+
+Decisión a tomar (ADR-002): **¿`kopi-application` puede depender de Spring?**
+Recomendación: **no**. Los casos de uso son clases Java planas; se registran
+como beans en `kopi-bootstrap` mediante `@Configuration`. Esto obliga a
+entender de verdad la inversión de dependencias y deja la transaccionalidad
+como una preocupación del adaptador/bootstrap (p. ej., un decorador
+`TransactionalPlayMove` o un puerto `UnitOfWork`).
+
+### 4.3 Puertos
+
+**Entrada (casos de uso):**
+
+```java
+public interface PlayMoveUseCase {
+    GameView play(PlayMoveCommand command);
+}
+
+public record PlayMoveCommand(GameId gameId, String uci, long expectedVersion) {}
+```
+
+- **`CreateGame`** — crea partida contra un perfil; si el bot juega con
+  blancas, hace su primera jugada.
+- **`PlayMove`** — valida y aplica la jugada humana; si la partida sigue,
+  obtiene y aplica la del bot.
+- **`Resign`** — termina la partida por abandono.
+- **`ImportPgn`** — parsea y valida un PGN, crea una partida `IMPORTED` ya
+  terminada.
+- **`RequestAnalysis`** — encola el análisis (idempotente).
+- **`RunAnalysisJob`** — lo ejecuta el *worker*: analiza, clasifica, guarda,
+  publica progreso.
+- **`GetGame` / `ListGames` / `GetAnalysis`** — lecturas.
+
+**Salida:**
+
+```java
+public interface ChessEngine {               // análisis "puro"
+    EngineAnalysis analyse(Position position, SearchLimits limits, int multiPv);
+}
+
+public interface BotPlayer {                 // elegir jugada para un perfil
+    Move chooseMove(Position position, BotProfile profile);
+}
+
+public interface GameRepository {
+    Optional<Game> findById(GameId id);
+    void save(Game game);                    // con control optimista por versión
+}
+
+public interface OpeningBook {
+    Optional<Opening> lookup(Position position);
+}
+
+public interface AnalysisJobQueue {
+    void enqueue(GameId id);
+    Optional<AnalysisJob> claimNext();       // SKIP LOCKED en el adaptador
+}
+
+public interface AnalysisEvents {
+    void progress(GameId id, int analysedPlies, int totalPlies);
+    void completed(GameId id);
+    void failed(GameId id, String reason);
+}
+```
+
+Nótese que `ChessEngine` y `BotPlayer` son **puertos distintos**: el bot
+nivel 1 no necesita un motor, y el análisis no necesita «personalidad».
+
+### 4.4 Java 25 al servicio del diseño
+
+- **`record`** — `Move`, `Square`, `Evaluation`, comandos, DTO, eventos.
+- **`sealed interface` + `switch` exhaustivo** — `Evaluation = Centipawns |
+  MateIn`; `GameOutcome = Checkmate | Stalemate | ...`; `Piece`. El
+  compilador obliga a tratar todos los casos.
+- **Patrones de registro** — `case MateIn(int n) when n > 0 -> ...`
+- **Hilos virtuales** — lectura bloqueante de `stdout` de Stockfish y
+  *workers* de análisis sin agotar hilos de plataforma.
+- **`ScopedValue`** — propagar `gameId` / *correlation id* a logs sin
+  `ThreadLocal`.
+- **Variables sin nombre `_`** (final en 22) — `case Checkmate _ -> ...`,
+  `catch (TimeoutException _)`.
+- **Stream Gatherers** (final en 24) — `Gatherers.windowSliding(n)` para las
+  ventanas de volatilidad del cálculo de precisión (§8.4) y para recorrer
+  pares de posiciones consecutivas (antes/después de cada jugada).
+- **Comentarios de documentación en Markdown `///`** (final en 23) — en todo
+  el dominio, que es el código que más se va a leer.
+- **Cuerpos de constructor flexibles** (final en 25) — validar argumentos
+  antes de `super(...)` en las excepciones de dominio y en clases con
+  herencia.
+- **Archivos fuente compactos y `void main()`** (final en 25) — utilidades de
+  desarrollo ejecutables con `java Perft.java` sin proyecto Maven (p. ej. un
+  *perft* de consola o el conversor del dataset de aperturas).
+- **Caché AOT** (JEP 514/515, en 25) — arranque más rápido de la app en
+  local; Spring Boot 4 tiene soporte para generarla.
+- ***Structured concurrency* (preview en 25)** — analizar varias posiciones
+  en paralelo con cancelación conjunta.
+
+**Política de *preview*:** el código principal usa solo *features* finales.
+Las *preview* (*structured concurrency*, *stable values*, patrones con tipos
+primitivos) se muestran en un módulo aislado `kopi-labs`, compilado con
+`--enable-preview`, que no es dependencia de ningún otro módulo. Así se
+aprenden sin atar la app a APIs que pueden cambiar.
+
+Ejemplo del estilo esperado en el dominio:
+
+```java
+public sealed interface Evaluation permits Evaluation.Centipawns, Evaluation.MateIn {
+    record Centipawns(int value) implements Evaluation {}
+    record MateIn(int moves) implements Evaluation {}   // >0 ganan blancas, <0 negras
+
+    default double whiteWinChance() {                     // [-1, 1]
+        return switch (this) {
+            case Centipawns(int cp) -> 2 / (1 + Math.exp(-0.00368208 * clamp(cp))) - 1;
+            case MateIn(int m)      -> m > 0 ? 1.0 : -1.0;
+        };
+    }
+}
+```
+
+---
+
+## 5. Modelo de dominio
+
+### 5.1 Representación del tablero
+
+Para un proyecto educativo, priorizar **legibilidad** sobre velocidad:
+
+- **MVP: tablero 0x88 o *mailbox* 10×12.** Fácil de depurar, detección de
+  casillas fuera del tablero trivial, suficientemente rápido para validar
+  jugadas y para bots de profundidad baja.
+- **Futuro (opcional): *bitboards*** detrás de la misma interfaz `Board`. Un
+  buen segundo ejercicio, con *perft* garantizando que nada se rompe.
+
+Tipos principales:
+
+- **`Square`, `Piece`, `Color`, `PieceType`** — valores básicos (records /
+  enums).
+- **`Move`** — origen, destino, promoción, tipo (normal, enroque, al paso,
+  doble avance).
+- **`Position`** — inmutable: tablero, turno, derechos de enroque, casilla al
+  paso, reloj de 50 jugadas, número de jugada, *hash* Zobrist.
+- **`MoveGenerator`** — jugadas pseudo-legales y legales.
+- **`Rules`** — jaque, mate, ahogado, material insuficiente, 50 jugadas,
+  triple repetición.
+- **`Fen`, `San`, `Pgn`** — notaciones: parseo y serialización.
+- **`Game` (agregado raíz)** — historial de posiciones, estado, resultado,
+  motivo, versión. Protege las invariantes.
+
+### 5.2 Agregado `Game`
+
+```text
+          create()                     applyMove() termina
+   ──────────────► IN_PROGRESS ─────────────────────────► FINISHED
+                       │                                     ▲
+                       │ resign()                            │
+                       └─────────────────────────────────────┘
+   importPgn() ────────────────────────────────────────────► FINISHED (origin = IMPORTED)
+```
+
+Invariantes que el agregado garantiza (no el controlador, no el servicio):
+
+- Solo se mueve en `IN_PROGRESS` y solo el color al que le toca.
+- Toda jugada aplicada es legal en la posición actual.
+- Tras cada jugada se evalúa el fin de partida.
+- La versión se incrementa con cada cambio (control optimista).
+
+Motivos de finalización, **todos implementados** (no «si la librería lo
+soporta»): `CHECKMATE`, `STALEMATE`, `INSUFFICIENT_MATERIAL`,
+`THREEFOLD_REPETITION`, `FIFTY_MOVE_RULE`, `RESIGNATION`.
+Para simplificar el MVP, la repetición y los 50 movimientos se aplican de
+forma **automática** (en reglas FIDE son reclamables; la quíntuple repetición
+y las 75 jugadas sí son automáticas). Documentarlo en un ADR.
+
+### 5.3 Perfiles de bot
+
+```java
+public enum BotProfile { PAWN, KNIGHT, BISHOP, ROOK, QUEEN }
+```
+
+Nombres temáticos en lugar de BEGINNER…EXPERT: más simpáticos y no prometen
+un nivel concreto. Detalle en §7.
+
+---
+
+## 6. Persistencia (PostgreSQL)
+
+### 6.1 Esquema inicial
+
+```sql
+create table game (
+    id               uuid primary key,
+    origin           text not null,          -- PLAYED | IMPORTED
+    status           text not null,          -- IN_PROGRESS | FINISHED
+    human_color      text,                   -- null si IMPORTED
+    bot_profile      text,                   -- null si IMPORTED
+    initial_fen      text not null,
+    result           text,                   -- WHITE_WIN | BLACK_WIN | DRAW
+    termination      text,
+    opening_eco      text,
+    opening_name     text,
+    pgn_headers      jsonb,                  -- solo para importadas
+    version          bigint not null,
+    created_at       timestamptz not null,
+    finished_at      timestamptz
+);
+
+create table game_move (
+    game_id    uuid not null references game(id) on delete cascade,
+    ply        int  not null,                -- 1 = primera jugada de blancas
+    uci        text not null,
+    san        text not null,
+    fen_after  text not null,
+    played_at  timestamptz,
+    primary key (game_id, ply)
+);
+
+create table analysis (
+    game_id         uuid primary key references game(id) on delete cascade,
+    status          text not null,           -- PENDING | RUNNING | COMPLETED | FAILED
+    engine_name     text,
+    engine_version  text,
+    config          jsonb not null,          -- profundidad/tiempo, multipv, versión del clasificador
+    summary         jsonb,                   -- precisión por color, conteos por categoría
+    started_at      timestamptz,
+    completed_at    timestamptz,
+    error           text
+);
+
+create table move_analysis (
+    game_id         uuid not null,
+    ply             int  not null,
+    eval_before     jsonb not null,          -- {"cp": 34} | {"mate": 3}, perspectiva BLANCAS
+    eval_after      jsonb not null,
+    best_move_uci   text,
+    best_line_san   jsonb,                   -- ["Nf3","Nc6",...]
+    classification  text not null,
+    win_chance_loss numeric(5,4),
+    missed_mate_in  int,
+    primary key (game_id, ply),
+    foreign key (game_id, ply) references game_move(game_id, ply) on delete cascade
+);
+
+create table analysis_job (
+    id           bigserial primary key,
+    game_id      uuid not null unique references game(id),
+    state        text not null,              -- QUEUED | RUNNING | DONE | FAILED
+    attempts     int  not null default 0,
+    locked_at    timestamptz,
+    created_at   timestamptz not null
+);
+
+create table opening (
+    epd   text primary key,                  -- posición sin contadores
+    eco   text not null,
+    name  text not null
+);
+
+create index game_created_at_idx on game (created_at desc);
+create index analysis_job_queued_idx on analysis_job (created_at) where state = 'QUEUED';
+```
+
+Decisiones:
+
+- **Convención de perspectiva única:** todas las evaluaciones se guardan
+  desde el punto de vista de las **blancas**. La conversión a «perspectiva del
+  jugador» ocurre solo en el dominio, al clasificar.
+- `fen_after` se guarda por comodidad de análisis y depuración; es
+  redundante (se reconstruye desde `initial_fen` + jugadas) y está bien que
+  lo sea.
+- El *mapping* fila ↔ agregado vive en el adaptador. El dominio no tiene
+  anotaciones.
+
+### 6.2 Cola de análisis sin infraestructura extra
+
+```sql
+-- claimNext()
+update analysis_job
+   set state = 'RUNNING', locked_at = now(), attempts = attempts + 1
+ where id = (select id from analysis_job
+              where state = 'QUEUED'
+              order by created_at
+              for update skip locked
+              limit 1)
+returning id, game_id;
+```
+
+Al arrancar, los trabajos `RUNNING` con `locked_at` antiguo vuelven a
+`QUEUED` (o pasan a `FAILED` si superan N intentos). Es un patrón real de
+producción y se aprende sin añadir RabbitMQ/Kafka.
+
+---
+
+## 7. Los cinco bots
+
+#### `PAWN` — nivel 1
+
+- **Implementación:** propia (`kopi-adapter-bots`).
+- **Idea:** jugada aleatoria ponderada: prefiere capturas y jaques, pero
+  cuelga piezas a menudo. Juega como un niño que acaba de aprender.
+
+#### `KNIGHT` — nivel 2
+
+- **Implementación:** propia.
+- **Idea:** minimax/alfa-beta a profundidad 2 con evaluación de material +
+  tabla de casillas sencilla. Ya no regala piezas en una jugada, pero no ve
+  tácticas largas.
+
+#### `BISHOP` — nivel 3
+
+- **Implementación:** Stockfish.
+- **Idea:** `Skill Level` bajo-medio y `movetime` corto.
+
+#### `ROOK` — nivel 4
+
+- **Implementación:** Stockfish.
+- **Idea:** `UCI_LimitStrength=true`, `UCI_Elo` medio.
+
+#### `QUEEN` — nivel 5
+
+- **Implementación:** Stockfish.
+- **Idea:** sin limitar; `movetime` acotado (p. ej. 1 s) para no bloquear la
+  CPU.
+
+Por qué así:
+
+- `UCI_Elo` no baja de cierto umbral (~1320 en versiones recientes; leer el
+  rango exacto de la salida de `uci` de la versión fijada y registrarlo).
+  Por debajo, **escribir bots propios es a la vez la solución y un ejercicio
+  excelente**: generar jugadas, evaluar, buscar. Además, el bot `KNIGHT`
+  reutiliza el dominio entero, lo que valida su API.
+- Los valores concretos (`Skill Level`, `UCI_Elo`, `movetime`) van en
+  configuración, no en el código, y se registran con cada partida.
+- **Calibración** (entregable 3): un *harness* que enfrenta perfiles entre sí
+  (N partidas, aperturas variadas) y comprueba que cada nivel gana al anterior
+  con claridad. No se publica ningún Elo.
+- Aleatoriedad con semilla configurable → partidas reproducibles en pruebas.
+
+---
+
+## 8. Análisis posterior
+
+### 8.1 Flujo
+
+```text
+FINISHED ─► RequestAnalysis ─► analysis_job(QUEUED)
+                                      │  worker (hilo virtual)
+                                      ▼
+            para cada posición (ply 0..N):
+              ChessEngine.analyse(pos, limits, multiPv=2)
+              → eval (perspectiva blancas) + mejor jugada + PV
+                                      │
+                                      ▼
+            para cada jugada: MoveClassifier (dominio, puro)
+            OpeningBook.lookup → BOOK / nombre de apertura
+                                      │
+                                      ▼
+            guardar move_analysis + summary ─► AnalysisEvents (SSE)
+```
+
+Optimización clave: **una sola búsqueda por posición**. La evaluación
+«después» de la jugada *k* es la evaluación «antes» de la jugada *k+1*.
+Para N jugadas se analizan N+1 posiciones, no 2N.
+
+### 8.2 Presupuesto
+
+Configurable y registrado en `analysis.config`:
+
+- Límite por posición: `depth` **o** `nodes` (más reproducible que tiempo
+  entre máquinas distintas). Valor inicial sugerido: `depth 16–18`, a medir.
+- `MultiPV = 2`: permite saber si la mejor jugada era «única» (útil para
+  futuras etiquetas como «solo jugada»).
+- `Threads = 1`, `Hash` fijo; un análisis concurrente en el MVP.
+- *Timeout* total por partida y reintentos limitados.
+
+### 8.3 Clasificación (fórmula pública)
+
+Se usa la **probabilidad de victoria** en vez de centipeones crudos, con la
+fórmula que Lichess publica:
+
+```text
+Win% = 50 + 50 · (2 / (1 + exp(−0.00368208 · cp)) − 1)
+```
+
+En el dominio se trabaja con *winning chances* en `[-1, 1]`
+(`Win%/50 − 1`). Para la jugada de un color:
+
+```text
+loss = winChance(antes, perspectiva del que mueve) − winChance(después, misma perspectiva)
+```
+
+Reglas del MVP:
+
+- **`BOOK`** — la posición resultante está en el libro de aperturas y aún no
+  ha salido de él.
+- **`BEST`** — la jugada coincide con la mejor del motor (o pérdida ≈ 0).
+- **`GOOD`** — `loss < 0.1`
+- **`INACCURACY`** — `0.1 ≤ loss < 0.2`
+- **`MISTAKE`** — `0.2 ≤ loss < 0.3`
+- **`BLUNDER`** — `loss ≥ 0.3`
+- **`MISSED_MATE`** — antes había `MateIn(n)` a favor del que mueve (n ≤
+  umbral configurable, p. ej. 5) y después ya no. Prevalece sobre las demás.
+
+Los umbrales 0.1 / 0.2 / 0.3 son los que usa Lichess (`Advice.scala`).
+Partir de algo probado y público evita discusiones interminables; se pueden
+ajustar después con datos.
+
+Detalles a tratar explícitamente (con pruebas):
+
+- Evaluaciones de mate → `winChance = ±1`.
+- *Clamp* de centipeones (p. ej. ±1000) antes de la fórmula.
+- Posiciones ya decididas: con la fórmula de Win % un −200 cp en +900 apenas
+  pesa, que es justo lo que queremos.
+- Jugadas forzadas (una sola legal): no clasificar como error.
+
+### 8.4 Precisión
+
+Precisión por jugada, también fórmula pública de Lichess:
+
+```text
+Accuracy% = 103.1668 · exp(−0.04354 · (Win%antes − Win%después)) − 3.1669
+```
+
+MVP: precisión de la partida = **media armónica** de las precisiones por
+jugada de cada color (Lichess la combina además con una media ponderada por
+volatilidad; dejarlo para después). En la interfaz se muestra como
+«Precisión (fórmula Lichess)», enlazando a la explicación.
+
+### 8.5 Qué no hacemos todavía
+
+`BRILLIANT`, `GREAT`, `EXCELLENT`, `MISSED_WIN`: requieren heurísticas
+(sacrificio de material, jugada única, dificultad «humana»…) con alto riesgo
+de falsos positivos. Quedan para v2 con un ADR propio y un conjunto de
+posiciones de prueba antes de implementarlas.
+
+### 8.6 Mates desaprovechados
+
+Igual que en la propuesta original, con dos precisiones:
+
+- Se reporta solo si el motor da `mate n` **en la posición antes de la
+  jugada** y la jugada elegida no lo mantiene.
+- El texto siempre es «el motor encontró mate en *n*» y se muestra la línea
+  completa en SAN, reproducible en el tablero.
+
+---
+
+## 9. Libro de aperturas
+
+- Fuente: `lichess-org/chess-openings` (CC0). Archivos `a.tsv`…`e.tsv`
+  con `eco`, `name`, `pgn`; la versión `dist/` incluye `epd`.
+- Carga: el adaptador lee los TSV (empaquetados como recurso) y rellena la
+  tabla `opening`, o se genera una migración Flyway de datos.
+- Búsqueda: EPD de la posición (FEN sin contadores). Esto detecta
+  transposiciones, cosa que una búsqueda por secuencia de jugadas no hace.
+- La partida guarda la **última** apertura reconocida como su nombre.
+- Atribución en `NOTICE` aunque CC0 no lo exija.
+
+---
+
+## 10. API REST
+
+Prefijo `/api/v1`. Errores en formato **`ProblemDetail`** (RFC 9457).
+
+- **`GET /bots`** — los cinco perfiles con descripción.
+- **`POST /games`** — crear partida. Devuelve `gameId`.
+- **`POST /games/import`** — importar PGN (`text/plain` o JSON).
+- **`GET /games`** — listado paginado.
+- **`GET /games/{id}`** — estado: FEN, turno, jugadas, resultado, versión,
+  jugadas legales.
+- **`POST /games/{id}/moves`** — jugada humana. Header
+  `If-Match: <version>`.
+- **`POST /games/{id}/resign`** — rendirse.
+- **`GET /games/{id}/pgn`** — exportar PGN.
+- **`POST /games/{id}/analysis`** — encolar análisis. `202 Accepted`;
+  idempotente.
+- **`GET /games/{id}/analysis`** — resultado o estado.
+- **`GET /games/{id}/analysis/events`** — SSE: `progress`, `completed`,
+  `failed`.
+
+### 10.1 Jugada
+
+```http
+POST /api/v1/games/7c1e.../moves
+If-Match: "12"
+Accept-Language: es
+Content-Type: application/json
+
+{ "uci": "e7e8q" }
+```
+
+Respuesta `200`: estado actualizado **incluyendo la jugada del bot**, para
+que el cliente haga una sola petición por turno. El bot está acotado por
+`movetime`, así que la latencia es predecible.
+
+Errores:
+
+- **`400`** — UCI mal formado.
+- **`409`** — partida terminada o no es tu turno.
+- **`412`** — `If-Match` no coincide (petición duplicada o concurrente).
+- **`422`** — jugada ilegal en la posición actual.
+- **`503`** — motor no disponible (la partida no cambia).
+
+Los campos `title` y `detail` del `ProblemDetail` se traducen según
+`Accept-Language` (inglés por defecto). Además se incluye una propiedad
+`code` estable (p. ej. `ILLEGAL_MOVE`) para clientes que no quieran depender
+del texto.
+
+### 10.2 Jugadas legales en la respuesta
+
+`GET /games/{id}` incluye `legalMoves` (lista UCI). Así el cliente
+resalta destinos posibles **sin implementar reglas**: el servidor sigue
+siendo la única autoridad y el cliente queda tonto a propósito.
+
+La API REST es la **interfaz pública** del proyecto (scripts, futuras apps,
+otros frontends). La interfaz web propia **no** la consume por HTTP: usa los
+mismos casos de uso directamente, como cualquier otro adaptador de entrada.
+
+---
+
+## 11. Interfaz web (Thymeleaf + htmx)
+
+### 11.1 Por qué así
+
+El objetivo del proyecto es aprender Java, Spring y Arquitectura Hexagonal.
+Un SPA (Angular, React…) obligaría a aprender otro lenguaje y otro ecosistema
+y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
++ htmx:
+
+- Todo vive en Spring Boot: un solo build, un solo contenedor.
+- La interfaz es **otro adaptador de entrada** (`kopi-adapter-web`), al lado
+  del REST. Ambos llaman a los mismos casos de uso: la demostración más
+  clara de que el núcleo no depende de cómo se entra.
+- Si en el futuro alguien quiere un SPA, la API REST ya existe y el núcleo
+  no cambia.
+
+### 11.2 Cómo funciona
+
+- **Páginas Thymeleaf:** Inicio (elegir bot y color) · Partida · Revisión ·
+  Importar PGN · Historial.
+- **htmx** para actualizar fragmentos sin recargar: lista de jugadas, estado,
+  resultado, panel de análisis. El servidor devuelve fragmentos HTML
+  (`th:fragment`), no JSON.
+- **Tablero:** Chessground cargado como módulo ES fijado por versión (copiado
+  en `static/vendor/` o desde un CDN con versión exacta). Un script propio
+  `board.js` (~100 líneas) hace tres cosas:
+  1. Pinta la posición y los destinos legales que el servidor incluye en el
+     HTML (`data-fen`, `data-legal-moves`).
+  2. Al soltar una pieza, envía la jugada (`htmx.ajax` o `fetch`) y aplica la
+     respuesta: nueva posición + jugada del bot.
+  3. En la revisión, mueve el tablero al navegar por las jugadas.
+- **Progreso del análisis:** extensión SSE de htmx (`hx-ext="sse"`) conectada
+  a un endpoint SSE del adaptador web; cada evento reemplaza la barra de
+  progreso y, al terminar, se carga el fragmento de revisión.
+- **Gráfica de evaluación:** SVG generado en el servidor desde la plantilla
+  (una polilínea con los Win %); sin librería de gráficos.
+- **Estilos:** un CSS sencillo sin *framework* (o Pico.css si se quiere
+  algo decente sin esfuerzo).
+
+### 11.3 Reglas
+
+- Sin lógica de ajedrez en JavaScript. Todo lo que el tablero necesita saber
+  (posición, destinos legales, última jugada, flechas de la mejor línea) lo
+  calcula el dominio y llega en el HTML.
+- Accesibilidad: categorías con icono + texto (no solo color), navegación
+  por teclado con ← → en la revisión.
+
+### 11.4 Idiomas (inglés y español)
+
+- **Archivos de mensajes:** `messages.properties` (inglés, idioma por
+  defecto) y `messages_es.properties` en `kopi-adapter-web`; el adaptador
+  REST tiene los suyos para los errores.
+- **Elección de idioma:** `CookieLocaleResolver` + `LocaleChangeInterceptor`
+  (`?lang=es` / `?lang=en`). Primera visita: `Accept-Language` del
+  navegador. Selector EN/ES visible en la cabecera de todas las páginas.
+- **Plantillas:** todo texto visible con `#{clave}`; ninguna cadena literal
+  en el HTML. Una prueba recorre las plantillas y falla si encuentra texto
+  sin traducir (o si una clave existe en un idioma y no en el otro).
+- **JavaScript:** los pocos textos que necesite `board.js` llegan en
+  atributos `data-*` ya traducidos desde la plantilla.
+- **Dominio sin textos:** categorías (`BLUNDER`), motivos de fin
+  (`STALEMATE`) y errores (`ILLEGAL_MOVE`) son enums o records; la
+  traducción vive en el adaptador (`classification.BLUNDER=Error grave`).
+  Un `MessageSource` jamás entra en el dominio ni en la aplicación.
+- **Notación:** la SAN estándar usa letras inglesas (`N`, `B`, `R`, `Q`,
+  `K`). En la interfaz se muestra en **notación de figuras** (`♘f3`), que no
+  depende del idioma. Opcional: notación española (`Cf3`) como preferencia.
+- **Nombres de aperturas:** el dataset de Lichess solo está en inglés; se
+  muestran en inglés en ambos idiomas, junto al código ECO. Traducir las más
+  comunes puede ser una contribución externa posterior.
+- **Fechas y números:** con `#temporals` / `#numbers` de Thymeleaf según el
+  `Locale` (`21/10/2026` vs `10/21/2026`, `87,5 %` vs `87.5%`).
+
+---
+
+## 12. Docker Compose
+
+```yaml
+services:
+  postgres:
+    image: postgres:17-alpine          # fijar versión exacta
+    environment:
+      POSTGRES_DB: kopi
+      POSTGRES_USER: kopi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define en .env}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kopi -d kopi"]
+    # sin "ports": solo accesible desde la red interna de Compose
+
+  app:
+    build: ../backend
+    ports: ["127.0.0.1:8080:8080"]     # interfaz web + API REST, solo en local
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kopi
+      SPRING_DATASOURCE_USERNAME: kopi
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      KOPI_ENGINE_PATH: /opt/stockfish/stockfish
+      KOPI_ENGINE_POOL_SIZE: 2
+      KOPI_ANALYSIS_MAX_CONCURRENT: 1
+    depends_on:
+      postgres: { condition: service_healthy }
+    deploy:
+      resources: { limits: { cpus: "2", memory: 1g } }
+
+volumes:
+  pgdata:
+```
+
+`Dockerfile` del backend: *multi-stage* (Maven + JDK 25 → JRE 25), descarga
+del binario oficial de Stockfish con **checksum verificado** (o compilación
+desde fuente con la etiqueta fijada), usuario no root, *healthcheck* sobre
+`/actuator/health/readiness`. La *readiness* incluye un `HealthIndicator`
+que hace `isready`/`readyok` contra el pool UCI.
+
+---
+
+## 13. Estrategia de pruebas
+
+La pirámide refleja los anillos hexagonales:
+
+#### Dominio
+
+- **Qué:** reglas, FEN/SAN/PGN, agregado `Game`, clasificador, fórmulas.
+  **Sin Spring, en milisegundos.**
+- **Herramientas:** JUnit 5, AssertJ, jqwik.
+
+#### Perft
+
+- **Qué:** conteo de nodos del generador de jugadas contra valores de
+  referencia (tabla más abajo).
+- **Herramientas:** JUnit parametrizado.
+
+#### Diferencial
+
+- **Qué:** para miles de posiciones aleatorias, nuestras jugadas legales =
+  las de una librería de referencia (p. ej. chesslib, solo en `test`).
+- **Herramientas:** JUnit + oráculo.
+
+#### Aplicación
+
+- **Qué:** casos de uso con puertos falsos (repositorio en memoria, motor
+  *fake*).
+- **Herramientas:** JUnit.
+
+#### Adaptadores
+
+- **Qué:** JDBC contra PostgreSQL real; UCI contra Stockfish real; parser
+  UCI con salidas grabadas.
+- **Herramientas:** Testcontainers.
+
+#### Arquitectura
+
+- **Qué:** el dominio no importa `org.springframework..`, `java.sql..`, ni
+  otros módulos; los adaptadores no se conocen entre sí.
+- **Herramientas:** ArchUnit.
+
+#### API
+
+- **Qué:** controladores con `MockMvc`/`RestTestClient`, contratos de error.
+- **Herramientas:** Spring Boot Test.
+
+#### Web
+
+- **Qué:** los controladores web devuelven la vista/fragmento correcto con el
+  modelo esperado.
+- **Herramientas:** `MockMvc`.
+
+#### Extremo a extremo
+
+- **Qué:** crear partida → jugar → terminar → analizar → revisar.
+- **Herramientas:** Playwright (opcional).
+
+### Valores *perft* de referencia mínimos
+
+- **Posición inicial** — d1: 20 · d2: 400 · d3: 8 902 · d4: 197 281 ·
+  d5: 4 865 609
+- ***Kiwipete*** — d1: 48 · d2: 2 039 · d3: 97 862 · d4: 4 085 603
+
+Añadir las posiciones 3–6 de la wiki de Chess Programming para cubrir
+enroques, promociones y capturas al paso en casos extremos. **Un generador
+que pasa perft es correcto; no hay discusión.** Es la mejor justificación de
+por qué podemos escribir nuestras propias reglas.
+
+---
+
+## 14. Observabilidad
+
+- Actuator: `health` (con *liveness*/*readiness*), `info` (versión de la app,
+  de Stockfish y del clasificador), `metrics`, `prometheus`.
+- Métricas Micrometer: `kopi.bot.move.duration{profile}`,
+  `kopi.analysis.duration`, `kopi.analysis.queue.size`,
+  `kopi.engine.restarts`.
+- Logs estructurados (JSON) con `gameId` propagado vía `ScopedValue`/MDC.
+- Trazas UCI completas solo con un *logger* específico en DEBUG.
+
+---
+
+## 15. Seguridad y robustez
+
+Al ejecutarse en local no hay amenazas entre usuarios, pero el código es
+público y la gente lo copiará: los hábitos importan igual.
+
+- Puertos de Postgres **no expuestos** al host salvo en un perfil de
+  desarrollo; la app escucha en `localhost` por defecto.
+- Ningún secreto en el repo: `.env` ignorado, `.env.example` con valores de
+  ejemplo.
+- Validación estricta de UCI (`^[a-h][1-8][a-h][1-8][qrbn]?$`) antes de
+  llegar al dominio; el dominio vuelve a validar legalidad.
+- Tamaño máximo de PGN importado (p. ej. 100 KB) y de partidas por import.
+- Nunca enviar al motor nada que venga del cliente salvo una posición
+  generada por nuestro dominio (FEN serializado por nosotros, no el del
+  usuario).
+- Pool de motores: cada proceso tiene un único dueño a la vez; *timeout* →
+  `stop`; sin respuesta → matar y recrear el proceso.
+- Cierre ordenado: `quit` a todos los procesos en el `@PreDestroy`/`SmartLifecycle`.
+
+---
+
+## 16. Roadmap por entregables
+
+Cada entregable tiene un **objetivo de aprendizaje** además del funcional.
+
+### Entregable 0 — Esqueleto
+
+- **Funcional:** multi-módulo Maven, Spring Boot arrancando, Postgres en
+  Compose, Flyway, CI (GitHub Actions) con build + tests, reglas ArchUnit
+  vacías pero activas.
+- **Aprendizaje:** estructura hexagonal, *wiring* sin anotaciones en el
+  núcleo.
+
+### Entregable 1 — Dominio de ajedrez
+
+- **Funcional:** tablero, generador de jugadas, FEN, SAN, fin de partida.
+  *Perft* en verde.
+- **Aprendizaje:** Java 25 moderno (records, sealed, switch), TDD, modelado
+  de dominio.
+
+### Entregable 2 — Jugar
+
+- **Funcional:** agregado `Game`, `CreateGame`, `PlayMove`, `Resign`, API
+  REST, persistencia, bot `PAWN`. Interfaz web mínima (Thymeleaf +
+  Chessground).
+- **Aprendizaje:** casos de uso, puertos y adaptadores, dos adaptadores de
+  entrada sobre el mismo núcleo, control optimista, `ProblemDetail`.
+
+### Entregable 3 — Cinco bots
+
+- **Funcional:** bot `KNIGHT` (alfa-beta), adaptador Stockfish (UCI + pool),
+  perfiles `BISHOP`–`QUEEN`, *harness* de calibración.
+- **Aprendizaje:** procesos externos, hilos virtuales, búsqueda en árboles,
+  Testcontainers con Stockfish.
+
+### Entregable 4 — Análisis
+
+- **Funcional:** cola en BD, *worker*, clasificador Win %, mates perdidos,
+  libro de aperturas, SSE, pantalla de revisión.
+- **Aprendizaje:** trabajo asíncrono duradero, SSE, dominio puro para reglas
+  de negocio no triviales.
+
+### Entregable 5 — Utilidad
+
+- **Funcional:** importar/exportar PGN, historial, resumen y precisión.
+- **Aprendizaje:** parser con buenos mensajes de error, paginación.
+
+### Entregable 6 — Estabilización
+
+- **Funcional:** E2E, métricas, imagen Docker final, documentación,
+  `NOTICE`, release 1.0.
+- **Aprendizaje:** operación, observabilidad, publicación OSS.
+
+**Futuro (v2+):** reloj y controles de tiempo · `BRILLIANT`/`GREAT` con ADR ·
+*bitboards* · estadísticas por apertura y por bot · puzzles generados a partir
+de los propios errores (¡muy útil y reutiliza todo el análisis!) · modo
+«entrenador» con pista opcional.
+
+El plan detallado por fases está en
+[`kopi-chess-plan-desarrollo.md`](kopi-chess-plan-desarrollo.md).
+
+---
+
+## 17. ADRs a escribir al empezar
+
+1. **ADR-001** Arquitectura hexagonal con módulos Maven y ArchUnit.
+2. **ADR-002** Casos de uso sin dependencia de Spring.
+3. **ADR-003** PostgreSQL en lugar de MongoDB.
+4. **ADR-004** Reglas de ajedrez propias, verificadas con *perft*.
+5. **ADR-005** Clasificación basada en Win % (fórmula y umbrales de Lichess).
+6. **ADR-006** Bots propios para niveles bajos.
+7. **ADR-007** Cola de análisis en PostgreSQL con `SKIP LOCKED`.
+8. **ADR-008** Repetición y 50 jugadas automáticas (simplificación sobre FIDE).
+9. **ADR-009** Libro de aperturas local (CC0) en lugar de API externa.
+10. **ADR-010** Interfaz web con Thymeleaf + htmx en lugar de SPA.
+11. **ADR-011** i18n: el dominio emite códigos, los adaptadores traducen.
+12. **ADR-012** Política de *features preview* (solo en `kopi-labs`).
+
+---
+
+## 18. Riesgos
+
+#### El generador de jugadas lleva más de lo previsto
+
+- **Mitigación:** es el entregable 1 aislado; *perft* da una meta objetiva.
+  Plan B: adaptador temporal con chesslib detrás del mismo contrato.
+
+#### El análisis satura la CPU en una máquina modesta
+
+- **Mitigación:** concurrencia 1, `depth` moderada, `nodes` como límite,
+  *timeout* por partida.
+
+#### Niveles indistinguibles entre sí
+
+- **Mitigación:** *harness* de calibración antes de cerrar el entregable 3.
+
+#### La interfaz consume el tiempo que querías dedicar al backend
+
+- **Mitigación:** Thymeleaf + htmx, sin SPA; Chessground resuelve lo difícil
+  del tablero.
+
+#### htmx se queda corto si la interfaz crece mucho
+
+- **Ejemplo:** análisis interactivo de variantes.
+- **Mitigación:** la API REST ya existe: un SPA podría añadirse después como
+  un cliente más, sin tocar el núcleo.
+
+#### Cambios de versión de Spring Boot 4.x durante el desarrollo
+
+- **Mitigación:** fijar versión; actualizar de *minor* en *minor* con CI en
+  verde.
+
+---
+
+## 19. Datos a verificar al arrancar
+
+Comprobados durante esta revisión, pero conviene confirmarlos contra la
+versión exacta que se fije:
+
+- Rango de `UCI_Elo` y opciones disponibles: ejecutar `stockfish` → `uci`.
+- Última versión estable de Stockfish (18 publicada el 31-01-2026) y de
+  Spring Boot 4.x.
+- Licencia de la librería que se use como oráculo de pruebas.
+
+---
+
+## 20. Resumen
+
+> **Jugar → terminar → analizar → entender → (importar tus propias
+> partidas).**
+
+Kopi Chess mantiene la idea central de la propuesta original —análisis
+posterior, Stockfish detrás de una interfaz, backend autoritativo— pero
+cambia lo que no encajaba con un proyecto **educativo y hexagonal**:
+el ajedrez pasa a ser **nuestro dominio** (no una librería), PostgreSQL
+sustituye a MongoDB y además sirve de cola duradera, la clasificación usa una
+fórmula pública en lugar de umbrales arbitrarios, los niveles bajos los
+escribimos nosotros, el libro de aperturas funciona sin red, y la interfaz
+web vive en el mismo Spring Boot como un adaptador más.
+
+---
+
+## Fuentes
+
+- Lichess — fórmulas de Win % y precisión: <https://lichess.org/page/accuracy>
+- Lichess — umbrales de clasificación (`Advice.scala`):
+  <https://github.com/lichess-org/lila/blob/master/modules/tree/src/main/Advice.scala>
+- Dataset de aperturas (CC0): <https://github.com/lichess-org/chess-openings>
+- Chessground (GPL-3.0): <https://github.com/lichess-org/chessground>
+- htmx (extensión SSE): <https://htmx.org/extensions/sse/>
+- Opciones UCI de Stockfish (código): <https://github.com/official-stockfish/Stockfish/blob/master/src/engine.cpp>
+- Stockfish 18: <https://ramachess.com/stockfish-18>
+- Spring Boot 4 / compatibilidad con Java: <https://www.baeldung.com/java-weekly-622>,
+  <https://stevenpg.com/references/spring-version-compatibility/>
+- Chess Programming Wiki — *Perft Results*: <https://www.chessprogramming.org/Perft_Results>
