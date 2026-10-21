@@ -283,12 +283,12 @@ ejecutable como archivo fuente compacto (`java Perft.java "<fen>" 4`).
 
 - [x] **Decidir representación** (0x88 recomendado) y escribir **ADR-004**
       (reglas propias verificadas con *perft*).
-- [ ] `Board`: colocar/quitar/consultar pieza por casilla. Inmutable o con
+- [x] `Board`: colocar/quitar/consultar pieza por casilla. Inmutable o con
       copia barata; documentar la decisión.
-- [ ] `CastlingRights` (record de 4 booleanos o máscara de bits).
-- [ ] `Position` (inmutable): tablero, turno, enroques, casilla al paso,
+- [x] `CastlingRights` (record de 4 booleanos o máscara de bits).
+- [x] `Position` (inmutable): tablero, turno, enroques, casilla al paso,
       `halfmoveClock`, `fullmoveNumber`.
-- [ ] **FEN**: `Fen.parse(String) → Position` y `Fen.format(Position)`.
+- [x] **FEN**: `Fen.parse(String) → Position` y `Fen.format(Position)`.
   - Pruebas de ida y vuelta con 20+ FEN variadas.
   - Errores claros ante FEN inválidas (`InvalidFenException` con el motivo).
 
