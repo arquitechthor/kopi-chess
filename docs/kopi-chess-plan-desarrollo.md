@@ -141,8 +141,6 @@ fricción.
       `*.iml`) y `.env`.
 - [ ] **Reescribir el `README.md`**: qué es Kopi Chess, estado, enlace al
       diseño y a este plan, licencia GPL-3.0.
-- [ ] **Mover el documento original** a `docs/archivo/` para dejar claro que
-      el vigente es el de Kopi Chess.
 - [ ] **Escribir ADR-001** (arquitectura hexagonal con módulos Maven y
       ArchUnit) y **ADR-002** (casos de uso sin Spring).
 

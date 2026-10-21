@@ -1,6 +1,6 @@
 # Kopi Chess — Documento de diseño técnico
 
-**Estado:** propuesta revisada (v2), sustituye a `chess-arena-diseno-tecnico.md`
+**Estado:** propuesta revisada (v2)
 **Fecha:** 2026-10-21
 **Licencia del proyecto:** GPL-3.0 (ya definida en el repositorio)
 **Lema:** *Open source educational project in Chess and Code.*
@@ -9,8 +9,9 @@
 
 ## 0. Cómo leer este documento
 
-Este documento parte de la propuesta original («Chess Arena») y la
-**reformula** con tres criterios:
+Este documento parte de una propuesta inicial llamada «Chess Arena» (un
+primer borrador generado con ChatGPT, que ya no forma parte del repositorio)
+y la **reformula** con tres criterios:
 
 1. **El código también es producto.** Kopi Chess es un proyecto educativo:
    además de servir para jugar y aprender ajedrez, debe servir para aprender
