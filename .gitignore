@@ -19,6 +19,33 @@
 *.tar.gz
 *.rar
 
+# Keep the Maven wrapper jar if it is ever used
+!.mvn/wrapper/maven-wrapper.jar
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Maven
+target/
+.flattened-pom.xml
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# VS Code
+.vscode/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local tools (e.g. a Stockfish binary for experiments)
+tools/
+
+# OS
+.DS_Store
+Thumbs.db
