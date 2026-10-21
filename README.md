@@ -1,2 +1,50 @@
-# kopi-chess
-Open source educational proyect in Chess and Code > !!
+# Kopi Chess
+
+*Open source educational project in Chess and Code.*
+
+[Leer en español](README.es.md)
+
+Kopi Chess is a local web application to **play chess against five bots** and
+**review every game afterwards**. Each move gets an evaluation, a classification
+(inaccuracy / mistake / blunder) and the engine's best alternative, and the
+review flags any mate you missed. You can also **import a PGN** from Lichess,
+Chess.com or an over-the-board game and analyse it the same way.
+
+It is also a codebase you can learn from. The project is a reference example of:
+
+- **Modern Java (25)**: records, sealed interfaces, pattern matching, virtual
+  threads, stream gatherers, scoped values…
+- **Spring Boot 4**
+- **Hexagonal Architecture**: a pure-Java chess domain (rules verified with
+  *perft*), use cases with no framework dependencies, and adapters for the web
+  UI, REST API, PostgreSQL and Stockfish.
+
+The UI is available in **English and Spanish**.
+
+## Status
+
+🚧 **Planning / early development.** Nothing to run yet.
+
+- Technical design (Spanish): [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
+- Development plan (Spanish): [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
+- Architecture Decision Records (Spanish): [`docs/adr/`](docs/adr/)
+
+## Planned stack
+
+Java 25 · Spring Boot 4 · Maven · PostgreSQL · Flyway · Stockfish (UCI) ·
+Thymeleaf + htmx · Chessground · Docker Compose · JUnit 5 · ArchUnit ·
+Testcontainers
+
+## Running locally
+
+Coming in phase 1: `docker compose up`, then open `http://localhost:8080`.
+
+## Contributing
+
+The code, commits, issues and pull requests are in **English**. Design
+documents are in **Spanish**. Contribution guidelines will be added before
+v1.0.
+
+## License
+
+[GPL-3.0](LICENSE). Kopi Chess uses Stockfish and Chessground, both GPL-3.0.

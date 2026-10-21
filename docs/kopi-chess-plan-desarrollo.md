@@ -99,8 +99,7 @@ Qué se gana, qué se pierde, qué queda pendiente.
 
 ### 2.4 Estilo de pruebas
 
-- Nombres descriptivos en español o inglés, pero **siempre el mismo**
-  (decidirlo en la fase 0). Ejemplo:
+- Nombres descriptivos **en inglés**, como todo el código. Ejemplo:
   `blackCannotCastleKingsideThroughAttackedSquare()`.
 - Patrón *Given / When / Then* en el cuerpo.
 - Posiciones de prueba siempre como **FEN** literal, nunca construidas a mano
@@ -116,12 +115,21 @@ fricción.
 
 ### Tareas
 
-- [ ] **Instalar herramientas**
-  - JDK 25 (Temurin o similar), comprobar con `java -version`.
-  - Maven 3.9+ (o usar el *wrapper* `mvnw`, recomendado).
-  - Docker Desktop con Compose v2.
-  - IDE: IntelliJ IDEA (Community basta) con soporte de Java 25.
-  - Stockfish local para experimentar a mano (binario oficial).
+- [ ] **Instalar herramientas** (todo funciona **sin permisos de
+      administrador**):
+  - **JDK 25:** descargarlo desde IntelliJ (*File → Project Structure → SDKs
+    → + → Download JDK*, versión 25, Temurin) o como `.zip` portable de
+    Adoptium descomprimido en una carpeta del usuario. No hace falta cambiar
+    el `JAVA_HOME` global si se usa otro JDK para otros proyectos: en la
+    terminal basta con fijarlo para la sesión
+    (`$env:JAVA_HOME = "<ruta-jdk-25>"`).
+  - **Maven:** no se instala; se usa el *wrapper* `mvnw` del repositorio
+    (fase 1).
+  - **Docker Desktop** con Compose v2.
+  - **IDE:** IntelliJ IDEA (Community basta) con soporte de Java 25. VS Code
+    sirve para documentos y plantillas.
+  - **Stockfish** como `.zip` portable (binario oficial), en `tools/` (está
+    en `.gitignore`) o en cualquier carpeta del usuario.
 - [ ] **Experimentar con UCI a mano** (30 minutos, muy recomendable)
   - Abrir Stockfish en la terminal y escribir: `uci`, `isready`,
     `position startpos moves e2e4`, `go depth 15`.
@@ -129,19 +137,23 @@ fricción.
     `bestmove`.
   - Ejecutar `uci` y **copiar el rango real de `UCI_Elo` y `Skill Level`**
     en `docs/notas/stockfish-opciones.md`.
-- [ ] **Decidir el `groupId` y paquete raíz** (p. ej.
-      `io.github.<tu-usuario>.kopi`). Anotarlo en el README.
-- [ ] **Configurar GitHub**
+- [x] **Decidir el `groupId` y paquete raíz:** `com.arquitechthor.kopi`
+      (ADR-001).
+- [x] **Decidir idiomas:** código, *commits*, *issues* y PR en inglés;
+      documentos de diseño, plan y ADRs en español; README en ambos
+      (`README.md` en inglés, `README.es.md` en español).
+- [x] **Configurar GitHub**
   - *Milestones* `F0` … `F7` con las fases de este plan.
   - Etiquetas: `domain`, `application`, `adapter`, `web`, `infra`, `docs`,
-    `good first issue`, `bug`.
+    `i18n`, `post-1.0`, `good first issue`, `bug`.
   - Plantillas de *issue* (tarea, bug) y de *pull request* con la DoD.
-  - Proteger `main`: exigir CI verde antes de fusionar.
-- [ ] **Actualizar `.gitignore`** para Maven e IntelliJ (`target/`, `.idea/`,
-      `*.iml`) y `.env`.
-- [ ] **Reescribir el `README.md`**: qué es Kopi Chess, estado, enlace al
-      diseño y a este plan, licencia GPL-3.0.
-- [ ] **Escribir ADR-001** (arquitectura hexagonal con módulos Maven y
+  - Proteger `main` exigiendo CI verde antes de fusionar: **se aplaza a la
+    fase 1**, cuando exista la CI.
+- [x] **Actualizar `.gitignore`** para Maven, IntelliJ, VS Code, `.env` y
+      `tools/`.
+- [x] **Reescribir el README** en inglés y español: qué es Kopi Chess,
+      estado, enlace al diseño y a este plan, licencia GPL-3.0.
+- [x] **Escribir ADR-001** (arquitectura hexagonal con módulos Maven y
       ArchUnit) y **ADR-002** (casos de uso sin Spring).
 
 ### Criterio de aceptación
@@ -190,6 +202,8 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
   - `actions/setup-java` con Java 25 y caché de Maven.
   - `./mvnw -B verify` (Testcontainers funciona en los *runners* Ubuntu).
   - Publicar el informe de JaCoCo como artefacto.
+  - Proteger `main`: exigir que la CI pase antes de fusionar (aplazado desde
+    la fase 0).
 - [ ] **Dockerfile del backend** *multi-stage* (JDK 25 para compilar, JRE 25
       para ejecutar, usuario no root). Stockfish todavía no.
 - [ ] **Servicio `app` en Compose** que arranca y conecta a Postgres.
