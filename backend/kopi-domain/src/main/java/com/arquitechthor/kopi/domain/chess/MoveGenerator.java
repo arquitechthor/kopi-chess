@@ -14,15 +14,23 @@ import java.util.List;
 /// leave the mover's own king in check. Filtering those out comes later,
 /// once squares can be tested for attacks.
 ///
-/// So far it knows knights and kings (without castling). Sliders, pawns and
-/// castling follow, one step at a time, as listed in §5.3 of the plan.
+/// So far it knows knights, kings (without castling), bishops, rooks and
+/// queens. Pawns and castling follow, one step at a time, as listed in §5.3
+/// of the plan.
 final class MoveGenerator {
 
     /// The eight L-shaped jumps of a knight.
     private static final int[] KNIGHT_OFFSETS = {33, 31, 18, 14, -14, -18, -31, -33};
 
-    /// One step in each of the eight directions.
-    private static final int[] KING_OFFSETS = {17, 16, 15, 1, -1, -15, -16, -17};
+    /// One step along each diagonal.
+    private static final int[] DIAGONAL_OFFSETS = {17, 15, -15, -17};
+
+    /// One step along each file and rank.
+    private static final int[] STRAIGHT_OFFSETS = {16, 1, -1, -16};
+
+    /// One step in each of the eight directions: kings step this way, queens
+    /// slide this way.
+    private static final int[] ALL_DIRECTIONS = {17, 16, 15, 1, -1, -15, -16, -17};
 
     private MoveGenerator() {}
 
@@ -39,8 +47,11 @@ final class MoveGenerator {
             }
             switch (piece.type()) {
                 case KNIGHT -> addSteps(board, side, cell, KNIGHT_OFFSETS, moves);
-                case KING -> addSteps(board, side, cell, KING_OFFSETS, moves);
-                case PAWN, BISHOP, ROOK, QUEEN -> {
+                case KING -> addSteps(board, side, cell, ALL_DIRECTIONS, moves);
+                case BISHOP -> addSlides(board, side, cell, DIAGONAL_OFFSETS, moves);
+                case ROOK -> addSlides(board, side, cell, STRAIGHT_OFFSETS, moves);
+                case QUEEN -> addSlides(board, side, cell, ALL_DIRECTIONS, moves);
+                case PAWN -> {
                     // Not generated yet: see the class comment.
                 }
             }
@@ -62,6 +73,25 @@ final class MoveGenerator {
                 moves.add(new Move(Board.squareOf(from), Board.squareOf(to), MoveKind.QUIET));
             } else if (target.color() != side) {
                 moves.add(new Move(Board.squareOf(from), Board.squareOf(to), MoveKind.CAPTURE));
+            }
+        }
+    }
+
+    /// Rays in each direction, for bishops, rooks and queens. A ray goes on
+    /// through empty squares, ends with a capture on the first opponent's
+    /// piece, and ends just before the first own piece or the edge.
+    private static void addSlides(Board board, Color side, int from, int[] offsets, List<Move> moves) {
+        for (var offset : offsets) {
+            for (var to = from + offset; Board.isOnBoard(to); to += offset) {
+                var target = board.at(to);
+                if (target == null) {
+                    moves.add(new Move(Board.squareOf(from), Board.squareOf(to), MoveKind.QUIET));
+                    continue;
+                }
+                if (target.color() != side) {
+                    moves.add(new Move(Board.squareOf(from), Board.squareOf(to), MoveKind.CAPTURE));
+                }
+                break;
             }
         }
     }

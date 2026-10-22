@@ -143,6 +143,109 @@ class MoveGeneratorTest {
         }
     }
 
+    @Nested
+    class Bishop {
+
+        @Test
+        void slidesAlongBothDiagonalsOnAnEmptyBoard() {
+            // Given
+            var fen = "4k3/8/8/8/3B4/8/8/4K3 w - - 0 1";
+
+            // When
+            var moves = movesFrom(fen, "d4");
+
+            // Then
+            assertThat(moves).containsExactlyInAnyOrder(
+                    "d4c3", "d4b2", "d4a1",
+                    "d4e5", "d4f6", "d4g7", "d4h8",
+                    "d4c5", "d4b6", "d4a7",
+                    "d4e3", "d4f2", "d4g1");
+        }
+
+        @Test
+        void stopsBeforeItsOwnPieceAndOnAnOpponentsPiece() {
+            // The white pawn on f6 blocks the ray before it; the black knight
+            // on b2 is captured, and a1 behind it is out of reach.
+            var fen = "4k3/8/5P2/8/3B4/8/1n6/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "d4");
+
+            assertThat(moves).containsExactlyInAnyOrder(
+                    "d4e5", "d4c3", "d4b2", "d4c5", "d4b6", "d4a7", "d4e3", "d4f2", "d4g1");
+            assertThat(moveBetween(fen, "d4", "b2").kind()).isEqualTo(MoveKind.CAPTURE);
+        }
+    }
+
+    @Nested
+    class Rook {
+
+        @Test
+        void slidesAlongItsFileAndRankUntilItsOwnKing() {
+            var fen = "4k3/8/8/8/8/8/8/R5K1 w - - 0 1";
+
+            var moves = movesFrom(fen, "a1");
+
+            assertThat(moves).containsExactlyInAnyOrder(
+                    "a1a2", "a1a3", "a1a4", "a1a5", "a1a6", "a1a7", "a1a8",
+                    "a1b1", "a1c1", "a1d1", "a1e1", "a1f1");
+        }
+
+        @Test
+        void doesNotWrapAroundTheEdgeOfTheBoard() {
+            // Sliding right from h4 must stop at once, not continue on a5.
+            var fen = "4k3/8/8/8/7R/8/8/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "h4");
+
+            assertThat(moves).containsExactlyInAnyOrder(
+                    "h4h5", "h4h6", "h4h7", "h4h8",
+                    "h4h3", "h4h2", "h4h1",
+                    "h4g4", "h4f4", "h4e4", "h4d4", "h4c4", "h4b4", "h4a4");
+        }
+
+        @Test
+        void capturesTheFirstOpponentsPieceOnItsWay() {
+            var fen = "4k3/8/8/8/R2pp3/8/8/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "a4");
+
+            assertThat(moves).contains("a4b4", "a4c4", "a4d4").doesNotContain("a4e4");
+            assertThat(moveBetween(fen, "a4", "d4").kind()).isEqualTo(MoveKind.CAPTURE);
+            assertThat(moveBetween(fen, "a4", "c4").kind()).isEqualTo(MoveKind.QUIET);
+        }
+    }
+
+    @Nested
+    class Queen {
+
+        @Test
+        void combinesTheRookAndTheBishopOnAnEmptyBoard() {
+            var fen = "4k3/8/8/8/3Q4/8/8/7K w - - 0 1";
+
+            var moves = movesFrom(fen, "d4");
+
+            assertThat(moves).hasSize(27).contains("d4d8", "d4a4", "d4h8", "d4a1", "d4g1", "d4a7");
+        }
+
+        @Test
+        void stopsOnAnOpponentsPiece() {
+            var fen = "4k3/8/8/8/3Q1p2/8/8/7K w - - 0 1";
+
+            var moves = movesFrom(fen, "d4");
+
+            assertThat(moves).contains("d4e4", "d4f4").doesNotContain("d4g4", "d4h4");
+        }
+    }
+
+    @Test
+    void slidersAreBlockedInTheInitialPosition() {
+        var initial = Fen.INITIAL;
+
+        for (var square : List.of("a1", "c1", "d1", "f1", "h1")) {
+            assertThat(movesFrom(initial, square)).as("moves from %s", square).isEmpty();
+        }
+    }
+
     @Test
     void onlyThePiecesOfTheSideToMoveMove() {
         var fen = "n3k3/8/8/8/8/8/8/N3K3 w - - 0 1";
