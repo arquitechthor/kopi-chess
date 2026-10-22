@@ -296,8 +296,8 @@ ejecutable como archivo fuente compacto (`java Perft.java "<fen>" 4`).
 
 Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 
-- [ ] Caballo y rey (sin enroque) — las más simples: tablas de desplazamientos.
-- [ ] Piezas deslizantes: alfil, torre, dama (rayos hasta chocar).
+- [x] Caballo y rey (sin enroque) — las más simples: tablas de desplazamientos.
+- [x] Piezas deslizantes: alfil, torre, dama (rayos hasta chocar).
 - [ ] Peones: avance simple, doble desde la fila inicial, capturas.
 - [ ] Promoción (4 jugadas por avance/captura a la última fila).
 - [ ] Captura al paso.
