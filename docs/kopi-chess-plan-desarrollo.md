@@ -298,9 +298,9 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 
 - [x] Caballo y rey (sin enroque) — las más simples: tablas de desplazamientos.
 - [x] Piezas deslizantes: alfil, torre, dama (rayos hasta chocar).
-- [ ] Peones: avance simple, doble desde la fila inicial, capturas.
-- [ ] Promoción (4 jugadas por avance/captura a la última fila).
-- [ ] Captura al paso.
+- [x] Peones: avance simple, doble desde la fila inicial, capturas.
+- [x] Promoción (4 jugadas por avance/captura a la última fila).
+- [x] Captura al paso.
 - [ ] `isSquareAttacked(square, byColor)`.
 - [ ] Enroques: derechos, casillas vacías, el rey no está en jaque, no
       atraviesa ni llega a casilla atacada.
