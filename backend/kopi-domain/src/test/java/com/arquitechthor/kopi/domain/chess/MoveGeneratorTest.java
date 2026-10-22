@@ -237,6 +237,165 @@ class MoveGeneratorTest {
         }
     }
 
+    @Nested
+    class Pawn {
+
+        @Test
+        void advancesOneOrTwoSquaresFromItsStartingRank() {
+            // Given
+            var fen = Fen.INITIAL;
+
+            // When
+            var single = moveBetween(fen, "e2", "e3");
+            var twoSquares = moveBetween(fen, "e2", "e4");
+
+            // Then
+            assertThat(single.kind()).isEqualTo(MoveKind.QUIET);
+            assertThat(twoSquares.kind()).isEqualTo(MoveKind.DOUBLE_PAWN_PUSH);
+            assertThat(movesFrom(fen, "e2")).hasSize(2);
+        }
+
+        @Test
+        void blackPawnsAdvanceDownTheBoard() {
+            var fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+
+            var moves = movesFrom(fen, "d7");
+
+            assertThat(moves).containsExactlyInAnyOrder("d7d6", "d7d5");
+            assertThat(moveBetween(fen, "d7", "d5").kind()).isEqualTo(MoveKind.DOUBLE_PAWN_PUSH);
+        }
+
+        @Test
+        void advancesOnlyOneSquareAwayFromItsStartingRank() {
+            var fen = "4k3/8/8/8/8/4P3/8/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "e3");
+
+            assertThat(moves).containsExactly("e3e4");
+        }
+
+        @Test
+        void cannotAdvanceIntoAnyPiece() {
+            // A piece right in front blocks both pushes, and the pawn does
+            // not capture straight ahead.
+            var fen = "4k3/8/8/8/8/4n3/4P3/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "e2");
+
+            assertThat(moves).isEmpty();
+        }
+
+        @Test
+        void cannotJumpOverAPieceWithTheDoublePush() {
+            var fen = "4k3/8/8/8/4N3/8/4P3/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "e2");
+
+            assertThat(moves).containsExactly("e2e3");
+        }
+
+        @Test
+        void capturesDiagonallyForwardButNotItsOwnPieces() {
+            // Black pieces on d3 and f3; in the second position, f3 holds a
+            // white knight instead.
+            var fen = "4k3/8/8/8/8/3n1b2/4P3/4K3 w - - 0 1";
+            var withOwnPiece = "4k3/8/8/8/8/3n1N2/4P3/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "e2");
+            var movesNextToOwnPiece = movesFrom(withOwnPiece, "e2");
+
+            assertThat(moves).containsExactlyInAnyOrder("e2e3", "e2e4", "e2d3", "e2f3");
+            assertThat(moveBetween(fen, "e2", "d3").kind()).isEqualTo(MoveKind.CAPTURE);
+            assertThat(movesNextToOwnPiece).containsExactlyInAnyOrder("e2e3", "e2e4", "e2d3");
+        }
+
+        @Test
+        void doesNotCaptureAroundTheEdgeOfTheBoard() {
+            // From h2, "forward and to the right" is off the board, not a3.
+            var fen = "4k3/8/8/8/8/n5n1/7P/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "h2");
+
+            assertThat(moves).containsExactlyInAnyOrder("h2h3", "h2h4", "h2g3");
+        }
+
+        @Test
+        void promotesToAnyOfFourPiecesOnTheLastRank() {
+            var fen = "4k3/1P6/8/8/8/8/8/4K3 w - - 0 1";
+
+            var moves = movesFrom(fen, "b7");
+
+            assertThat(moves).containsExactlyInAnyOrder("b7b8q", "b7b8r", "b7b8b", "b7b8n");
+            assertThat(moveBetween(fen, "b7", "b8").kind())
+                    .isInstanceOf(MoveKind.Promotion.class)
+                    .isNotEqualTo(new MoveKind.Promotion(PieceType.QUEEN, true));
+        }
+
+        @Test
+        void promotesAlsoWhenCapturing() {
+            // The push to e8 is blocked by the king; the capture on d8 is not.
+            var fen = "3rk3/4P3/8/8/8/8/8/4K3 w - - 0 1";
+
+            var moves = MoveGenerator.pseudoLegalMoves(Fen.parse(fen)).stream()
+                    .filter(move -> move.from().equals(Square.parse("e7")))
+                    .toList();
+
+            assertThat(moves).extracting(Move::kind).containsExactlyInAnyOrder(
+                    new MoveKind.Promotion(PieceType.QUEEN, true),
+                    new MoveKind.Promotion(PieceType.ROOK, true),
+                    new MoveKind.Promotion(PieceType.BISHOP, true),
+                    new MoveKind.Promotion(PieceType.KNIGHT, true));
+            assertThat(moves).allSatisfy(move -> assertThat(move.to()).isEqualTo(Square.parse("d8")));
+        }
+
+        @Test
+        void blackPawnsPromoteOnTheFirstRank() {
+            var fen = "4k3/8/8/8/8/8/6p1/4K3 b - - 0 1";
+
+            var moves = movesFrom(fen, "g2");
+
+            assertThat(moves).containsExactlyInAnyOrder("g2g1q", "g2g1r", "g2g1b", "g2g1n");
+        }
+
+        @Test
+        void capturesEnPassantOnTheTargetSquare() {
+            // Black has just played d7-d5 next to the white pawn on e5.
+            var fen = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2";
+
+            var moves = movesFrom(fen, "e5");
+
+            assertThat(moves).containsExactlyInAnyOrder("e5e6", "e5d6");
+            assertThat(moveBetween(fen, "e5", "d6").kind()).isEqualTo(MoveKind.EN_PASSANT);
+        }
+
+        @Test
+        void blackCapturesEnPassantToo() {
+            var fen = "4k3/8/8/8/3Pp3/8/8/4K3 b - d3 0 1";
+
+            var capture = moveBetween(fen, "e4", "d3");
+
+            assertThat(capture.kind()).isEqualTo(MoveKind.EN_PASSANT);
+        }
+
+        @Test
+        void cannotCaptureEnPassantWithoutATarget() {
+            // Same pawns, but d7-d5 was not the last move.
+            var fen = "4k3/8/8/3pP3/8/8/8/4K3 w - - 0 2";
+
+            var moves = movesFrom(fen, "e5");
+
+            assertThat(moves).containsExactly("e5e6");
+        }
+    }
+
+    @Test
+    void theInitialPositionHasTwentyMoves() {
+        // Sixteen pawn moves and four knight moves: perft(1) of the start.
+        var moves = MoveGenerator.pseudoLegalMoves(Position.initial());
+
+        assertThat(moves).hasSize(20);
+    }
+
     @Test
     void slidersAreBlockedInTheInitialPosition() {
         var initial = Fen.INITIAL;
