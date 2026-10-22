@@ -301,8 +301,8 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 - [x] Peones: avance simple, doble desde la fila inicial, capturas.
 - [x] Promoción (4 jugadas por avance/captura a la última fila).
 - [x] Captura al paso.
-- [ ] `isSquareAttacked(square, byColor)`.
-- [ ] Enroques: derechos, casillas vacías, el rey no está en jaque, no
+- [x] `isSquareAttacked(square, byColor)`.
+- [x] Enroques: derechos, casillas vacías, el rey no está en jaque, no
       atraviesa ni llega a casilla atacada.
 - [ ] `Position.apply(Move) → Position`: mover, capturar, actualizar
       enroques (también cuando se captura una torre en su casilla inicial),

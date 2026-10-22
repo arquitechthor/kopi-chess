@@ -130,16 +130,201 @@ class MoveGeneratorTest {
 
             assertThat(capture.kind()).isEqualTo(MoveKind.CAPTURE);
         }
+    }
+
+    @Nested
+    class Castling {
+
+        private static final String BOTH_SIDES_FREE = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
+
+        private static List<String> castlingsFrom(String fen, String from) {
+            return MoveGenerator.pseudoLegalMoves(Fen.parse(fen)).stream()
+                    .filter(move -> move.from().equals(Square.parse(from)))
+                    .filter(move -> move.kind() instanceof MoveKind.Castling)
+                    .map(Move::toUci)
+                    .toList();
+        }
 
         @Test
-        void doesNotCastleYet() {
-            // Castling has its own step (rights, empty and unattacked
-            // squares); for now the king only takes single steps.
-            var fen = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
+        void castlesOnBothSidesWhenNothingStandsInTheWay() {
+            // Given
+            var fen = BOTH_SIDES_FREE;
 
-            var moves = movesFrom(fen, "e1");
+            // When
+            var kingside = moveBetween(fen, "e1", "g1");
+            var queenside = moveBetween(fen, "e1", "c1");
 
-            assertThat(moves).containsExactlyInAnyOrder("e1d1", "e1d2", "e1e2", "e1f1", "e1f2");
+            // Then
+            assertThat(kingside.kind()).isEqualTo(new MoveKind.Castling(CastleSide.KINGSIDE));
+            assertThat(queenside.kind()).isEqualTo(new MoveKind.Castling(CastleSide.QUEENSIDE));
+            assertThat(movesFrom(fen, "e1")).containsExactlyInAnyOrder(
+                    "e1d1", "e1d2", "e1e2", "e1f1", "e1f2", "e1g1", "e1c1");
+        }
+
+        @Test
+        void blackCastlesOnTheEighthRank() {
+            var fen = "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1";
+
+            var castlings = castlingsFrom(fen, "e8");
+
+            assertThat(castlings).containsExactlyInAnyOrder("e8g8", "e8c8");
+        }
+
+        @Test
+        void needsTheCastlingRight() {
+            var onlyBlackRights = "r3k2r/8/8/8/8/8/8/R3K2R w kq - 0 1";
+            var onlyWhiteKingside = "r3k2r/8/8/8/8/8/8/R3K2R w Kkq - 0 1";
+
+            assertThat(castlingsFrom(onlyBlackRights, "e1")).isEmpty();
+            assertThat(castlingsFrom(onlyWhiteKingside, "e1")).containsExactly("e1g1");
+        }
+
+        @Test
+        void needsEverySquareBetweenKingAndRookEmpty() {
+            // The knight on b1 is not on the king's path, but it is between
+            // king and rook, so it blocks queenside castling.
+            var fen = "r3k2r/8/8/8/8/8/8/RN2K2R w KQkq - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).containsExactly("e1g1");
+        }
+
+        @Test
+        void isNotPossibleWhileInCheck() {
+            var fen = "4k3/8/8/4r3/8/8/8/R3K2R w KQ - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).isEmpty();
+        }
+
+        @Test
+        void cannotPassThroughAnAttackedSquare() {
+            // The rook on f8 attacks f1, which the king crosses to reach g1.
+            var fen = "4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).containsExactly("e1c1");
+        }
+
+        @Test
+        void cannotLandOnAnAttackedSquare() {
+            var fen = "4k1r1/8/8/8/8/8/8/R3K2R w KQ - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).containsExactly("e1c1");
+        }
+
+        @Test
+        void mayCastleQueensideWhileTheRooksPathIsAttacked() {
+            // b1 is attacked, but only the rook crosses it, not the king.
+            var fen = "1r2k3/8/8/8/8/8/8/R3K2R w KQ - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).containsExactlyInAnyOrder("e1g1", "e1c1");
+        }
+
+        @Test
+        void needsTheRookOnItsCorner() {
+            // FEN does not check that the rights match the pieces, so the
+            // generator must not castle with a rook that is not there.
+            var fen = "4k3/8/8/8/8/8/8/4K2R w KQ - 0 1";
+
+            var castlings = castlingsFrom(fen, "e1");
+
+            assertThat(castlings).containsExactly("e1g1");
+        }
+    }
+
+    @Nested
+    class SquareAttacks {
+
+        private static boolean attacked(String fen, String square, Color byColor) {
+            return MoveGenerator.isSquareAttacked(Fen.parse(fen).board(), Square.parse(square), byColor);
+        }
+
+        @Test
+        void pawnsAttackDiagonallyForward() {
+            var fen = "4k3/8/8/4p3/4P3/8/8/4K3 w - - 0 1";
+
+            assertThat(attacked(fen, "d5", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "f5", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "d3", Color.WHITE)).isFalse();
+            assertThat(attacked(fen, "d4", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "f4", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "d6", Color.BLACK)).isFalse();
+        }
+
+        @Test
+        void aPawnDoesNotAttackTheSquareInFrontOfIt() {
+            var fen = "4k3/8/8/8/3P4/8/8/4K3 w - - 0 1";
+
+            assertThat(attacked(fen, "d5", Color.WHITE)).isFalse();
+        }
+
+        @Test
+        void aPawnOnTheEdgeAttacksOnlyOneSquare() {
+            var fen = "4k3/8/8/8/7P/8/8/4K3 w - - 0 1";
+
+            assertThat(attacked(fen, "g5", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "a6", Color.WHITE)).isFalse();
+            assertThat(attacked(fen, "a5", Color.WHITE)).isFalse();
+        }
+
+        @Test
+        void knightsAndKingsAttackTheSquaresTheyCouldMoveTo() {
+            var fen = "4k3/8/8/8/8/8/8/1N2K3 w - - 0 1";
+
+            assertThat(attacked(fen, "c3", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "d2", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "f2", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "b3", Color.WHITE)).isFalse();
+            assertThat(attacked(fen, "d7", Color.BLACK)).isTrue();
+        }
+
+        @Test
+        void slidersAttackUntilTheFirstPieceInTheirWay() {
+            // The bishop on c1 is blocked by the pawn on d2; the rook on a1
+            // sees up the open a-file and along the first rank to the king.
+            var fen = "4k3/8/8/8/8/8/3P4/R1B1K3 w - - 0 1";
+
+            assertThat(attacked(fen, "d2", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "f4", Color.WHITE)).isFalse();
+            assertThat(attacked(fen, "a8", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "b1", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "d1", Color.WHITE)).isTrue(); // by the king
+            assertThat(attacked(fen, "b2", Color.WHITE)).isTrue(); // by the bishop
+        }
+
+        @Test
+        void queensAttackLikeRooksAndBishops() {
+            var fen = "4k3/8/8/8/3q4/8/8/7K w - - 0 1";
+
+            assertThat(attacked(fen, "d1", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "a4", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "h8", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "a1", Color.BLACK)).isTrue();
+            assertThat(attacked(fen, "e6", Color.BLACK)).isFalse();
+        }
+
+        @Test
+        void aRookDoesNotAttackAroundTheEdgeOfTheBoard() {
+            var fen = "4k3/8/8/8/7R/8/8/4K3 w - - 0 1";
+
+            assertThat(attacked(fen, "a5", Color.WHITE)).isFalse();
+            assertThat(attacked(fen, "a4", Color.WHITE)).isTrue();
+        }
+
+        @Test
+        void onlyThePiecesOfTheGivenColourCount() {
+            var fen = "4k3/8/8/8/3N4/8/8/4K3 w - - 0 1";
+
+            assertThat(attacked(fen, "e6", Color.WHITE)).isTrue();
+            assertThat(attacked(fen, "e6", Color.BLACK)).isFalse();
         }
     }
 

@@ -12,11 +12,11 @@ import java.util.Optional;
 /// `+1`, so a knight's jump two ranks up and one file right is `+33`.
 ///
 /// The moves are *pseudo-legal*: they follow how each piece moves, but may
-/// leave the mover's own king in check. Filtering those out comes later,
-/// once squares can be tested for attacks.
-///
-/// It knows every piece; only castling is missing, as it needs to test
-/// squares for attacks (§5.3 of the plan).
+/// leave the mover's own king in check. Filtering those out comes next
+/// (§5.3 of the plan), with [#isSquareAttacked] doing the hard part.
+/// Castling is the exception: it is only generated when fully legal, because
+/// its conditions (not out of, through or into check) cannot be checked
+/// afterwards by looking at the king's final square alone.
 final class MoveGenerator {
 
     /// What a pawn may become on the last rank, strongest first.
@@ -51,7 +51,10 @@ final class MoveGenerator {
             }
             switch (piece.type()) {
                 case KNIGHT -> addSteps(board, side, cell, KNIGHT_OFFSETS, moves);
-                case KING -> addSteps(board, side, cell, ALL_DIRECTIONS, moves);
+                case KING -> {
+                    addSteps(board, side, cell, ALL_DIRECTIONS, moves);
+                    addCastlings(position, cell, moves);
+                }
                 case BISHOP -> addSlides(board, side, cell, DIAGONAL_OFFSETS, moves);
                 case ROOK -> addSlides(board, side, cell, STRAIGHT_OFFSETS, moves);
                 case QUEEN -> addSlides(board, side, cell, ALL_DIRECTIONS, moves);
@@ -59,6 +62,110 @@ final class MoveGenerator {
             }
         }
         return List.copyOf(moves);
+    }
+
+    /// Whether any piece of `byColor` attacks `square`, that is, could
+    /// capture something standing there. Whatever actually stands on the
+    /// square (nothing, or a piece of either colour) does not matter.
+    static boolean isSquareAttacked(Board board, Square square, Color byColor) {
+        return isAttacked(board, Board.cellOf(square), byColor);
+    }
+
+    /// Looks outwards from the attacked cell instead of generating every
+    /// opponent move: attacks are symmetric, so a knight attacks the cell
+    /// if and only if a knight stands a knight's jump away from it, a rook
+    /// if the first piece along a file or rank from it is that rook, etc.
+    private static boolean isAttacked(Board board, int cell, Color byColor) {
+        // A white pawn attacks upwards, so it stands one rank *below* the
+        // cell it attacks; a black pawn, one rank above.
+        var pawnRank = byColor == Color.WHITE ? -16 : 16;
+        if (holds(board, cell + pawnRank - 1, byColor, PieceType.PAWN)
+                || holds(board, cell + pawnRank + 1, byColor, PieceType.PAWN)) {
+            return true;
+        }
+        for (var offset : KNIGHT_OFFSETS) {
+            if (holds(board, cell + offset, byColor, PieceType.KNIGHT)) {
+                return true;
+            }
+        }
+        for (var offset : ALL_DIRECTIONS) {
+            if (holds(board, cell + offset, byColor, PieceType.KING)) {
+                return true;
+            }
+        }
+        return isAttackedAlongRays(board, cell, byColor, DIAGONAL_OFFSETS, PieceType.BISHOP)
+                || isAttackedAlongRays(board, cell, byColor, STRAIGHT_OFFSETS, PieceType.ROOK);
+    }
+
+    /// Whether the first piece along any of these rays from `cell` is a
+    /// `slider` or a queen of `byColor`.
+    private static boolean isAttackedAlongRays(
+            Board board, int cell, Color byColor, int[] offsets, PieceType slider) {
+        for (var offset : offsets) {
+            for (var from = cell + offset; Board.isOnBoard(from); from += offset) {
+                var piece = board.at(from);
+                if (piece == null) {
+                    continue;
+                }
+                if (piece.color() == byColor && (piece.type() == slider || piece.type() == PieceType.QUEEN)) {
+                    return true;
+                }
+                break;
+            }
+        }
+        return false;
+    }
+
+    /// Whether `cell` is on the board and holds a `type` of `color`.
+    private static boolean holds(Board board, int cell, Color color, PieceType type) {
+        // A record pattern deconstructs the piece in place; it also fails
+        // to match `null`, so empty cells need no separate check.
+        return Board.isOnBoard(cell)
+                && board.at(cell) instanceof Piece(var pieceColor, var pieceType)
+                && pieceColor == color
+                && pieceType == type;
+    }
+
+    /// Castling on either side for the king on `from`, when it is legal now:
+    ///
+    /// - the side still has the right, and its rook stands on its corner
+    ///   (FEN does not guarantee that the rights match the pieces);
+    /// - every square between king and rook is empty;
+    /// - the king is not in check, and neither the square it crosses nor the
+    ///   one it lands on is attacked. (The rook may cross an attacked square:
+    ///   `b1` in queenside castling.)
+    private static void addCastlings(Position position, int from, List<Move> moves) {
+        var board = position.board();
+        var side = position.sideToMove();
+        var opponent = side.opposite();
+        var homeRank = side == Color.WHITE ? 0 : 0x70;
+        if (from != homeRank + 4) {
+            return; // the king is not on e1/e8, so it has moved
+        }
+        for (var castleSide : CastleSide.values()) {
+            var toward = castleSide == CastleSide.KINGSIDE ? 1 : -1;
+            var rookCell = homeRank + (castleSide == CastleSide.KINGSIDE ? 7 : 0);
+            var to = from + 2 * toward;
+            if (position.castlingRights().has(side, castleSide)
+                    && holds(board, rookCell, side, PieceType.ROOK)
+                    && isEmptyBetween(board, from, rookCell, toward)
+                    && !isAttacked(board, from, opponent)
+                    && !isAttacked(board, from + toward, opponent)
+                    && !isAttacked(board, to, opponent)) {
+                moves.add(new Move(Board.squareOf(from), Board.squareOf(to), new MoveKind.Castling(castleSide)));
+            }
+        }
+    }
+
+    /// Whether every cell strictly between `from` and `to`, stepping by
+    /// `step`, is empty.
+    private static boolean isEmptyBetween(Board board, int from, int to, int step) {
+        for (var cell = from + step; cell != to; cell += step) {
+            if (board.at(cell) != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Single steps by each offset, for pieces that jump (knights) or only
