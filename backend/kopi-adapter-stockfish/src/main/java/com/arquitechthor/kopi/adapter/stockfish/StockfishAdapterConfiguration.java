@@ -25,6 +25,12 @@ public class StockfishAdapterConfiguration {
                 UciEngine::isAlive, properties.waitTimeout());
     }
 
+    /// The `stockfish` component of `/actuator/health`.
+    @Bean
+    StockfishHealthIndicator stockfishHealthIndicator(EnginePool<UciEngine> stockfishPool) {
+        return new StockfishHealthIndicator(stockfishPool);
+    }
+
     @Bean
     StockfishBots stockfishBots(EnginePool<UciEngine> stockfishPool, StockfishProperties properties) {
         return new StockfishBots(stockfishPool, properties.profiles(), properties.moveMargin());

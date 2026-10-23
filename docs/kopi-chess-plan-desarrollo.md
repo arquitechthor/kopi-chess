@@ -639,13 +639,21 @@ Stockfish.
 - [ ] Implementar `ChessEngine.analyse(...)` (se usará en la fase 5).
       **Aplazado a la fase 5**, donde se define el puerto y se usa; el
       *parser* (`InfoLine`, con la puntuación normalizada) ya está listo.
-- [ ] `HealthIndicator` que hace `isready` contra el pool.
-- [ ] **Dockerfile**: añadir Stockfish con versión fijada y **checksum**
+- [x] `HealthIndicator` que hace `isready` contra el pool. **Hecho:** componente
+      `stockfish` de `/actuator/health` (UP con el nombre del motor, DOWN con
+      el motivo); fuera del grupo de *readiness*, porque sin Stockfish siguen
+      jugando `PAWN` y `KNIGHT`.
+- [x] **Dockerfile**: añadir Stockfish con versión fijada y **checksum**
       verificado (o compilarlo desde la etiqueta oficial). Elegir un binario
       compatible con la CPU destino (las variantes `avx2`/`bmi2` no funcionan
-      en todas las máquinas; la genérica `x86-64` sí).
-- [ ] Prueba de integración con Stockfish real (Testcontainers con la imagen
-      de la app, o el binario descargado en CI).
+      en todas las máquinas; la genérica `x86-64` sí). **Hecho:** etapa
+      `stockfish` con la *release* `sf_19` *universal* (`x86-64` o `arm64`
+      según `TARGETARCH`), SHA-256 verificado y prueba de humo en la imagen
+      final; `KOPI_STOCKFISH` apunta al binario. La CI construye la imagen.
+- [x] Prueba de integración con Stockfish real (Testcontainers con la imagen
+      de la app, o el binario descargado en CI). **Hecho** con el binario
+      descargado en CI: `StockfishBotsTest` y una partida contra `QUEEN` en
+      `GameApiIT`.
 - [x] **ADR-006** (bots propios para niveles bajos).
 - **Hecho (primera parte):** `UciConnection` / `UciProcess` (hilo virtual
   lector, *timeouts*), `UciEngine` (opciones validadas contra el rango que
