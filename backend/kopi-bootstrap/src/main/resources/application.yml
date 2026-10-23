@@ -18,16 +18,19 @@ kopi:
     # The engine binary: KOPI_STOCKFISH, or "stockfish" on the PATH (as in the Docker image).
     path: ${KOPI_STOCKFISH:stockfish}
     pool-size: 1
+    # All three on the same scale (UCI_Elo), well apart. Calibration round 1 mixed
+    # Skill Level 3 (BISHOP) with Elo 1600 (ROOK): ROOK scored only 47% (docs/notas/calibracion.md).
     profiles:
       BISHOP:
-        skill-level: 3
+        limit-strength: true
+        elo: 1320       # Stockfish's minimum
         movetime: 100ms
       ROOK:
         limit-strength: true
-        elo: 1600
+        elo: 2000
         movetime: 300ms
       QUEEN:
-        movetime: 1s
+        movetime: 1s    # no handicap
 
 server:
   port: 8080
