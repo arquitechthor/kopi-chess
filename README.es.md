@@ -30,7 +30,11 @@ La interfaz está disponible en **inglés y español**.
 
 ## Estado
 
-🚧 **Planificación / desarrollo inicial.** Todavía no hay nada que ejecutar.
+🚧 **En desarrollo: fase 3 de 7 (jugar contra un bot).** Las reglas
+completas del ajedrez ya están hechas y verificadas
+([`v0.2.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.2.0)),
+pero todavía no se puede jugar: la aplicación solo muestra la página de
+inicio.
 
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
