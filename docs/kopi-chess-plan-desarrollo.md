@@ -431,10 +431,46 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 - [ ] **`kopi-bootstrap`**: `@Configuration` que crea los casos de uso con sus
       adaptadores y los decora con transacciones.
 
+### 6.4 Modo oficina (diseño §11.5)
+
+Todo en `kopi-adapter-web`; el dominio y la aplicación no cambian. Necesita
+`San.format` (§5.5) y la vista `GameView`.
+
+- [ ] **Letras de pieza localizadas**: claves `piece.letter.*` en los dos
+      idiomas (`T A C D R P` / `R B N Q K P`) y un formateador que convierte
+      la SAN del dominio a la del idioma (`Nf3` → `Cf3`, `e8=Q` → `e8=D`).
+- [ ] **Correspondencia de la entrada** (`OfficeMoveInput` o similar): dada
+      la entrada y las jugadas legales formateadas, devuelve *una jugada*,
+      *ninguna* o *varias candidatas*. Normaliza mayúsculas, `x`, `+`/`#`,
+      `0`/`O` y espacios; acepta también UCI.
+  - Pruebas unitarias: `E4` → `e4`; `cf3` → `Cf3`; `0-0` → `O-O`;
+    `axb5` con peón y alfil pudiendo capturar en `b5` → dos candidatas;
+    `Ce5` sin caballo que llegue → ninguna; `g1f3` → `Cf3`.
+- [ ] **Plantilla `game-office.html`**: cabecera, menú y pie de una empresa
+      ficticia; tabla del tablero con cabeceras `a`–`h` / `1`–`8` orientada
+      según el color humano, blancas en mayúscula y negras en minúscula,
+      leyenda, última jugada en negrita; a la derecha, jugadas legales
+      agrupadas por pieza, historial en dos columnas y estado.
+- [ ] **Formulario de jugada** sin JavaScript (*Post/Redirect/Get*): el texto
+      se resuelve contra las jugadas legales y se pasa a `PlayMove` como
+      jugada concreta. Mensajes traducidos para «ilegal», «¿quisiste decir…?»
+      (con las candidatas) y «Has jugado `Cf3`»; el texto erróneo se conserva
+      en el campo.
+- [ ] **Activación**: `?view=office` y *cookie* de preferencia; enlace
+      discreto de ida y vuelta. Título de pestaña neutro.
+- [ ] Pruebas `MockMvc`: la vista oficina se elige con el parámetro y con la
+      *cookie*; la tabla tiene 64 celdas y las cabeceras correctas para
+      ambos colores; una jugada aceptada redirige y una ambigua muestra las
+      candidatas.
+- [ ] **ADR-013** (notación localizada solo en el adaptador; entrada resuelta
+      contra las jugadas legales).
+
 ### Criterio de aceptación
 
 - Desde el navegador se juega una partida completa contra `PAWN` hasta mate,
   ahogado o rendición.
+- La misma partida se puede jugar entera en **modo oficina**, en español y en
+  inglés, escribiendo las jugadas, con JavaScript desactivado.
 - Reiniciar el contenedor `app` no pierde la partida.
 - Dos peticiones simultáneas con la misma versión: una pasa y la otra recibe
   `412`.
@@ -444,7 +480,8 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 ### Aprendizaje
 
 Agregados y casos de uso, dos adaptadores de entrada sobre el mismo núcleo,
-mapeo dominio ↔ filas, control optimista, `ProblemDetail`, Thymeleaf + htmx.
+mapeo dominio ↔ filas, control optimista, `ProblemDetail`, Thymeleaf + htmx,
+y una segunda presentación (modo oficina) sobre los mismos casos de uso.
 
 ### Trampas habituales
 
@@ -452,6 +489,11 @@ mapeo dominio ↔ filas, control optimista, `ProblemDetail`, Thymeleaf + htmx.
   eso vive en el caso de uso o en el agregado.
 - Anotar el agregado `Game` con anotaciones de persistencia. El adaptador
   tiene sus propias clases de fila.
+- Meter las letras en español en el dominio o escribir un segundo parser de
+  SAN para el modo oficina. Basta con formatear las jugadas legales y
+  comparar la entrada contra ellas.
+- Hacer la entrada insensible a mayúsculas y olvidar que `a`/`A`, `c`/`C`,
+  `d`/`D` (y `b`/`B` en inglés) pueden ser columna o pieza.
 
 ---
 
@@ -723,7 +765,8 @@ antes de empezar:
 - **F1:** módulos, arranque, Compose, Flyway, ArchUnit rompe la build, CI,
   i18n EN/ES, `kopi-labs`.
 - **F2:** FEN, jugadas, *perft* en verde, SAN, fin de partida, Zobrist.
-- **F3:** agregado `Game`, casos de uso, Postgres, REST, web jugable con `PAWN`.
+- **F3:** agregado `Game`, casos de uso, Postgres, REST, web jugable con `PAWN`,
+  modo oficina.
 - **F4:** `KNIGHT`, cliente UCI + pool, tres perfiles Stockfish, calibración.
 - **F5:** Win %, clasificador, libro, cola duradera, SSE, revisión.
 - **F6:** PGN entrada/salida, historial.

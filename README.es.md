@@ -11,6 +11,11 @@ alternativa del motor, y la revisión señala los mates que se escaparon. Tambi�
 puedes **importar un PGN** de Lichess, Chess.com o de una partida en tablero
 físico y analizarlo igual.
 
+Y, para la oficina, un **modo oficina**: la partida parece la web de una
+empresa cualquiera, el tablero es una tabla con letras (`T`, `A`, `C`…) y las
+jugadas se escriben en notación algebraica (`e4`, `Cf3`, `O-O`). Pasa
+desapercibido y entrena la notación.
+
 También es un código del que aprender. El proyecto es un ejemplo de referencia
 de:
 
