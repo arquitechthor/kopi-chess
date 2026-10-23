@@ -59,11 +59,13 @@ API (la versión de la partida va en `If-Match`; la respuesta incluye la jugada
 del bot):
 
 ```shell
-curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json"      -d '{"humanColor": "WHITE", "botProfile": "PAWN"}'
-curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"'      -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
+curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json" \
+     -d '{"humanColor": "WHITE", "botProfile": "PAWN"}'
+curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"' \
+     -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
 ```
- Si el puerto 8080 está ocupado, usa
-otro: `KOPI_PORT=8090 docker compose up --build` (PowerShell:
+
+Si el puerto 8080 está ocupado, usa otro: `KOPI_PORT=8090 docker compose up --build` (PowerShell:
 `$env:KOPI_PORT=8090; docker compose up --build`).
 
 Para parar: `docker compose down`; con `-v` también se borran las partidas
