@@ -312,17 +312,21 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 
 ### 5.4 Perft (el hito de la fase)
 
-- [ ] `Perft.count(position, depth)` en código de prueba (o en el dominio si
-      se quiere exponer).
-- [ ] `Perft.divide(position, depth)`: conteo por jugada raíz. **Imprescindible
+- [x] `Perft.count(position, depth)` en código de prueba (o en el dominio si
+      se quiere exponer). **Hecho:** en el dominio, con *bulk counting* en la
+      última profundidad.
+- [x] `Perft.divide(position, depth)`: conteo por jugada raíz. **Imprescindible
       para depurar**: se compara con `go perft N` de Stockfish y se baja por la
-      rama que difiere.
-- [ ] Prueba parametrizada con las 6 posiciones de la Chess Programming Wiki:
+      rama que difiere. **Hecho:** también desde consola con el archivo
+      fuente compacto `backend/kopi-domain/dev/Perft.java`, con la misma
+      salida que Stockfish.
+- [x] Prueba parametrizada con las 6 posiciones de la Chess Programming Wiki:
   - Inicial hasta d5 (4 865 609).
   - *Kiwipete* hasta d4 (4 085 603).
-  - Posiciones 3–6 hasta la profundidad que dure < 10 s.
-- [ ] Marcar las profundidades altas como prueba lenta (`@Tag("slow")`) y
-      ejecutarlas en CI pero no en cada guardado local.
+  - Posiciones 3–6 hasta la profundidad que dure < 10 s (d6, d5, d4, d4).
+- [x] Marcar las profundidades altas como prueba lenta (`@Tag("slow")`) y
+      ejecutarlas en CI pero no en cada guardado local. **Hecho:** se excluyen
+      por defecto; el perfil `-Pslow-tests` (que usa la CI) las incluye.
 
 ### 5.5 Notación y fin de partida
 

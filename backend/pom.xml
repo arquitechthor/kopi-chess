@@ -53,6 +53,9 @@
         <maven-failsafe-plugin.version>3.6.0</maven-failsafe-plugin.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+
+        <!-- JUnit tags left out of local builds; the slow-tests profile (used by CI) runs everything. -->
+        <kopi.excludedTestTags>slow</kopi.excludedTestTags>
     </properties>
 
     <dependencyManagement>
@@ -162,6 +165,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <excludedGroups>${kopi.excludedTestTags}</excludedGroups>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -251,4 +257,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- ./mvnw verify -Pslow-tests: also run tests tagged "slow" (deep perft). -->
+        <profile>
+            <id>slow-tests</id>
+            <properties>
+                <kopi.excludedTestTags/>
+            </properties>
+        </profile>
+    </profiles>
 </project>

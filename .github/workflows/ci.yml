@@ -29,8 +29,8 @@ jobs:
           cache: maven
           cache-dependency-path: backend/**/pom.xml
 
-      - name: Verify (compile, unit + integration tests, architecture rules)
-        run: ./mvnw -B -ntp verify
+      - name: Verify (compile, unit + slow + integration tests, architecture rules)
+        run: ./mvnw -B -ntp verify -Pslow-tests
 
       - name: Upload coverage reports
         if: always()

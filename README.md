@@ -69,6 +69,9 @@ cd backend
 ./mvnw verify        # Windows: mvnw.cmd verify
 ```
 
+Slow tests (the deep *perft* counts, about 15 s) are skipped locally and run
+in CI. To run them too: `./mvnw verify -Pslow-tests`.
+
 If your `JAVA_HOME` points to another JDK, set it for the current shell only,
 e.g. in PowerShell: `$env:JAVA_HOME = "C:\path\to\jdk-25"`.
 
