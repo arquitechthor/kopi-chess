@@ -515,6 +515,11 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
     (casillas por CSS, resaltados en cian), coronación con un `<dialog>`,
     partidas recientes en la portada y página 404 propia. Hasta la fase 4,
     los bots que no juegan aparecen como «Próximamente».
+  - **Después (fase 4):** la jugada ya no recarga la página. `board.js` la
+    envía con `fetch` a `…/live-moves`, que devuelve solo el fragmento
+    `live` de la plantilla (estado, jugadas, `#board-state`); Chessground
+    anima la respuesta del bot desde su casilla de origen. Sigue sin htmx,
+    y el formulario clásico queda como respaldo sin JavaScript.
 - [x] **`kopi-bootstrap`**: `@Configuration` que crea los casos de uso con sus
       adaptadores y los decora con transacciones. **Hecho**
       (`UseCaseConfiguration`) **sin** decorarlos con transacciones: el bot

@@ -82,6 +82,47 @@ class GamePageTest {
     }
 
     @Test
+    void aLiveMoveAnswersOnlyThePartOfThePageThatChanges() {
+        var id = newGame("WHITE");
+
+        var result = mvc.post().uri("/games/{id}/live-moves?lang=es", id)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("uci", "g1f3").param("version", "0").exchange();
+
+        assertThat(result).hasStatusOk();
+        assertThat(result).bodyText()
+                .startsWith("<div id=\"game-live\"")
+                .doesNotContain("<html", "<nav", "id=\"board\"")
+                // The new position after the bot's reply, for the board to animate.
+                .contains("data-last-move=\"a7a5\"", "data-version=\"2\"", "data-movable=\"true\"")
+                .contains("data-thinking=\"El bot está pensando…\"")
+                .contains("<span class=\"move\">♘f3</span>", "<span class=\"move\">a5</span>", "Te toca");
+        assertThat(games.latest().version()).isEqualTo(2);
+    }
+
+    @Test
+    void aRefusedLiveMoveAnswersTheFragmentWithTheMessageAndTheSamePosition() {
+        var id = newGame("WHITE");
+
+        var result = mvc.post().uri("/games/{id}/live-moves?lang=es", id)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("uci", "e2e5").param("version", "0").exchange();
+
+        assertThat(result).hasStatusOk().bodyText()
+                .contains("Esa jugada no es legal aquí.", "data-version=\"0\"", "data-fen=\"" + Fen.INITIAL + "\"");
+        assertThat(games.latest().moves()).isEmpty();
+    }
+
+    @Test
+    void thePageStillWorksWithoutJavaScript() {
+        // The form keeps its classic action; the script only enhances it.
+        var id = newGame("WHITE");
+
+        assertThat(gamePage(id)).contains("action=\"/games/" + id + "/moves\"",
+                "data-live-action=\"/games/" + id + "/live-moves\"");
+    }
+
+    @Test
     void anIllegalMoveShowsTheGameAgainWithAMessage() {
         var id = newGame("WHITE");
 

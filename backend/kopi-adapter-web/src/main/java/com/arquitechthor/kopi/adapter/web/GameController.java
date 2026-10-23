@@ -109,6 +109,23 @@ class GameController {
         return "redirect:/games/" + id;
     }
 
+    /// The same move as [#play], for `board.js`: instead of a redirect, the
+    /// answer is just the part of the page that changes (the `live`
+    /// fragment of `game.html`), so the page is not reloaded and the board
+    /// can animate the bot's reply. A refused move answers the fragment too,
+    /// with the message and the position as it was.
+    @PostMapping("/games/{id}/live-moves")
+    String playLive(@PathVariable UUID id, @RequestParam String uci, @RequestParam long version, Model model) {
+        var gameId = new GameId(id);
+        try {
+            model.addAttribute("game", GamePage.of(playMove.play(new PlayMoveCommand(gameId, uci, version))));
+        } catch (RuntimeException e) {
+            model.addAttribute(ERROR, refusal(e));
+            model.addAttribute("game", GamePage.of(getGame.get(gameId)));
+        }
+        return "game :: live";
+    }
+
     @PostMapping("/games/{id}/resign")
     String resign(@PathVariable UUID id, @RequestParam long version, RedirectAttributes redirect) {
         try {
