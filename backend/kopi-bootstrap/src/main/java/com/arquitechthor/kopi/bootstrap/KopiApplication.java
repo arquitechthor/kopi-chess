@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.bootstrap;
 
+import com.arquitechthor.kopi.adapter.persistence.PersistenceAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.web.WebAdapterConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @Import({
         WebAdapterConfiguration.class,
+        PersistenceAdapterConfiguration.class,
 })
 public class KopiApplication {
 
