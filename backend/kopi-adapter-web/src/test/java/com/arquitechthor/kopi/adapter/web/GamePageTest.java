@@ -121,7 +121,7 @@ class GamePageTest {
     @Test
     void anUnavailableBotSendsYouBackHome() {
         assertThat(mvc.post().uri("/games").contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("bot", "KNIGHT").param("color", "BLACK"))
+                .param("bot", "QUEEN").param("color", "BLACK"))
                 .hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/")
                 .flash().containsEntry(GameController.ERROR, "BOT_UNAVAILABLE");
         assertThat(games.count()).isZero();
@@ -141,6 +141,7 @@ class GamePageTest {
         assertThat(mvc.get().uri("/?lang=es")).hasStatusOk().bodyText()
                 .contains("Partidas recientes", "En juego")
                 .containsPattern("value=\"PAWN\"(?![^>]*disabled)")
+                .containsPattern("value=\"KNIGHT\"(?![^>]*disabled)")
                 .containsPattern("value=\"QUEEN\"[^>]*disabled")
                 .contains("Próximamente.");
     }
