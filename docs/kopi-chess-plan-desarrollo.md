@@ -222,7 +222,10 @@ CI funcione y que **la arquitectura esté vigilada desde el primer día**.
   - Selector EN/ES en la cabecera de la página inicial.
   - Prueba que falla si una clave existe en un idioma y no en el otro.
   - Pendiente para la fase 3: detectar texto literal sin `#{...}` en las
-    plantillas.
+    plantillas. **Hecho en la fase 3** (`TemplatesAreTranslatedTest`): lee
+    las plantillas con AttoParser (el *parser* de Thymeleaf) y falla si hay
+    texto con letras fuera de un elemento que Thymeleaf reemplaza, o un
+    `title`/`alt`/`placeholder`/`aria-label` sin su `th:`.
 - [x] **Módulo `kopi-labs`** compilado con `--enable-preview`, sin
       dependientes (regla ArchUnit). Un primer ejemplo: *structured
       concurrency* lanzando dos tareas y cancelando ambas si una falla.
