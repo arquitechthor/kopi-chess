@@ -11,10 +11,9 @@ import java.util.Optional;
 /// that fell off an edge. Moving one rank up is `+16`, one file right is
 /// `+1`, so a knight's jump two ranks up and one file right is `+33`.
 ///
-/// The moves are *pseudo-legal*: they follow how each piece moves, but may
-/// leave the mover's own king in check. Filtering those out comes next
-/// (§5.3 of the plan), with [#isSquareAttacked] doing the hard part.
-/// Castling is the exception: it is only generated when fully legal, because
+/// [#pseudoLegalMoves] follow how each piece moves, but may leave the
+/// mover's own king in check; [#legalMoves] filters those out, with
+/// [#isSquareAttacked] doing the hard part. Castling is the exception: it is only generated when fully legal, because
 /// its conditions (not out of, through or into check) cannot be checked
 /// afterwards by looking at the king's final square alone.
 final class MoveGenerator {
@@ -62,6 +61,38 @@ final class MoveGenerator {
             }
         }
         return List.copyOf(moves);
+    }
+
+    /// Every legal move for the side to move: the pseudo-legal ones that do
+    /// not leave its own king attacked.
+    ///
+    /// The simplest correct approach: play each move and look. It catches
+    /// every case at once (pinned pieces, the king stepping into check,
+    /// moves that ignore a check, en passant opening a line to the king)
+    /// without special code for any of them. Faster schemes can come once
+    /// *perft* proves this one right.
+    static List<Move> legalMoves(Position position) {
+        var side = position.sideToMove();
+        return pseudoLegalMoves(position).stream()
+                .filter(move -> !isInCheck(position.apply(move).board(), side))
+                .toList();
+    }
+
+    /// Whether the king of `color` is attacked.
+    static boolean isInCheck(Board board, Color color) {
+        return isAttacked(board, kingCell(board, color), color.opposite());
+    }
+
+    /// The cell of the king of `color`. Every position has one: [Fen#parse]
+    /// checks it, and no legal move captures a king.
+    private static int kingCell(Board board, Color color) {
+        for (var square : Square.ALL) {
+            var cell = Board.cellOf(square);
+            if (holds(board, cell, color, PieceType.KING)) {
+                return cell;
+            }
+        }
+        throw new IllegalStateException("No " + color + " king on the board:\n" + board);
     }
 
     /// Whether any piece of `byColor` attacks `square`, that is, could
