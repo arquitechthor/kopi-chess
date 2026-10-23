@@ -31,7 +31,8 @@ The UI is available in **English and Spanish**.
 🚧 **In development: phase 3 of 7 (play against a bot).** The full rules of
 chess are done and verified
 ([`v0.2.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.2.0)),
-but you cannot play yet: the application only shows its home page.
+and you can already play against the `PAWN` bot **through the REST API**;
+the web interface for playing arrives in this same phase.
 
 - Technical design (Spanish): [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Development plan (Spanish): [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
@@ -51,8 +52,17 @@ Requires **Docker**.
 docker compose up --build
 ```
 
-Then check `http://localhost:8080/actuator/health` (the chess UI arrives in the
-next phases). If port 8080 is taken, pick another one:
+Then check `http://localhost:8080/actuator/health`. To play through the API
+(the game version goes in `If-Match`; the response includes the bot's reply):
+
+```shell
+curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json" \
+     -d '{"humanColor": "WHITE", "botProfile": "PAWN"}'
+curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"' \
+     -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
+```
+
+If port 8080 is taken, pick another one:
 `KOPI_PORT=8090 docker compose up --build` (PowerShell:
 `$env:KOPI_PORT=8090; docker compose up --build`).
 

@@ -6,8 +6,8 @@ spring:
   flyway:
     locations: classpath:db/migration
   messages:
-    # One bundle per adapter that shows text to people (the REST adapter will add its own).
-    basename: i18n/web/messages
+    # One bundle per adapter that shows text to people; keys never clash (web: plain, REST: rest.*).
+    basename: i18n/web/messages, i18n/rest/messages
     # Unknown language -> messages.properties (English), never the server's OS language.
     fallback-to-system-locale: false
 
