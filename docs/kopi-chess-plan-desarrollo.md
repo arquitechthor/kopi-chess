@@ -304,10 +304,10 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 - [x] `isSquareAttacked(square, byColor)`.
 - [x] Enroques: derechos, casillas vacías, el rey no está en jaque, no
       atraviesa ni llega a casilla atacada.
-- [ ] `Position.apply(Move) → Position`: mover, capturar, actualizar
+- [x] `Position.apply(Move) → Position`: mover, capturar, actualizar
       enroques (también cuando se captura una torre en su casilla inicial),
       casilla al paso, relojes, turno.
-- [ ] **Jugadas legales** = pseudo-legales que no dejan al propio rey en
+- [x] **Jugadas legales** = pseudo-legales que no dejan al propio rey en
       jaque.
 
 ### 5.4 Perft (el hito de la fase)
