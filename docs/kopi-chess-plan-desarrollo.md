@@ -502,8 +502,14 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
   - Todos los textos con `#{...}` en inglés y español (categorías, motivos de
     fin y errores traducidos desde los enums del dominio).
   - Jugadas mostradas en notación de figuras (`♘f3`).
-- [ ] **`kopi-bootstrap`**: `@Configuration` que crea los casos de uso con sus
-      adaptadores y los decora con transacciones.
+- [x] **`kopi-bootstrap`**: `@Configuration` que crea los casos de uso con sus
+      adaptadores y los decora con transacciones. **Hecho**
+      (`UseCaseConfiguration`) **sin** decorarlos con transacciones: el bot
+      puede pensar segundos entre la carga y el guardado, y el bloqueo
+      optimista más el guardado atómico del repositorio bastan (ADR-014).
+      Reloj UTC en microsegundos (la precisión de PostgreSQL), UUID
+      aleatorios, `KopiBots`. Importa ya el adaptador REST: la API funciona
+      de extremo a extremo (`GameApiIT`).
 
 ### 6.4 Modo oficina (diseño §11.5)
 

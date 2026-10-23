@@ -1290,6 +1290,8 @@ El plan detallado por fases está en
 12. **ADR-012** Política de *features preview* (solo en `kopi-labs`).
 13. **ADR-013** Modo oficina: notación localizada solo en el adaptador web y
     entrada resuelta contra las jugadas legales.
+14. **ADR-014** Sin transacción alrededor de los casos de uso (bloqueo
+    optimista + guardado atómico en el repositorio).
 
 ---
 
