@@ -3,27 +3,53 @@
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#070a14">
     <title th:text="${title} + ' · ' + #{app.name}">Kopi Chess</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
     <link rel="stylesheet" th:href="@{/css/kopi.css}">
+    <script th:src="@{/js/nav.js}" defer></script>
 </head>
 <body>
 
-<header th:fragment="header" class="site-header">
-    <a class="brand" th:href="@{/}" th:text="#{app.name}">Kopi Chess</a>
-    <nav class="language-switch" th:aria-label="#{language.label}">
-        <a href="?lang=en" hreflang="en" lang="en"
-           th:aria-current="${#locale.language == 'en'} ? 'true'"
-           th:text="#{language.en}">English</a>
-        <a href="?lang=es" hreflang="es" lang="es"
-           th:aria-current="${#locale.language == 'es'} ? 'true'"
-           th:text="#{language.es}">Español</a>
-    </nav>
-</header>
+<!--/* Same menu pattern as the family's sites: "Home" first, "About me" last (design §11.6). */-->
+<nav th:fragment="header" class="nav">
+    <div class="nav-inner">
+        <a class="nav-brand" th:href="@{/}">
+            <img class="nav-logo" th:src="@{/img/logo.svg}" alt="" width="32" height="32">
+            <span th:text="#{app.name}">Kopi Chess</span>
+        </a>
+        <div class="nav-links">
+            <a th:href="@{/}" th:text="#{nav.home}">Home</a>
+            <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{nav.source}">Source code</a>
+            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">About me</a>
+            <span class="language-switch" th:aria-label="#{language.label}" role="group">
+                <a href="?lang=en" hreflang="en" lang="en"
+                   th:aria-current="${#locale.language == 'en'} ? 'true'"
+                   th:title="#{language.en}">EN</a>
+                <a href="?lang=es" hreflang="es" lang="es"
+                   th:aria-current="${#locale.language == 'es'} ? 'true'"
+                   th:title="#{language.es}">ES</a>
+            </span>
+        </div>
+        <button class="nav-toggle" id="navToggle" type="button" th:aria-label="#{nav.toggle}">☰</button>
+    </div>
+</nav>
 
-<footer th:fragment="footer" class="site-footer">
-    <span th:text="#{footer.license}">Free software under GPL-3.0</span>
-    ·
-    <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{footer.source}">Source code</a>
+<footer th:fragment="footer">
+    <div class="container">
+        <div class="footer-brand">
+            <img class="nav-logo" th:src="@{/img/logo.svg}" alt="" width="24" height="24">
+            <span th:text="#{footer.brand}">© 2026 Héctor Guzmán · Free software under GPL-3.0</span>
+        </div>
+        <div class="footer-links">
+            <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{footer.source}">Source code</a>
+        </div>
+        <nav class="footer-sitios" th:aria-label="#{sites.label}">
+            <a href="https://kopitools.link" th:text="#{sites.kopiTools}">Kopi Tools</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/" th:text="#{sites.awsNotes}">Apuntes AWS</a>
+            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">About me</a>
+        </nav>
+    </div>
 </footer>
 
 </body>

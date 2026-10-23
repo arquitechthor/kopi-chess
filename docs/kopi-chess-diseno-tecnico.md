@@ -890,8 +890,8 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
   progreso y, al terminar, se carga el fragmento de revisión.
 - **Gráfica de evaluación:** SVG generado en el servidor desde la plantilla
   (una polilínea con los Win %); sin librería de gráficos.
-- **Estilos:** un CSS sencillo sin *framework* (o Pico.css si se quiere
-  algo decente sin esfuerzo).
+- **Estilos:** un CSS propio sin *framework* (`static/css/kopi.css`), con la
+  identidad visual de la familia de webs (§11.6).
 
 ### 11.3 Reglas
 
@@ -1014,6 +1014,50 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
   inglés y español. Las letras de pieza también (`piece.letter.KNIGHT=C`).
 - **Accesibilidad de regalo:** una tabla con cabeceras y un campo de texto
   funcionan bien con lectores de pantalla y con teclado.
+
+### 11.6 Identidad visual
+
+Kopi Chess se ve como parte de la misma familia que las otras webs del
+autor:
+[arquitechthor.github.io](https://arquitechthor.github.io/),
+[Kopi Tools](https://kopitools.link) (`kopi-web`) y
+[Apuntes AWS](https://arquitechthor.github.io/aws-cert-study/)
+(`aws-cert-study`).
+
+- **Paleta y *tokens*:** los mismos *custom properties* de CSS que esas
+  webs: fondo azul casi negro (`--bg: #070a14`), superficies `--surface` /
+  `--surface-2`, texto `--text` / `--text-muted` / `--text-faint`, y los
+  acentos **cian** (`#22d3ee`), **violeta** (`#a855f7`) y **magenta**
+  (`#fb7185`), que salen de la mascota de Kopi y se combinan en
+  `--gradient-brand`. **Solo tema oscuro**, como las demás.
+- **Copiados, no compartidos:** igual que en las otras webs, los *tokens* y
+  los componentes base se copian en `kopi.css`. Si cambian allí, se
+  actualizan a mano aquí. Nunca se escribe un color fuera de los *tokens*.
+- **Tipografía:** la del sistema (`--font`), pesos 800 en títulos, y
+  `--font-mono` para FEN, PGN y notación cuando haga falta.
+- **Componentes:** los mismos nombres y estilos (`.nav`, `.nav-links`,
+  `.nav-toggle`, `.btn-primary` con el degradado, `.btn-secondary`,
+  `.eyebrow`, `.gradient-text`, `.hero` con `--gradient-radial`, `.card`),
+  contenedor de 1120 px y corte móvil a 760 px.
+- **Menú:** el mismo patrón que las otras webs: marca a la izquierda
+  (logo + «Kopi Chess»), «Inicio» el primer enlace y «Sobre mí» (a
+  `arquitechthor.github.io`) el último, sin botón de llamada a la acción, y
+  botón ☰ en móvil con `static/js/nav.js`, la misma lógica que en las otras
+  webs. Kopi Chess añade al final el selector de idioma (`EN · ES`).
+- **Pie:** © y licencia, enlace al código y, al final, la línea común
+  `.footer-sitios`: **Kopi Tools · Apuntes AWS · Sobre mí**, con los mismos
+  enlaces. Kopi Chess no aparece en esa línea porque se ejecuta en local y no
+  tiene URL pública.
+- **Logo:** provisional, un caballo (♞) con el degradado de la marca
+  (`static/img/logo.svg`, también *favicon*). Cada web de la familia tiene
+  su propio logo; el definitivo de Kopi Chess queda pendiente.
+- **Diferencias deliberadas:** la interfaz es **bilingüe** (las otras webs
+  solo están en español) y el **modo oficina** (§11.5) no usa nada de esta
+  identidad: su objetivo es justamente no parecer Kopi.
+- **Tablero (fase 3):** colores de casillas de Chessground ajustados a la
+  paleta (claras y oscuras en tonos de `--surface-2` y violeta apagado) y
+  resaltados de última jugada y destinos en cian, en lugar del marrón por
+  defecto.
 
 ---
 

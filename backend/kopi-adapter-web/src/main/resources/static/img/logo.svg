@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Kopi Chess">
+  <!-- Placeholder mark: a knight in the family's brand gradient on its dark background. -->
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.55" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#10142a"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="url(#brand)" stroke-width="2"/>
+  <text x="32" y="47" text-anchor="middle" font-size="42" fill="url(#brand)"
+        font-family="'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', serif">&#x265E;</text>
+</svg>
