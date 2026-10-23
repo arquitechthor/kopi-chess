@@ -54,3 +54,17 @@ jobs:
           name: jacoco-reports
           path: backend/**/target/site/jacoco/
           if-no-files-found: ignore
+
+  image:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Builds the image as `docker compose up --build` does, including the
+      # checksum check and the smoke test of the bundled Stockfish.
+      - name: Build the image
+        run: docker build -t kopi-chess:ci backend
+
+      - name: Stockfish answers inside the image
+        run: printf 'uci\nquit\n' | docker run --rm -i --entrypoint /usr/local/bin/stockfish kopi-chess:ci | grep -q uciok
