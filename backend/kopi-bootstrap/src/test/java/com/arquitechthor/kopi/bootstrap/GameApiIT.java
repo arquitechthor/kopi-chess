@@ -67,6 +67,18 @@ class GameApiIT {
     }
 
     @Test
+    void aStockfishBotOpensThroughTheWholeApplication() {
+        // CI provides the engine (KOPI_STOCKFISH); QUEEN with White moves first.
+        var result = mvc.post().uri("/api/v1/games")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"humanColor\": \"BLACK\", \"botProfile\": \"QUEEN\"}")
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.CREATED);
+        assertThat(result).bodyJson().extractingPath("$.moves.length()").isEqualTo(1);
+    }
+
+    @Test
     void aResignationIsStored() throws Exception {
         var id = createGame("WHITE");
 

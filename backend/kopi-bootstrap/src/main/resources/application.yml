@@ -11,6 +11,24 @@ spring:
     # Unknown language -> messages.properties (English), never the server's OS language.
     fallback-to-system-locale: false
 
+# The Stockfish bots (design §7). Values live here, not in code, and are
+# tuned by the calibration of plan §7.3.
+kopi:
+  stockfish:
+    # The engine binary: KOPI_STOCKFISH, or "stockfish" on the PATH (as in the Docker image).
+    path: ${KOPI_STOCKFISH:stockfish}
+    pool-size: 1
+    profiles:
+      BISHOP:
+        skill-level: 3
+        movetime: 100ms
+      ROOK:
+        limit-strength: true
+        elo: 1600
+        movetime: 300ms
+      QUEEN:
+        movetime: 1s
+
 server:
   port: 8080
 

@@ -618,20 +618,22 @@ Stockfish.
 
 ### 7.2 Adaptador Stockfish
 
-- [ ] **`UciProcess`**: arranca el binario con `ProcessBuilder`, hilo virtual
+- [x] **`UciProcess`**: arranca el binario con `ProcessBuilder`, hilo virtual
       que lee `stdout` línea a línea hacia una cola.
-- [ ] **Protocolo**: `uci` → esperar `uciok`; `setoption`; `isready` →
+- [x] **Protocolo**: `uci` → esperar `uciok`; `setoption`; `isready` →
       `readyok`; `ucinewgame`; `position fen ... moves ...`; `go ...`;
       esperar `bestmove`. Siempre con *timeout*.
-- [ ] **Parser de `info`**: `depth`, `multipv`, `score cp N` / `score mate N`,
+- [x] **Parser de `info`**: `depth`, `multipv`, `score cp N` / `score mate N`,
       `pv ...`. Pruebas con líneas reales copiadas en la fase 0.
-- [ ] **Normalización de la puntuación** a perspectiva de blancas (Stockfish
+- [x] **Normalización de la puntuación** a perspectiva de blancas (Stockfish
       la da desde el lado que mueve).
-- [ ] **Pool** (`EnginePool`) de tamaño configurable: préstamo exclusivo,
+- [x] **Pool** (`EnginePool`) de tamaño configurable: préstamo exclusivo,
       devolución, reinicio de procesos muertos, `quit` ordenado al cerrar.
-- [ ] Implementar `BotPlayer` para `BISHOP`, `ROOK`, `QUEEN` con la
+- [x] Implementar `BotPlayer` para `BISHOP`, `ROOK`, `QUEEN` con la
       configuración de cada perfil en `application.yml`.
 - [ ] Implementar `ChessEngine.analyse(...)` (se usará en la fase 5).
+      **Aplazado a la fase 5**, donde se define el puerto y se usa; el
+      *parser* (`InfoLine`, con la puntuación normalizada) ya está listo.
 - [ ] `HealthIndicator` que hace `isready` contra el pool.
 - [ ] **Dockerfile**: añadir Stockfish con versión fijada y **checksum**
       verificado (o compilarlo desde la etiqueta oficial). Elegir un binario
@@ -640,6 +642,15 @@ Stockfish.
 - [ ] Prueba de integración con Stockfish real (Testcontainers con la imagen
       de la app, o el binario descargado en CI).
 - [x] **ADR-006** (bots propios para niveles bajos).
+- **Hecho (primera parte):** `UciConnection` / `UciProcess` (hilo virtual
+  lector, *timeouts*), `UciEngine` (opciones validadas contra el rango que
+  anuncia el motor, porque Stockfish ajusta en silencio los valores fuera
+  de rango; `stop` si se agota el tiempo), `InfoLine`, `EnginePool`
+  (perezoso, descarta motores rotos) y `StockfishBots`, que **reintenta
+  una vez** con un motor nuevo si el primero falla: matar el proceso entre
+  dos jugadas no se nota. Perfiles en `kopi.stockfish.profiles`.
+  `kopi-bootstrap` reparte el puerto `BotPlayer`: bots propios para `PAWN`
+  y `KNIGHT`, Stockfish para el resto.
 
 ### 7.3 Calibración
 

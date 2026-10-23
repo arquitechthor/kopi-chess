@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.bootstrap;
 
 import com.arquitechthor.kopi.adapter.bots.KopiBots;
+import com.arquitechthor.kopi.adapter.stockfish.StockfishBots;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
@@ -20,6 +21,7 @@ import java.time.Duration;
 import java.util.UUID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /// The use cases and the ports they need, wired by hand (ADR-002): the
 /// application ring has no Spring annotations, so this class is where each
@@ -42,9 +44,17 @@ class UseCaseConfiguration {
         return () -> new GameId(UUID.randomUUID());
     }
 
+    /// One port, two adapters (ADR-006): Kopi's own bots for `PAWN` and
+    /// `KNIGHT`, Stockfish for the rest. `@Primary` because `StockfishBots`
+    /// is a `BotPlayer` bean too; the use cases must get this one.
     @Bean
-    BotPlayer botPlayer() {
-        return new KopiBots();
+    @Primary
+    BotPlayer botPlayer(StockfishBots stockfish) {
+        var own = new KopiBots();
+        return (position, profile) -> switch (profile) {
+            case PAWN, KNIGHT -> own.chooseMove(position, profile);
+            case BISHOP, ROOK, QUEEN -> stockfish.chooseMove(position, profile);
+        };
     }
 
     @Bean
