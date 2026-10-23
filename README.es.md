@@ -30,11 +30,11 @@ La interfaz está disponible en **inglés y español**.
 
 ## Estado
 
-🚧 **En desarrollo: fase 3 de 7 (jugar contra un bot).** Las reglas
-completas del ajedrez ya están hechas y verificadas
-([`v0.2.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.2.0)),
-y ya se puede jugar contra el bot `PAWN` **por la API REST**; la interfaz
-web para jugar llega en esta misma fase.
+🚧 **En desarrollo: fase 4 de 7 (cinco bots).** Ya se puede jugar contra el
+bot `PAWN` en el navegador, en el **modo oficina** o por la API REST, y las
+partidas se guardan
+([`v0.3.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.3.0)).
+Los otros cuatro bots llegan en esta fase.
 
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
