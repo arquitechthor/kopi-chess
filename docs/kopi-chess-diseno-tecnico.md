@@ -942,9 +942,11 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
 
 **Aspecto**
 
-- Cabecera, menú, pie y textos de relleno de una empresa **ficticia y
-  genérica** (nombre inventado, sin logotipos ni marcas reales). El título
-  de la pestaña es neutro («Informe de operaciones» / «Operations report»).
+- Cabecera, menú, pie y textos de relleno de un portal interno
+  **genérico y sin nombre de empresa** («Portal del empleado»,
+  «Departamento de Operaciones»): sin logotipos ni marcas, y sin inventar
+  un nombre que pudiera coincidir con una empresa real. El título de la
+  pestaña es neutro («Informe de operaciones» / «Operations report»).
 - Estilo sobrio de aplicación de gestión: tipografía del sistema, grises,
   sin imágenes.
 - El tablero es una **tabla HTML** (`<table>`) con aspecto de informe:
@@ -985,7 +987,9 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
   en inglés): `axb5` y `Axb5` pueden ser ambas legales. Si la entrada
   normalizada encaja con **más de una** jugada legal, no se juega nada y se
   responde «¿Quisiste decir `axb5` o `Axb5`?» con las candidatas. Si encaja
-  con exactamente una, se juega.
+  con exactamente una, se juega. Si el texto coincide **exactamente**
+  (mayúsculas incluidas) con una jugada, se juega esa sin preguntar: quien
+  escribe `Axb5` ya ha dicho que es el alfil (ADR-013).
 - Si no encaja con ninguna, se muestra un error traducido y el texto
   introducido se conserva en el campo.
 - Tras una jugada aceptada, la respuesta muestra la jugada en su forma

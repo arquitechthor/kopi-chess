@@ -57,6 +57,9 @@
             </form>
             <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
         </div>
+        <!--/* Discreet on purpose: office mode is for not being noticed (design §11.5). */-->
+        <a class="muted text-view" th:href="@{/games/{id}(id=${game.id}, view='office')}"
+           th:text="#{game.textView}">Text view</a>
     </aside>
 </main>
 

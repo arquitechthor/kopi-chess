@@ -526,34 +526,41 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 Todo en `kopi-adapter-web`; el dominio y la aplicación no cambian. Necesita
 `San.format` (§5.5) y la vista `GameView`.
 
-- [ ] **Letras de pieza localizadas**: claves `piece.letter.*` en los dos
+- [x] **Letras de pieza localizadas**: claves `piece.letter.*` en los dos
       idiomas (`T A C D R P` / `R B N Q K P`) y un formateador que convierte
       la SAN del dominio a la del idioma (`Nf3` → `Cf3`, `e8=Q` → `e8=D`).
-- [ ] **Correspondencia de la entrada** (`OfficeMoveInput` o similar): dada
+- [x] **Correspondencia de la entrada** (`OfficeMoveInput` o similar): dada
       la entrada y las jugadas legales formateadas, devuelve *una jugada*,
       *ninguna* o *varias candidatas*. Normaliza mayúsculas, `x`, `+`/`#`,
       `0`/`O` y espacios; acepta también UCI.
   - Pruebas unitarias: `E4` → `e4`; `cf3` → `Cf3`; `0-0` → `O-O`;
     `axb5` con peón y alfil pudiendo capturar en `b5` → dos candidatas;
     `Ce5` sin caballo que llegue → ninguna; `g1f3` → `Cf3`.
-- [ ] **Plantilla `game-office.html`**: cabecera, menú y pie de una empresa
+- [x] **Plantilla `game-office.html`**: cabecera, menú y pie de una empresa
       ficticia; tabla del tablero con cabeceras `a`–`h` / `1`–`8` orientada
       según el color humano, blancas en mayúscula y negras en minúscula,
       leyenda, última jugada en negrita; a la derecha, jugadas legales
       agrupadas por pieza, historial en dos columnas y estado.
-- [ ] **Formulario de jugada** sin JavaScript (*Post/Redirect/Get*): el texto
+- [x] **Formulario de jugada** sin JavaScript (*Post/Redirect/Get*): el texto
       se resuelve contra las jugadas legales y se pasa a `PlayMove` como
       jugada concreta. Mensajes traducidos para «ilegal», «¿quisiste decir…?»
       (con las candidatas) y «Has jugado `Cf3`»; el texto erróneo se conserva
       en el campo.
-- [ ] **Activación**: `?view=office` y *cookie* de preferencia; enlace
+- [x] **Activación**: `?view=office` y *cookie* de preferencia; enlace
       discreto de ida y vuelta. Título de pestaña neutro.
-- [ ] Pruebas `MockMvc`: la vista oficina se elige con el parámetro y con la
+- [x] Pruebas `MockMvc`: la vista oficina se elige con el parámetro y con la
       *cookie*; la tabla tiene 64 celdas y las cabeceras correctas para
       ambos colores; una jugada aceptada redirige y una ambigua muestra las
       candidatas.
-- [ ] **ADR-013** (notación localizada solo en el adaptador; entrada resuelta
+- [x] **ADR-013** (notación localizada solo en el adaptador; entrada resuelta
       contra las jugadas legales).
+- **Hecho.** Dos ajustes sobre el diseño: si el texto coincide
+  **exactamente** con una jugada (mayúsculas incluidas) se juega sin
+  preguntar (`Axb5` es el alfil); solo se pregunta cuando, ignorando
+  mayúsculas, encaja con varias. Y el portal **no lleva nombre de
+  empresa** («Portal del empleado», «Departamento de Operaciones»), para no
+  imitar a ninguna real. La vista se elige con `?view=office` /
+  `?view=board` y se recuerda en la *cookie* `kopi-view`.
 
 ### Criterio de aceptación
 

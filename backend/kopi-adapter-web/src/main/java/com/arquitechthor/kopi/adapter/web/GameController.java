@@ -18,10 +18,14 @@ import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
 import com.arquitechthor.kopi.domain.game.GameRuleException;
 import com.arquitechthor.kopi.domain.game.IllegalMoveException;
 import com.arquitechthor.kopi.domain.game.NotYourTurnException;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,13 +49,15 @@ class GameController {
     private final GetGameUseCase getGame;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
+    private final MessageSource messages;
 
     GameController(CreateGameUseCase createGame, GetGameUseCase getGame, PlayMoveUseCase playMove,
-            ResignUseCase resign) {
+            ResignUseCase resign, MessageSource messages) {
         this.createGame = createGame;
         this.getGame = getGame;
         this.playMove = playMove;
         this.resign = resign;
+        this.messages = messages;
     }
 
     /// From the home page form. `color` is `WHITE`, `BLACK` or `RANDOM`.
@@ -71,9 +77,24 @@ class GameController {
         }
     }
 
+    /// The game, on the board or in office mode (design §11.5).
+    ///
+    /// `?view=office` switches to office mode and `?view=board` back; the
+    /// choice is remembered in a cookie, like the language.
     @GetMapping("/games/{id}")
-    String game(@PathVariable UUID id, Model model) {
-        model.addAttribute("game", GamePage.of(getGame.get(new GameId(id))));
+    String game(@PathVariable UUID id, @RequestParam(required = false) String view,
+            @CookieValue(name = OfficeController.VIEW_COOKIE, required = false) String remembered,
+            HttpServletResponse response, Locale locale, Model model) {
+        var office = view == null ? OfficeController.OFFICE.equals(remembered) : OfficeController.OFFICE.equals(view);
+        if (view != null) {
+            response.addCookie(OfficeController.viewCookie(office));
+        }
+        var game = getGame.get(new GameId(id));
+        if (office) {
+            model.addAttribute("office", OfficePage.of(game, OfficeNotation.of(messages, locale)));
+            return "game-office";
+        }
+        model.addAttribute("game", GamePage.of(game));
         return "game";
     }
 
@@ -101,7 +122,7 @@ class GameController {
     /// The code of a refused action, or the exception again if it is not a
     /// refusal but a failure (a bug, the database down): those deserve the
     /// error page, not a polite message.
-    private static String refusal(RuntimeException e) {
+    static String refusal(RuntimeException e) {
         return switch (e) {
             case GameRuleException rule -> switch (rule) {
                 case IllegalMoveException _ -> "ILLEGAL_MOVE";

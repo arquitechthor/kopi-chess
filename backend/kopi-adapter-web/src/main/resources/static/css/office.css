@@ -1,0 +1,99 @@
+/* ============================================================
+   Office mode (design §11.5): a plain internal-portal look.
+
+   On purpose nothing of Kopi's identity (kopi.css): light, grey,
+   system font, no images, no board colours. The board is a data
+   table like any other report.
+   ============================================================ */
+
+:root {
+  --page: #f3f4f6;
+  --paper: #ffffff;
+  --ink: #1f2933;
+  --ink-soft: #52606d;
+  --line: #d9dee3;
+  --header: #2f3e4e;
+  --accent: #2b6cb0;
+  --ok: #276749;
+  --ok-bg: #e6f4ea;
+  --bad: #9b2c2c;
+  --bad-bg: #fdecec;
+  --mark: #fff3bf;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.5 "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+a { color: var(--accent); }
+
+.portal-inner { max-width: 1100px; margin: 0 auto; padding: 0 20px; width: 100%; }
+
+.portal-header { background: var(--header); color: #fff; }
+.portal-header .portal-inner { display: flex; align-items: center; gap: 28px; min-height: 48px; flex-wrap: wrap; }
+.portal-name { font-weight: 600; letter-spacing: 0.02em; }
+.portal-menu { display: flex; gap: 18px; font-size: 13px; color: #cbd2d9; }
+.portal-menu .is-current { color: #fff; border-bottom: 2px solid #fff; padding-bottom: 2px; }
+
+.portal-main { flex: 1; padding-top: 18px; padding-bottom: 32px; }
+.breadcrumbs { color: var(--ink-soft); font-size: 12.5px; margin: 0 0 6px; }
+h1 { font-size: 20px; font-weight: 600; margin: 0 0 14px; }
+h2 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+
+.messages { display: grid; gap: 6px; margin-bottom: 16px; }
+.msg { margin: 0; padding: 8px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 3px; }
+.msg-ok { background: var(--ok-bg); border-color: #b7dfc3; color: var(--ok); }
+.msg-error { background: var(--bad-bg); border-color: #f3bcbc; color: var(--bad); }
+
+.layout { display: grid; grid-template-columns: minmax(0, auto) minmax(260px, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+
+.layout section, .layout aside > section {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px;
+}
+.layout aside { display: grid; gap: 16px; }
+
+/* The board: a report table with file and rank headers. */
+.grid { border-collapse: collapse; font-family: Consolas, "Courier New", monospace; }
+.grid caption { text-align: left; font: 600 14px/1.5 "Segoe UI", Tahoma, Arial, sans-serif; padding-bottom: 8px; }
+.grid th, .grid td { width: 2.6em; height: 2.2em; text-align: center; border: 1px solid var(--line); }
+.grid th { background: #f8f9fa; color: var(--ink-soft); font-weight: normal; font-size: 12.5px; }
+.grid td { font-size: 15px; }
+.grid td.is-last { font-weight: 700; background: var(--mark); }
+
+.legend { color: var(--ink-soft); font-size: 12.5px; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+
+.entry { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.entry label { font-weight: 600; }
+.entry input[type=text] {
+  font: 15px Consolas, "Courier New", monospace; padding: 6px 8px; width: 12em;
+  border: 1px solid #b8c2cc; border-radius: 3px;
+}
+button {
+  font: inherit; padding: 6px 14px; border-radius: 3px; cursor: pointer;
+  background: var(--accent); color: #fff; border: 1px solid var(--accent);
+}
+button.secondary { background: var(--paper); color: var(--ink); border-color: #b8c2cc; }
+
+.codes { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+.codes dt { color: var(--ink-soft); }
+.codes dd { margin: 0; font-family: Consolas, "Courier New", monospace; }
+
+.log { border-collapse: collapse; width: 100%; font-family: Consolas, "Courier New", monospace; }
+.log th { text-align: left; font: 600 12.5px "Segoe UI", Tahoma, Arial, sans-serif; color: var(--ink-soft); }
+.log th, .log td { padding: 3px 8px; border-bottom: 1px solid var(--line); }
+.muted { color: var(--ink-soft); margin: 0; }
+
+.portal-footer { border-top: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); font-size: 12px; }
+.portal-footer .portal-inner { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; }
+.portal-links { display: flex; gap: 12px; }
+.portal-links a { color: var(--ink-soft); }

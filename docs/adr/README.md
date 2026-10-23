@@ -11,6 +11,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-008](008-repeticion-y-50-jugadas-automaticas.md) — Repetición y 50 jugadas automáticas
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
 - [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)
+- [ADR-013](013-modo-oficina-notacion-localizada.md) — Modo oficina: notación localizada solo en el adaptador web
 - [ADR-014](014-sin-transaccion-en-los-casos-de-uso.md) — Sin transacción alrededor de los casos de uso
 
 ## Plantilla

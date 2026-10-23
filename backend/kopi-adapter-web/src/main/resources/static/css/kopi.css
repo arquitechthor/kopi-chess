@@ -285,3 +285,4 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 .footer-sitios a { color: var(--text-muted); }
 .footer-sitios a + a::before { content: "·"; display: inline-block; margin-right: 12px; color: var(--text-faint); }
 .footer-sitios a[aria-current] { color: var(--text); font-weight: 600; }
+.text-view { font-size: 12.5px; justify-self: start; }
