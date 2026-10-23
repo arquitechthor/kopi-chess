@@ -1,6 +1,5 @@
 package com.arquitechthor.kopi.domain.game;
 
-import com.arquitechthor.kopi.domain.chess.Move;
 import java.io.Serial;
 import java.util.Objects;
 
@@ -10,16 +9,16 @@ public final class IllegalMoveException extends GameRuleException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final transient Move move; // not serialized: see GameRuleException
+    private final String uci;
 
-    IllegalMoveException(GameId gameId, Move move, String fen) {
-        Objects.requireNonNull(move, "move");
-        this.move = move;
-        super(gameId, move + " (" + move.kind() + ") is not legal in " + fen);
+    IllegalMoveException(GameId gameId, String uci, String detail) {
+        Objects.requireNonNull(uci, "uci");
+        this.uci = uci;
+        super(gameId, uci + " " + detail);
     }
 
-    /// The move that was refused.
-    public Move move() {
-        return move;
+    /// The refused move in UCI, as it was given (`e2e5`).
+    public String uci() {
+        return uci;
     }
 }

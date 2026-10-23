@@ -80,20 +80,53 @@ public final class Game {
     ///                              position
     public Game play(Move move, Color color, Instant now) {
         Objects.requireNonNull(move, "move");
-        Objects.requireNonNull(color, "color");
         Objects.requireNonNull(now, "now");
+        var position = requireTurn(color);
+        // Equality includes the kind, so a well-formed move that is not
+        // the one the rules produce here (a "capture" on an empty square)
+        // is refused too.
+        if (!position.legalMoves().contains(move)) {
+            throw new IllegalMoveException(id, move.toUci(),
+                    "(" + move.kind() + ") is not legal in " + position.toFen());
+        }
+        return apply(position, move, now);
+    }
+
+    /// The game after `color` plays the move written as `uci` (`e2e4`,
+    /// `e7e8q`) at `now`.
+    ///
+    /// The text is looked up among the legal moves, never turned into a
+    /// move on its own (ADR-004): what it means depends on the position.
+    ///
+    /// @throws GameNotInProgressException if the game is over
+    /// @throws NotYourTurnException if `color` is not the side to move
+    /// @throws IllegalMoveException if no legal move is written `uci`
+    public Game play(String uci, Color color, Instant now) {
+        Objects.requireNonNull(uci, "uci");
+        Objects.requireNonNull(now, "now");
+        var position = requireTurn(color);
+        var move = position.legalMoves().stream()
+                .filter(candidate -> candidate.toUci().equals(uci))
+                .findFirst()
+                .orElseThrow(() -> new IllegalMoveException(id, uci, "is not a legal move in " + position.toFen()));
+        return apply(position, move, now);
+    }
+
+    /// The current position, after checking that the game is in progress
+    /// and that `color` is to move. In that order: a move in a finished
+    /// game is refused as such, whoever's turn it was.
+    private Position requireTurn(Color color) {
+        Objects.requireNonNull(color, "color");
         requireInProgress();
         var position = currentPosition();
         if (color != position.sideToMove()) {
             throw new NotYourTurnException(id, color);
         }
-        // Equality includes the kind, so a well-formed move that is not
-        // the one the rules produce here (a "capture" on an empty square)
-        // is refused too.
-        if (!position.legalMoves().contains(move)) {
-            throw new IllegalMoveException(id, move, position.toFen());
-        }
+        return position;
+    }
 
+    /// The game after the legal `move` is played from `position` at `now`.
+    private Game apply(Position position, Move move, Instant now) {
         var after = position.apply(move);
         var played = new ArrayList<>(moves);
         played.add(new PlayedMove(moves.size() + 1, move, San.format(position, move), after, now));

@@ -41,8 +41,7 @@ class HexagonalArchitectureTest {
             .should().dependOnClassesThat().resideInAnyPackage(
                     ADAPTERS, BOOTSTRAP,
                     "org.springframework..", "jakarta..", "java.sql..", "javax.sql..")
-            .because("use cases must not depend on adapters or on Spring (ADR-002)")
-            .allowEmptyShould(true);
+            .because("use cases must not depend on adapters or on Spring (ADR-002)");
 
     @ArchTest
     static final ArchRule adaptersDoNotKnowEachOther = slices()
