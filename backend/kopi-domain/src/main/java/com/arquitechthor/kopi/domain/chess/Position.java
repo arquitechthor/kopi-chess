@@ -63,6 +63,14 @@ public record Position(
         return MoveGenerator.legalMoves(this);
     }
 
+    /// A 64-bit fingerprint of what makes this position "the same" as
+    /// another for the repetition rule: pieces, side to move, castling
+    /// rights and a *usable* en passant capture, but not the clocks.
+    /// Equal positions always share it; different ones practically never.
+    public long zobristHash() {
+        return Zobrist.hash(this);
+    }
+
     /// Whether the king of the side to move is attacked.
     public boolean isInCheck() {
         return MoveGenerator.isInCheck(board, sideToMove);
