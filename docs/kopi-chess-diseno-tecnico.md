@@ -1125,9 +1125,10 @@ La pirámide refleja los anillos hexagonales:
 
 #### Diferencial
 
-- **Qué:** para miles de posiciones aleatorias, nuestras jugadas legales =
-  las de una librería de referencia (p. ej. chesslib, solo en `test`).
-- **Herramientas:** JUnit + oráculo.
+- **Qué:** para miles de posiciones de partidas aleatorias con semilla,
+  nuestras jugadas legales, el jaque y el FEN = los de Stockfish (oráculo
+  por UCI, solo en `test`; ver §5.6 del plan).
+- **Herramientas:** JUnit + Stockfish.
 
 #### Aplicación
 

@@ -344,11 +344,27 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 
 ### 5.6 Prueba diferencial (opcional pero muy valiosa)
 
-- [ ] Dependencia **solo de test** a una librería de referencia (p. ej.
-      chesslib; verificar licencia).
-- [ ] Generar miles de posiciones jugando partidas aleatorias con semilla y
-      comparar el conjunto de jugadas legales y el FEN resultante.
-- [ ] Con jqwik: propiedad «para toda posición alcanzable, `Fen.parse(Fen.format(p)) == p`».
+- [x] Dependencia **solo de test** a una librería de referencia (p. ej.
+      chesslib; verificar licencia). **Hecho con Stockfish como oráculo**
+      en lugar de una librería: chesslib solo se publica en JitPack (no en
+      Maven Central) y no hay en Central una alternativa fiable. Stockfish
+      es GPL-3.0 como Kopi Chess, ya forma parte del proyecto (fase 4) y no
+      añade ninguna dependencia de Maven: se habla con él por UCI desde
+      `StockfishOracle`, en código de prueba. La CI descarga la *release*
+      oficial `sf_19` (versión fijada y SHA-256 verificado); en local se
+      busca en `tools/stockfish/` o en `KOPI_STOCKFISH`, y si no está, la
+      prueba se omite.
+- [x] Generar miles de posiciones jugando partidas aleatorias con semilla y
+      comparar el conjunto de jugadas legales y el FEN resultante. **Hecho:**
+      120 partidas desde las 6 posiciones de *perft*; en cada posición se
+      comparan el FEN, el jaque y el conjunto exacto de jugadas legales
+      (`@Tag("slow")`, ~15 s). Comprobado que detecta la trampa del enroque
+      al capturar una torre.
+- [x] Con jqwik: propiedad «para toda posición alcanzable, `Fen.parse(Fen.format(p)) == p`».
+      **Hecho sin jqwik:** jqwik 1.x apunta a la plataforma de JUnit 5 y
+      este proyecto usa JUnit 6 (Spring Boot 4). La propiedad, junto con la
+      ida y vuelta de SAN, se comprueba con JUnit sobre partidas aleatorias
+      con semilla.
 
 ### Criterio de aceptación
 
