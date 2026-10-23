@@ -10,6 +10,11 @@ Kopi Chess is a local web application to **play chess against five bots** and
 review flags any mate you missed. You can also **import a PGN** from Lichess,
 Chess.com or an over-the-board game and analyse it the same way.
 
+And for work hours there is an **office mode**: the game looks like any
+company's website, the board is a table of letters (`R`, `B`, `N`…) and you
+type your moves in algebraic notation (`e4`, `Nf3`, `O-O`). It keeps a low
+profile and trains your notation.
+
 It is also a codebase you can learn from. The project is a reference example of:
 
 - **Modern Java (25)**: records, sealed interfaces, pattern matching, virtual

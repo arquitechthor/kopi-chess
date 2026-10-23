@@ -51,6 +51,11 @@ Kopi Chess es una aplicación web que se ejecuta en local con un solo
   analizarla igual que una partida propia. *(Esto es lo que convierte el
   proyecto en algo realmente útil: el análisis no queda limitado a partidas
   contra nuestros bots.)*
+- **Jugar en modo oficina**: una apariencia discreta que simula la web de una
+  empresa cualquiera, con el tablero como tabla de datos y las jugadas
+  escritas a mano. Sirve para pasar desapercibido y, sobre todo, para
+  **entrenar la notación algebraica** (`e4`, `Cf3`, `O-O`) en el idioma de la
+  interfaz (§11.5).
 
 Y, como proyecto de código, ser un **ejemplo de referencia** de un dominio
 rico (las reglas del ajedrez) protegido por una arquitectura hexagonal real,
@@ -68,6 +73,8 @@ con pruebas que demuestran su corrección.
 7. Etiqueta de apertura (nombre + ECO) sin conexión a internet.
 8. Entorno completo con Docker Compose.
 9. Interfaz en inglés y español, con selector de idioma.
+10. Modo oficina: tablero en texto y jugadas introducidas en notación
+    algebraica, sin JavaScript.
 
 ### Fuera del alcance del MVP
 
@@ -902,7 +909,8 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
   `kopi-bootstrap` los declara en `spring.messages.basename` (ADR-011).
 - **Elección de idioma:** `CookieLocaleResolver` + `LocaleChangeInterceptor`
   (`?lang=es` / `?lang=en`). Primera visita: `Accept-Language` del
-  navegador. Selector EN/ES visible en la cabecera de todas las páginas.
+  navegador. Selector EN/ES visible en la cabecera de todas las páginas
+  (en el modo oficina, discreto en el pie; §11.5).
 - **Plantillas:** todo texto visible con `#{clave}`; ninguna cadena literal
   en el HTML. Una prueba recorre las plantillas y falla si encuentra texto
   sin traducir (o si una clave existe en un idioma y no en el otro).
@@ -920,6 +928,92 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
   comunes puede ser una contribución externa posterior.
 - **Fechas y números:** con `#temporals` / `#numbers` de Thymeleaf según el
   `Locale` (`21/10/2026` vs `10/21/2026`, `87,5 %` vs `87.5%`).
+
+### 11.5 Modo oficina
+
+Una apariencia alternativa de la página de partida, pensada para dos cosas:
+
+- **Pasar desapercibido:** la página parece la intranet o la web corporativa
+  de una empresa cualquiera. Nada de tableros, colores de ajedrez ni iconos
+  de piezas.
+- **Entrenar la notación:** no se arrastran piezas; cada jugada se escribe
+  (`e4`, `Cf3`, `exd5`, `O-O`, `e8=D`). Quien lo use acaba leyendo y
+  escribiendo notación algebraica con soltura.
+
+**Aspecto**
+
+- Cabecera, menú, pie y textos de relleno de una empresa **ficticia y
+  genérica** (nombre inventado, sin logotipos ni marcas reales). El título
+  de la pestaña es neutro («Informe de operaciones» / «Operations report»).
+- Estilo sobrio de aplicación de gestión: tipografía del sistema, grises,
+  sin imágenes.
+- El tablero es una **tabla HTML** (`<table>`) con aspecto de informe:
+  columnas `a`–`h` y filas `8`–`1` como cabeceras (`<th>`), una celda por
+  casilla y sin colorear las casillas. Se orienta desde el color del jugador.
+- Cada pieza es **una letra** en el idioma de la interfaz:
+
+  | Pieza   | Español | Inglés |
+  |---------|---------|--------|
+  | Peón    | `P`     | `P`    |
+  | Torre   | `T`     | `R`    |
+  | Alfil   | `A`     | `B`    |
+  | Caballo | `C`     | `N`    |
+  | Dama    | `D`     | `Q`    |
+  | Rey     | `R`     | `K`    |
+
+  Las blancas en mayúscula y las negras en minúscula (`C` / `c`), como en
+  los diagramas de texto: el color se distingue sin depender del estilo.
+  Una leyenda bajo la tabla lo recuerda. La última jugada se marca con
+  negrita en sus dos casillas.
+- **A la derecha del tablero**, el listado de **jugadas legales** en
+  notación algebraica del idioma (`Cf3`, `e4`, `O-O`), agrupadas por pieza y
+  ordenadas. Debajo, las jugadas de la partida como una tabla de dos
+  columnas (blancas / negras) y el estado (turno, jaque, resultado).
+- **Entrada de texto** (`<input>` dentro de un `<form>`) con un botón de
+  enviar, con aspecto de campo de búsqueda o de formulario de la empresa.
+
+**Entrada de jugadas**
+
+- Se acepta la **notación algebraica del idioma de la interfaz**. La
+  comparación se hace contra el listado de jugadas legales ya formateado,
+  así que solo puede aceptarse una jugada legal.
+- Es tolerante con lo que no cambia el significado: mayúsculas o minúsculas
+  (`E4` = `e4`), `x` y `+`/`#` opcionales (`Cf3` = `Cf3+`, `exd5` = `ed5`),
+  `0-0` = `O-O`, espacios.
+- La tolerancia a mayúsculas crea ambigüedades porque algunas letras de
+  pieza coinciden con columnas (`A`/`a`, `C`/`c`, `D`/`d` en español; `B`/`b`
+  en inglés): `axb5` y `Axb5` pueden ser ambas legales. Si la entrada
+  normalizada encaja con **más de una** jugada legal, no se juega nada y se
+  responde «¿Quisiste decir `axb5` o `Axb5`?» con las candidatas. Si encaja
+  con exactamente una, se juega.
+- Si no encaja con ninguna, se muestra un error traducido y el texto
+  introducido se conserva en el campo.
+- Tras una jugada aceptada, la respuesta muestra la jugada en su forma
+  canónica («Has jugado `Cf3`») y la respuesta del bot. Así se aprende la
+  forma correcta aunque se haya escrito de otra manera.
+- Como atajo, también se acepta **UCI** (`g1f3`), que es como se escriben
+  las jugadas en otros sitios del proyecto.
+
+**Cómo encaja en la arquitectura**
+
+- **Solo afecta a `kopi-adapter-web`.** El dominio sigue hablando SAN
+  estándar en inglés (`San.format`, §5.5 del plan) y no sabe nada de
+  idiomas (ADR-011). El adaptador traduce las letras de pieza para mostrar
+  y hace la correspondencia de la entrada contra las jugadas legales
+  formateadas. No hace falta `San.parse` en otro idioma.
+- **Sin JavaScript:** formulario clásico (`POST` + redirección,
+  *Post/Redirect/Get*), con htmx solo como mejora opcional. Es la prueba de
+  que la interfaz es un adaptador más: mismos casos de uso
+  (`PlayMove`, `GetGame`), otra presentación.
+- **Activación:** un enlace discreto en la página de partida («Vista de
+  texto» / «Text view») y un parámetro `?view=office`; la preferencia se
+  guarda en una *cookie*, como el idioma. Desde el modo oficina se vuelve
+  con un enlace igual de discreto en el pie.
+- **Textos:** todas las etiquetas, la leyenda, los errores y el «contenido
+  de relleno» de la empresa ficticia van en los archivos de mensajes, en
+  inglés y español. Las letras de pieza también (`piece.letter.KNIGHT=C`).
+- **Accesibilidad de regalo:** una tabla con cabeceras y un campo de texto
+  funcionan bien con lectores de pantalla y con teclado.
 
 ---
 
@@ -1017,7 +1111,9 @@ La pirámide refleja los anillos hexagonales:
 #### Web
 
 - **Qué:** los controladores web devuelven la vista/fragmento correcto con el
-  modelo esperado.
+  modelo esperado. En el modo oficina, además, pruebas unitarias de la
+  traducción de letras y de la correspondencia de la entrada (tolerancias y
+  ambigüedades como `axb5` / `Axb5`).
 - **Herramientas:** `MockMvc`.
 
 #### Extremo a extremo
@@ -1094,7 +1190,7 @@ Cada entregable tiene un **objetivo de aprendizaje** además del funcional.
 
 - **Funcional:** agregado `Game`, `CreateGame`, `PlayMove`, `Resign`, API
   REST, persistencia, bot `PAWN`. Interfaz web mínima (Thymeleaf +
-  Chessground).
+  Chessground) y modo oficina (tablero en texto, sin JavaScript).
 - **Aprendizaje:** casos de uso, puertos y adaptadores, dos adaptadores de
   entrada sobre el mismo núcleo, control optimista, `ProblemDetail`.
 
@@ -1147,6 +1243,8 @@ El plan detallado por fases está en
 10. **ADR-010** Interfaz web con Thymeleaf + htmx en lugar de SPA.
 11. **ADR-011** i18n: el dominio emite códigos, los adaptadores traducen.
 12. **ADR-012** Política de *features preview* (solo en `kopi-labs`).
+13. **ADR-013** Modo oficina: notación localizada solo en el adaptador web y
+    entrada resuelta contra las jugadas legales.
 
 ---
 
