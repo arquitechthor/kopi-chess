@@ -667,13 +667,18 @@ Stockfish.
 
 ### 7.3 Calibración
 
-- [ ] *Harness* (`kopi-bootstrap` en `src/test`, o un módulo `kopi-tools`):
+- [x] *Harness* (`kopi-bootstrap` en `src/test`, o un módulo `kopi-tools`):
       enfrenta perfil N contra N+1, M partidas desde aperturas variadas,
       alternando colores.
-- [ ] Ajustar parámetros hasta que cada nivel gane claramente al anterior
+- [x] Ajustar parámetros hasta que cada nivel gane claramente al anterior
       (p. ej. > 70 % de puntos).
-- [ ] Guardar los resultados en `docs/notas/calibracion.md` con la versión de
+- [x] Guardar los resultados en `docs/notas/calibracion.md` con la versión de
       Stockfish y los parámetros usados.
+- **Hecho:** `CalibrationTest` (`-Pcalibration`, fuera de la CI), 16
+  partidas por pareja desde 8 aperturas. La primera ronda falló
+  (`ROOK` 47 % contra `BISHOP`: *Skill Level* y `UCI_Elo` no son
+  comparables); con los tres perfiles en `UCI_Elo` (1320 / 2000 / sin
+  límite) todos los niveles pasan: 100 %, 78 %, 100 %, 100 %.
 
 ### Criterio de aceptación
 

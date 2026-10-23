@@ -19,7 +19,7 @@ import java.util.Objects;
 /// Whatever goes wrong (no binary, a crash, a timeout, a nonsense answer)
 /// becomes a [BotUnavailableException]: the use case saves nothing and the
 /// game stays as it was (REST: `503`).
-public final class StockfishBots implements BotPlayer {
+public final class StockfishBots implements BotPlayer, AutoCloseable {
 
     private final EnginePool<UciEngine> pool;
     private final Map<BotProfile, StockfishProperties.Profile> profiles;
@@ -30,6 +30,19 @@ public final class StockfishBots implements BotPlayer {
         this.pool = Objects.requireNonNull(pool, "pool");
         this.profiles = Map.copyOf(profiles);
         this.moveMargin = Objects.requireNonNull(moveMargin, "moveMargin");
+    }
+
+    /// Bots built straight from their settings, outside Spring (the
+    /// calibration harness). Close them to end the engine processes.
+    public static StockfishBots start(StockfishProperties properties) {
+        return new StockfishAdapterConfiguration().stockfishBots(
+                new StockfishAdapterConfiguration().stockfishPool(properties), properties);
+    }
+
+    /// Ends the engine processes (closing the pool twice is harmless).
+    @Override
+    public void close() {
+        pool.close();
     }
 
     /// Whether `profile` is configured to play with Stockfish.

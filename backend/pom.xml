@@ -54,8 +54,9 @@
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
 
-        <!-- JUnit tags left out of local builds; the slow-tests profile (used by CI) runs everything. -->
-        <kopi.excludedTestTags>slow</kopi.excludedTestTags>
+        <!-- JUnit tags left out of local builds. The slow-tests profile (used by CI) adds "slow";
+             "calibration" (bot strength, tens of minutes) only runs with -Pcalibration. -->
+        <kopi.excludedTestTags>slow,calibration</kopi.excludedTestTags>
     </properties>
 
     <dependencyManagement>
@@ -259,11 +260,20 @@
     </build>
 
     <profiles>
-        <!-- ./mvnw verify -Pslow-tests: also run tests tagged "slow" (deep perft). -->
+        <!-- ./mvnw verify -Pslow-tests: also run tests tagged "slow" (deep perft, differential). -->
         <profile>
             <id>slow-tests</id>
             <properties>
+                <kopi.excludedTestTags>calibration</kopi.excludedTestTags>
+            </properties>
+        </profile>
+        <!-- ./mvnw -pl kopi-bootstrap -am test -Pcalibration: only the bot calibration
+             (needs Stockfish: KOPI_STOCKFISH). Results in kopi-bootstrap/target/calibration.md. -->
+        <profile>
+            <id>calibration</id>
+            <properties>
                 <kopi.excludedTestTags/>
+                <groups>calibration</groups>
             </properties>
         </profile>
     </profiles>

@@ -646,12 +646,13 @@ producción y se aprende sin añadir RabbitMQ/Kafka.
 #### `BISHOP` — nivel 3
 
 - **Implementación:** Stockfish.
-- **Idea:** `Skill Level` bajo-medio y `movetime` corto.
+- **Idea:** `UCI_LimitStrength` con `UCI_Elo` 1320 (el mínimo) y `movetime`
+  corto. (Calibrado: ver `docs/notas/calibracion.md`.)
 
 #### `ROOK` — nivel 4
 
 - **Implementación:** Stockfish.
-- **Idea:** `UCI_LimitStrength=true`, `UCI_Elo` medio.
+- **Idea:** `UCI_LimitStrength=true`, `UCI_Elo` 2000.
 
 #### `QUEEN` — nivel 5
 
