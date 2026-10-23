@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.bootstrap;
 
 import com.arquitechthor.kopi.adapter.bots.KopiBots;
+import com.arquitechthor.kopi.adapter.stockfish.StockfishBots;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
@@ -42,9 +43,15 @@ class UseCaseConfiguration {
         return () -> new GameId(UUID.randomUUID());
     }
 
+    /// One port, two adapters (ADR-006): Kopi's own bots for `PAWN` and
+    /// `KNIGHT`, Stockfish for the rest.
     @Bean
-    BotPlayer botPlayer() {
-        return new KopiBots();
+    BotPlayer botPlayer(StockfishBots stockfish) {
+        var own = new KopiBots();
+        return (position, profile) -> switch (profile) {
+            case PAWN, KNIGHT -> own.chooseMove(position, profile);
+            case BISHOP, ROOK, QUEEN -> stockfish.chooseMove(position, profile);
+        };
     }
 
     @Bean

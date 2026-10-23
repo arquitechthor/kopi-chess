@@ -135,15 +135,15 @@ class GamePageTest {
     }
 
     @Test
-    void theHomePageListsRecentGamesAndOnlyThePlayableBots() {
+    void theHomePageListsRecentGamesAndEveryBot() {
         newGame("WHITE");
 
         assertThat(mvc.get().uri("/?lang=es")).hasStatusOk().bodyText()
                 .contains("Partidas recientes", "En juego")
                 .containsPattern("value=\"PAWN\"(?![^>]*disabled)")
                 .containsPattern("value=\"KNIGHT\"(?![^>]*disabled)")
-                .containsPattern("value=\"QUEEN\"[^>]*disabled")
-                .contains("Próximamente.");
+                .containsPattern("value=\"QUEEN\"(?![^>]*disabled)")
+                .doesNotContain("Próximamente.");
     }
 
     @Test

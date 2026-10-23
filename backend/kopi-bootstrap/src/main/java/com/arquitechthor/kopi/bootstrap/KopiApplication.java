@@ -2,6 +2,7 @@ package com.arquitechthor.kopi.bootstrap;
 
 import com.arquitechthor.kopi.adapter.persistence.PersistenceAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.rest.RestAdapterConfiguration;
+import com.arquitechthor.kopi.adapter.stockfish.StockfishAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.web.WebAdapterConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Import;
         WebAdapterConfiguration.class,
         RestAdapterConfiguration.class,
         PersistenceAdapterConfiguration.class,
+        StockfishAdapterConfiguration.class,
         UseCaseConfiguration.class,
 })
 public class KopiApplication {
