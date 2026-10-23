@@ -43,11 +43,11 @@ class KopiApplicationIT {
     }
 
     @Test
-    void flywayAppliedTheBaselineMigration() {
+    void flywayAppliedEveryMigration() {
         var versions = jdbc.sql("select version from flyway_schema_history where success order by installed_rank")
                 .query(String.class)
                 .list();
 
-        assertThat(versions).containsExactly("1");
+        assertThat(versions).containsExactly("1", "2");
     }
 }

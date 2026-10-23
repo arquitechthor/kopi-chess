@@ -457,12 +457,21 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
       bot atiende peticiones de varios hilos), con semilla en pruebas.
       `KopiBots` implementa `BotPlayer`; hasta la fase 4 los demás perfiles
       responden `BotUnavailableException` (503).
-- [ ] **`kopi-adapter-persistence`**:
+- [x] **`kopi-adapter-persistence`**:
   - Migración `V2__games.sql` con `game` y `game_move` (diseño §6.1).
   - Implementación de `GameRepository` con `JdbcClient` o Spring Data JDBC.
   - Control optimista: `UPDATE ... WHERE id = ? AND version = ?`; si afecta
     0 filas → `ConcurrentModification`.
   - Prueba de integración con **Testcontainers** (`PostgreSQLContainer`).
+  - **Hecho** con `JdbcClient` y SQL a mano. Una partida guardada se
+    reconstruye **rejugando** sus jugadas con el propio agregado (`start` +
+    `play`, y `resign` si terminó por abandono): el dominio no necesita
+    una puerta trasera para la persistencia, y una fila incoherente
+    (versión o final que el rejuego no reproduce) falla en lugar de cargar
+    una partida corrupta. El mapeo filas ↔ `Game` (`GameRows`) es Java puro
+    con pruebas unitarias; las jugadas se añaden (nunca se reescriben) y la
+    partida y sus jugadas se guardan en una sola transacción. Los
+    instantes se truncan a microsegundos, la precisión de PostgreSQL.
 - [ ] **`kopi-adapter-rest`**:
   - `POST /games`, `GET /games/{id}`, `POST /games/{id}/moves`,
     `POST /games/{id}/resign`, `GET /games`, `GET /bots`.
