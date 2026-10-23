@@ -334,12 +334,13 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
       `R1e2`), capturas, promoción (`e8=Q`), enroque (`O-O`), `+` y `#`.
 - [x] `San.parse(position, "Nf3") → Move` (necesario para importar PGN en la
       fase 6, pero se prueba aquí).
-- [ ] `Rules`: jaque, jaque mate, ahogado, material insuficiente (K-K, K+B-K,
+- [x] `Rules`: jaque, jaque mate, ahogado, material insuficiente (K-K, K+B-K,
       K+N-K, K+B-K+B mismo color), regla de 50 jugadas.
-- [ ] **Hash Zobrist** en `Position` (tabla de aleatorios con semilla fija).
+- [x] **Hash Zobrist** en `Position` (tabla de aleatorios con semilla fija).
 - [ ] Triple repetición (necesita el historial: se resuelve en el agregado
-      `Game`, fase 3, pero el hash se prepara aquí).
-- [ ] **ADR-008** (repetición y 50 jugadas automáticas).
+      `Game`, fase 3, pero el hash se prepara aquí). **Hash listo:**
+      `Position.zobristHash()`; el conteo se hace en la fase 3 (§6.1).
+- [x] **ADR-008** (repetición y 50 jugadas automáticas).
 
 ### 5.6 Prueba diferencial (opcional pero muy valiosa)
 
