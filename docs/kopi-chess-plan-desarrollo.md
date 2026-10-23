@@ -422,15 +422,31 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 
 ### 6.2 Aplicación
 
-- [ ] Puertos de salida: `GameRepository`, `BotPlayer`, `Clock`,
-      `IdGenerator`.
-- [ ] Casos de uso: `CreateGame`, `PlayMove`, `Resign`, `GetGame`, `ListGames`.
+- [x] Puertos de salida: `GameRepository`, `BotPlayer`, `Clock`,
+      `IdGenerator`. **Hecho** en `application.port`. El reloj es
+      `java.time.Clock` (la abstracción estándar del JDK; `Clock.fixed` en
+      pruebas), no una interfaz propia. `GameRepository` tiene `insert` y
+      `update(game, loadedVersion)`: una jugada humana más la del bot suben
+      la versión en 2, así que el repositorio necesita la versión cargada.
+      Excepciones de los puertos: `ConcurrentGameUpdateException` y
+      `BotUnavailableException`.
+- [x] Casos de uso: `CreateGame`, `PlayMove`, `Resign`, `GetGame`, `ListGames`.
   - `PlayMove`: cargar → comprobar versión → aplicar jugada humana → si sigue,
     pedir jugada al bot → aplicarla → guardar → devolver vista.
-- [ ] Vista de lectura `GameView` (record) con FEN, turno, jugadas en SAN,
-      jugadas legales en UCI, estado, resultado, versión.
-- [ ] **Pruebas con dobles**: repositorio en memoria, bot que devuelve una
-      jugada fija, reloj fijo. Sin Spring.
+  - **Hecho** en `application.game`: una interfaz por caso de uso (el
+    puerto de entrada, que además permite envolverlo en una transacción
+    desde `kopi-bootstrap`) y una clase que la implementa. Se guarda una
+    sola vez al final: cualquier fallo deja la partida como estaba.
+    `PlayMoveCommand` rechaza el texto que no parece UCI
+    (`InvalidUciException`, el 400 de la API); la legalidad la decide
+    `Game.play(String uci, …)`, nuevo en el dominio.
+- [x] Vista de lectura `GameView` (record) con FEN, turno, jugadas en SAN,
+      jugadas legales en UCI, estado, resultado, versión. **Hecho**, y las
+      jugadas legales llevan también su SAN (para el modo oficina).
+      `GameSummary` y `GamePage` para el listado.
+- [x] **Pruebas con dobles**: repositorio en memoria, bot que devuelve una
+      jugada fija, reloj fijo. Sin Spring. **Hecho:** 21 pruebas, incluida
+      una carrera real (otra petición guarda mientras el bot piensa).
 
 ### 6.3 Adaptadores
 

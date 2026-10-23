@@ -142,8 +142,39 @@ class GameTest {
             assertThatThrownBy(() -> newGame().play(e2e5, Color.WHITE, START))
                     .isInstanceOfSatisfying(IllegalMoveException.class, e -> {
                         assertThat(e.gameId()).isEqualTo(ID);
-                        assertThat(e.move()).isEqualTo(e2e5);
+                        assertThat(e.uci()).isEqualTo("e2e5");
                     });
+        }
+
+        @Test
+        void acceptsAMoveWrittenInUci() {
+            var game = newGame().play("g1f3", Color.WHITE, START);
+
+            assertThat(game.moves()).singleElement().extracting(PlayedMove::san).isEqualTo("Nf3");
+        }
+
+        @Test
+        void aPromotionInUciNamesThePiece() {
+            var game = newGame("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1").play("b7b8n", Color.WHITE, START);
+
+            assertThat(game.moves().getFirst().san()).isEqualTo("b8=N");
+        }
+
+        @Test
+        void uciTextThatIsNoLegalMoveIsRefused() {
+            assertThatThrownBy(() -> newGame().play("e2e5", Color.WHITE, START))
+                    .isInstanceOfSatisfying(IllegalMoveException.class, e -> assertThat(e.uci()).isEqualTo("e2e5"));
+            // A promotion needs its piece.
+            assertThatThrownBy(() -> newGame("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1").play("b7b8", Color.WHITE, START))
+                    .isInstanceOf(IllegalMoveException.class);
+        }
+
+        @Test
+        void aFinishedGameIsReportedBeforeTheTurnOrTheMove() {
+            var finished = newGame().resign(Color.WHITE, START);
+
+            assertThatThrownBy(() -> finished.play("e7e5", Color.BLACK, START))
+                    .isInstanceOf(GameNotInProgressException.class);
         }
 
         @Test
