@@ -330,9 +330,9 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 
 ### 5.5 Notación y fin de partida
 
-- [ ] **SAN**: `San.format(position, move)` con desambiguación (`Nbd2`,
+- [x] **SAN**: `San.format(position, move)` con desambiguación (`Nbd2`,
       `R1e2`), capturas, promoción (`e8=Q`), enroque (`O-O`), `+` y `#`.
-- [ ] `San.parse(position, "Nf3") → Move` (necesario para importar PGN en la
+- [x] `San.parse(position, "Nf3") → Move` (necesario para importar PGN en la
       fase 6, pero se prueba aquí).
 - [ ] `Rules`: jaque, jaque mate, ahogado, material insuficiente (K-K, K+B-K,
       K+N-K, K+B-K+B mismo color), regla de 50 jugadas.
