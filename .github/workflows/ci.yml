@@ -29,8 +29,13 @@ jobs:
           cache: maven
           cache-dependency-path: backend/**/pom.xml
 
+      - name: Install Stockfish (reference for the differential test)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends stockfish
+
       - name: Verify (compile, unit + slow + integration tests, architecture rules)
         run: ./mvnw -B -ntp verify -Pslow-tests
+        env:
+          KOPI_STOCKFISH: /usr/games/stockfish
 
       - name: Upload coverage reports
         if: always()
