@@ -9,17 +9,12 @@
 
 <main class="container game-layout">
     <div class="board-column" role="region" th:aria-label="#{game.board}">
-        <!--/* Everything the board needs comes from the server (design §10.2, §11.3). */-->
-        <div id="board" class="board"
-             th:data-fen="${game.fen}"
-             th:data-orientation="${game.orientation}"
-             th:data-turn="${game.turnColor}"
-             th:data-movable="${game.humanToMove}"
-             th:data-check="${game.inCheck}"
-             th:data-legal-moves="${game.legalMovesJson}"
-             th:data-last-move="${game.lastMove}"></div>
+        <!--/* The position and legal moves are in #board-state, in the panel below,
+               so a move can update both without reloading the page. */-->
+        <div id="board" class="board" th:data-orientation="${game.orientation}"></div>
 
-        <form id="move-form" method="post" th:action="@{/games/{id}/moves(id=${game.id})}">
+        <form id="move-form" method="post" th:action="@{/games/{id}/moves(id=${game.id})}"
+              th:data-live-action="@{/games/{id}/live-moves(id=${game.id})}">
             <input type="hidden" name="uci" value="">
             <input type="hidden" name="version" th:value="${game.version}">
         </form>
@@ -37,25 +32,40 @@
 
     <aside class="game-panel card">
         <span class="eyebrow" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
-        <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}}">Your move</h1>
-        <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
 
-        <h2 class="panel-title" th:text="#{game.moves}">Moves</h2>
-        <p class="muted" th:if="${#lists.isEmpty(game.moveRows)}" th:text="#{game.noMoves}">No moves yet.</p>
-        <ol class="move-list" th:unless="${#lists.isEmpty(game.moveRows)}">
-            <li th:each="row : ${game.moveRows}">
-                <span class="move-number" th:text="${row.number} + '.'">1.</span>
-                <span class="move" th:text="${row.white}">e4</span>
-                <span class="move" th:text="${row.black}">e5</span>
-            </li>
-        </ol>
+        <!--/* Everything that changes with a move. board.js asks the server for just
+               this fragment (POST …/live-moves) instead of reloading the page. */-->
+        <div id="game-live" class="game-live" th:fragment="live">
+            <!--/* Everything the board needs comes from the server (design §10.2, §11.3). */-->
+            <div id="board-state" hidden
+                 th:data-fen="${game.fen}"
+                 th:data-turn="${game.turnColor}"
+                 th:data-movable="${game.humanToMove}"
+                 th:data-check="${game.inCheck}"
+                 th:data-legal-moves="${game.legalMovesJson}"
+                 th:data-last-move="${game.lastMove}"
+                 th:data-version="${game.version}"
+                 th:data-thinking="#{status.botToMove}"></div>
+            <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}}">Your move</h1>
+            <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
 
-        <div class="panel-actions">
-            <form method="post" th:action="@{/games/{id}/resign(id=${game.id})}" th:unless="${game.finished}">
-                <input type="hidden" name="version" th:value="${game.version}">
-                <button class="btn btn-secondary" type="submit" th:text="#{game.resign}">Resign</button>
-            </form>
-            <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+            <h2 class="panel-title" th:text="#{game.moves}">Moves</h2>
+            <p class="muted" th:if="${#lists.isEmpty(game.moveRows)}" th:text="#{game.noMoves}">No moves yet.</p>
+            <ol class="move-list" th:unless="${#lists.isEmpty(game.moveRows)}">
+                <li th:each="row : ${game.moveRows}">
+                    <span class="move-number" th:text="${row.number} + '.'">1.</span>
+                    <span class="move" th:text="${row.white}">e4</span>
+                    <span class="move" th:text="${row.black}">e5</span>
+                </li>
+            </ol>
+
+            <div class="panel-actions">
+                <form method="post" th:action="@{/games/{id}/resign(id=${game.id})}" th:unless="${game.finished}">
+                    <input type="hidden" name="version" th:value="${game.version}">
+                    <button class="btn btn-secondary" type="submit" th:text="#{game.resign}">Resign</button>
+                </form>
+                <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+            </div>
         </div>
         <!--/* Discreet on purpose: office mode is for not being noticed (design §11.5). */-->
         <a class="muted text-view" th:href="@{/games/{id}(id=${game.id}, view='office')}"
