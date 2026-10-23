@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 class HomeController {
 
-    /// The bots that play today. `KNIGHT` and the Stockfish bots arrive in
-    /// phase 4 (plan §7); until then they are shown but cannot be chosen.
-    static final Set<BotProfile> AVAILABLE_BOTS = EnumSet.of(BotProfile.PAWN);
+    /// The bots that play today. The Stockfish bots arrive with the
+    /// Stockfish adapter (plan §7.2); until then they are shown but cannot
+    /// be chosen.
+    static final Set<BotProfile> AVAILABLE_BOTS = EnumSet.of(BotProfile.PAWN, BotProfile.KNIGHT);
 
     /// How many games the "recent games" list shows.
     static final int RECENT_GAMES = 10;

@@ -605,12 +605,16 @@ Stockfish.
 
 ### 7.1 Bot `KNIGHT` (propio)
 
-- [ ] Función de evaluación: material + tablas de casillas (*piece-square
+- [x] Función de evaluación: material + tablas de casillas (*piece-square
       tables*) sencillas.
-- [ ] Búsqueda minimax con poda alfa-beta a profundidad 2 (configurable).
-- [ ] Ordenación básica de jugadas (capturas primero) para que la poda rinda.
-- [ ] Pruebas: en posiciones con una pieza colgada, la captura; en mate en 1,
+- [x] Búsqueda minimax con poda alfa-beta a profundidad 2 (configurable).
+- [x] Ordenación básica de jugadas (capturas primero) para que la poda rinda.
+- [x] Pruebas: en posiciones con una pieza colgada, la captura; en mate en 1,
       lo encuentra.
+- **Hecho:** `Evaluation` (material + bonificaciones por casilla escritas
+  como fórmulas propias) y `KnightBot` (negamax + alfa-beta, MVV-LVA,
+  azar entre jugadas a 10 cp de la mejor). Comprobación rápida: 19
+  victorias y 1 tablas en 20 partidas contra `PAWN`, ~4 ms por jugada.
 
 ### 7.2 Adaptador Stockfish
 
@@ -635,7 +639,7 @@ Stockfish.
       en todas las máquinas; la genérica `x86-64` sí).
 - [ ] Prueba de integración con Stockfish real (Testcontainers con la imagen
       de la app, o el binario descargado en CI).
-- [ ] **ADR-006** (bots propios para niveles bajos).
+- [x] **ADR-006** (bots propios para niveles bajos).
 
 ### 7.3 Calibración
 

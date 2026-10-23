@@ -8,6 +8,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-002](002-casos-de-uso-sin-spring.md) — Casos de uso sin dependencia de Spring
 - [ADR-003](003-postgresql-en-lugar-de-mongodb.md) — PostgreSQL en lugar de MongoDB
 - [ADR-004](004-reglas-propias-perft.md) — Reglas de ajedrez propias, verificadas con *perft*
+- [ADR-006](006-bots-propios-para-niveles-bajos.md) — Bots propios para los niveles bajos
 - [ADR-008](008-repeticion-y-50-jugadas-automaticas.md) — Repetición y 50 jugadas automáticas
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
 - [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)

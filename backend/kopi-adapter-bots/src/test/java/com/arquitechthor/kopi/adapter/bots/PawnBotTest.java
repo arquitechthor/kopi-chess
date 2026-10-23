@@ -106,7 +106,7 @@ class PawnBotTest {
 
     @Test
     void theBotPlayerPortPlaysPawnWithIt() {
-        var bots = new KopiBots(seeded(8));
+        var bots = new KopiBots(seeded(8), new KnightBot(KnightBot.DEFAULT_DEPTH, () -> null));
 
         var move = bots.chooseMove(Position.initial(), BotProfile.PAWN);
 
@@ -114,10 +114,10 @@ class PawnBotTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = BotProfile.class, names = "PAWN", mode = EnumSource.Mode.EXCLUDE)
-    void theOtherProfilesAreNotAvailableYet(BotProfile profile) {
-        // KNIGHT and the Stockfish bots arrive in phase 4.
-        var bots = new KopiBots(seeded(9));
+    @EnumSource(value = BotProfile.class, names = {"PAWN", "KNIGHT"}, mode = EnumSource.Mode.EXCLUDE)
+    void theStockfishProfilesAreNotAvailableYet(BotProfile profile) {
+        // BISHOP, ROOK and QUEEN arrive with the Stockfish adapter.
+        var bots = new KopiBots(seeded(9), new KnightBot(KnightBot.DEFAULT_DEPTH, () -> null));
 
         assertThatThrownBy(() -> bots.chooseMove(Position.initial(), profile))
                 .isInstanceOfSatisfying(BotUnavailableException.class, e -> assertThat(e.profile()).isEqualTo(profile));

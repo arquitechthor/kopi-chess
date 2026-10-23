@@ -44,10 +44,10 @@ class WebAdapterTestApplication {
 
     static final Instant NOW = Instant.parse("2026-10-23T12:00:00Z");
 
-    /// The first legal move in UCI order; `KNIGHT` is "down", to test the
+    /// The first legal move in UCI order; `QUEEN` is "down", to test the
     /// message for an unavailable bot.
     static final BotPlayer BOT = (position, profile) -> {
-        if (profile == BotProfile.KNIGHT) {
+        if (profile == BotProfile.QUEEN) {
             throw new BotUnavailableException(profile, new IllegalStateException("not yet"));
         }
         return position.legalMoves().stream().min(Comparator.comparing(Move::toUci)).orElseThrow();
