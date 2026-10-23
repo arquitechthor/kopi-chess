@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
-<head th:replace="~{fragments/layout :: head(#{home.title})}"></head>
+<head th:replace="~{fragments/layout :: head(#{home.title}, ~{})}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: header}"></nav>
 
@@ -14,18 +14,73 @@
             </h1>
             <p class="hero-desc" th:text="#{home.intro}">Play against five bots and review every game afterwards.</p>
             <div class="hero-actions">
-                <a class="btn btn-primary" href="https://github.com/arquitechthor/kopi-chess"
-                   th:text="#{home.follow}">Follow the progress on GitHub</a>
+                <a class="btn btn-primary" href="#new-game" th:text="#{newGame.play}">Play</a>
             </div>
         </div>
     </section>
 
-    <section aria-labelledby="status-title">
+    <section id="new-game" aria-labelledby="new-game-title">
         <div class="container">
-            <div class="card">
-                <h2 id="status-title" th:text="#{home.status.title}">Under construction</h2>
-                <p th:text="#{home.status.body}">Kopi Chess is being built in the open, one phase at a time.</p>
-                <p class="muted" th:text="#{home.status.phase(3, 7)}">Current phase: 3 of 7.</p>
+            <form class="card new-game" method="post" th:action="@{/games}">
+                <h2 id="new-game-title" th:text="#{newGame.title}">New game</h2>
+                <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">The bot cannot play.</p>
+
+                <fieldset>
+                    <legend th:text="#{newGame.bot}">Opponent</legend>
+                    <div class="choices">
+                        <label class="choice" th:each="bot, it : ${bots}" th:classappend="${!bot.available} ? 'is-disabled'">
+                            <input type="radio" name="bot" th:value="${bot.profile}" th:checked="${it.first}"
+                                   th:disabled="${!bot.available}" required>
+                            <span class="choice-name" th:text="#{|bot.${bot.profile}.name|}">Pawn</span>
+                            <span class="choice-level" th:text="#{newGame.level(${bot.profile.level})}">Level 1</span>
+                            <span class="choice-desc"
+                                  th:text="${bot.available} ? #{|bot.${bot.profile}.description|} : #{newGame.comingSoon}">Plays like a child.</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend th:text="#{newGame.color}">Your colour</legend>
+                    <div class="choices choices-inline">
+                        <label class="choice"><input type="radio" name="color" value="WHITE" checked>
+                            <span class="choice-name" th:text="#{color.WHITE}">White</span></label>
+                        <label class="choice"><input type="radio" name="color" value="BLACK">
+                            <span class="choice-name" th:text="#{color.BLACK}">Black</span></label>
+                        <label class="choice"><input type="radio" name="color" value="RANDOM">
+                            <span class="choice-name" th:text="#{newGame.random}">Random</span></label>
+                    </div>
+                </fieldset>
+
+                <button class="btn btn-primary" type="submit" th:text="#{newGame.play}">Play</button>
+            </form>
+        </div>
+    </section>
+
+    <section aria-labelledby="recent-title" th:unless="${#lists.isEmpty(recentGames)}">
+        <div class="container">
+            <h2 id="recent-title" th:text="#{recent.title}">Recent games</h2>
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th scope="col" th:text="#{recent.date}">Date</th>
+                        <th scope="col" th:text="#{recent.bot}">Opponent</th>
+                        <th scope="col" th:text="#{recent.color}">Colour</th>
+                        <th scope="col" th:text="#{recent.moves}">Moves</th>
+                        <th scope="col" th:text="#{recent.result}">Result</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="summary : ${recentGames}">
+                        <td><a th:href="@{/games/{id}(id=${summary.id})}"
+                               th:text="${#temporals.format(summary.createdAt, #messages.msg('recent.dateFormat'))}">23/10/2026 12:00</a></td>
+                        <td th:text="#{|bot.${summary.botProfile}.name|}">Pawn</td>
+                        <td th:text="#{|color.${summary.humanColor}|}">White</td>
+                        <td th:text="${(summary.plies + 1) / 2}">12</td>
+                        <td th:text="${summary.result.isPresent()} ? #{|result.${summary.result.get()}|} : #{result.IN_PROGRESS}">In progress</td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </section>

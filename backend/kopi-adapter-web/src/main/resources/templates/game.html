@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{game.title}, ~{::link})}">
+    <link rel="stylesheet" th:href="@{/vendor/chessground-9.2.1/chessground.base.css}">
+    <link rel="stylesheet" th:href="@{/vendor/chessground-9.2.1/chessground.cburnett.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<main class="container game-layout">
+    <div class="board-column" role="region" th:aria-label="#{game.board}">
+        <!--/* Everything the board needs comes from the server (design §10.2, §11.3). */-->
+        <div id="board" class="board"
+             th:data-fen="${game.fen}"
+             th:data-orientation="${game.orientation}"
+             th:data-turn="${game.turnColor}"
+             th:data-movable="${game.humanToMove}"
+             th:data-check="${game.inCheck}"
+             th:data-legal-moves="${game.legalMovesJson}"
+             th:data-last-move="${game.lastMove}"></div>
+
+        <form id="move-form" method="post" th:action="@{/games/{id}/moves(id=${game.id})}">
+            <input type="hidden" name="uci" value="">
+            <input type="hidden" name="version" th:value="${game.version}">
+        </form>
+
+        <dialog id="promotion" class="promotion" th:aria-label="#{game.promotion}">
+            <p th:text="#{game.promotion}">Promote to</p>
+            <div class="promotion-pieces">
+                <button type="button" data-piece="q" th:title="#{piece.QUEEN}">♕</button>
+                <button type="button" data-piece="r" th:title="#{piece.ROOK}">♖</button>
+                <button type="button" data-piece="b" th:title="#{piece.BISHOP}">♗</button>
+                <button type="button" data-piece="n" th:title="#{piece.KNIGHT}">♘</button>
+            </div>
+        </dialog>
+    </div>
+
+    <aside class="game-panel card">
+        <span class="eyebrow" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
+        <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}}">Your move</h1>
+        <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
+
+        <h2 class="panel-title" th:text="#{game.moves}">Moves</h2>
+        <p class="muted" th:if="${#lists.isEmpty(game.moveRows)}" th:text="#{game.noMoves}">No moves yet.</p>
+        <ol class="move-list" th:unless="${#lists.isEmpty(game.moveRows)}">
+            <li th:each="row : ${game.moveRows}">
+                <span class="move-number" th:text="${row.number} + '.'">1.</span>
+                <span class="move" th:text="${row.white}">e4</span>
+                <span class="move" th:text="${row.black}">e5</span>
+            </li>
+        </ol>
+
+        <div class="panel-actions">
+            <form method="post" th:action="@{/games/{id}/resign(id=${game.id})}" th:unless="${game.finished}">
+                <input type="hidden" name="version" th:value="${game.version}">
+                <button class="btn btn-secondary" type="submit" th:text="#{game.resign}">Resign</button>
+            </form>
+            <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+        </div>
+    </aside>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script type="module" th:src="@{/js/board.js}"></script>
+</body>
+</html>
