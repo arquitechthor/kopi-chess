@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--/*
+  Office mode (design §11.5): a game that looks like a page of an internal
+  company portal. Deliberately none of Kopi's look (no logo, palette or
+  menu), no JavaScript, and a neutral tab title. The company is not named:
+  no real organisation is imitated.
+*/-->
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{office.tabTitle}">Operations report</title>
+    <link rel="stylesheet" th:href="@{/css/office.css}">
+</head>
+<body>
+<header class="portal-header">
+    <div class="portal-inner">
+        <span class="portal-name" th:text="#{office.portal}">Employee portal</span>
+        <nav class="portal-menu" aria-hidden="true">
+            <span th:text="#{office.menu.home}">Home</span>
+            <span class="is-current" th:text="#{office.menu.reports}">Reports</span>
+            <span th:text="#{office.menu.calendar}">Calendar</span>
+            <span th:text="#{office.menu.directory}">Directory</span>
+        </nav>
+    </div>
+</header>
+
+<main class="portal-inner portal-main" th:with="o=${office}">
+    <p class="breadcrumbs">
+        <span th:text="#{office.menu.reports}">Reports</span> ›
+        <span th:text="#{office.department}">Operations</span> ›
+        <span th:text="#{office.reportName(${#strings.substring(o.id, 0, 8)})}">Report 00000000</span>
+    </p>
+    <h1 th:text="#{office.heading}">Weekly operations report</h1>
+
+    <div class="messages" aria-live="polite">
+        <p class="msg msg-ok" th:if="${played}">
+            <span th:text="#{office.played(${played})}">Recorded: Nf3.</span>
+            <span th:if="${reply}" th:text="#{office.reply(${reply})}">Reply: e5.</span>
+        </p>
+        <p class="msg msg-error" role="alert" th:if="${error}"
+           th:text="${error == 'OFFICE_AMBIGUOUS'} ? #{error.OFFICE_AMBIGUOUS(${candidates})} : #{|error.${error}|}">
+            Not a valid code.</p>
+        <p class="msg" th:text="#{${o.statusKey}}">Your move</p>
+    </div>
+
+    <div class="layout">
+        <section aria-labelledby="board-title">
+            <table class="grid">
+                <caption id="board-title" th:text="#{office.boardCaption}">Stock by location</caption>
+                <thead>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col" th:each="file : ${o.files}" th:text="${file}">a</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rank : ${o.ranks}">
+                    <th scope="row" th:text="${rank.label}">8</th>
+                    <td th:each="cell : ${rank.cells}" th:classappend="${cell.lastMove} ? 'is-last'"
+                        th:title="${cell.square}" th:text="${cell.piece}">T</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="legend">
+                <span th:text="#{office.legend}">Key:</span>
+                <span th:text="#{office.legendPieces(${o.letters[0]}, ${o.letters[1]}, ${o.letters[2]}, ${o.letters[3]}, ${o.letters[4]}, ${o.letters[5]})}">K king…</span>
+                <span th:text="#{office.legendCase}">Upper case: white; lower case: black.</span>
+            </p>
+
+            <form class="entry" method="post" th:action="@{/games/{id}/office-moves(id=${o.id})}" th:if="${o.humanToMove}">
+                <label for="move" th:text="#{office.codeLabel}">Operation code</label>
+                <input id="move" name="move" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+                       autofocus required th:value="${typed}" th:placeholder="#{office.codePlaceholder}">
+                <input type="hidden" name="version" th:value="${o.version}">
+                <button type="submit" th:text="#{office.submit}">Record</button>
+            </form>
+        </section>
+
+        <aside>
+            <section th:unless="${#lists.isEmpty(o.groups)}" aria-labelledby="codes-title">
+                <h2 id="codes-title" th:text="#{office.validCodes}">Valid codes</h2>
+                <dl class="codes">
+                    <th:block th:each="group : ${o.groups}">
+                        <dt th:text="#{|piece.${group.piece}|} + ' (' + ${group.letter} + ')'">King (K)</dt>
+                        <dd th:text="${#strings.listJoin(group.moves, ' · ')}">Kf1 · Ke2</dd>
+                    </th:block>
+                </dl>
+            </section>
+
+            <section aria-labelledby="log-title">
+                <h2 id="log-title" th:text="#{office.log}">Log</h2>
+                <p class="muted" th:if="${#lists.isEmpty(o.history)}" th:text="#{office.logEmpty}">No entries.</p>
+                <table class="log" th:unless="${#lists.isEmpty(o.history)}">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{color.WHITE}">White</th>
+                        <th scope="col" th:text="#{color.BLACK}">Black</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${o.history}">
+                        <td th:text="${row.number}">1</td>
+                        <td th:text="${row.white}">e4</td>
+                        <td th:text="${row.black}">e5</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <form method="post" th:action="@{/games/{id}/resign(id=${o.id})}" th:unless="${o.finished}">
+                <input type="hidden" name="version" th:value="${o.version}">
+                <button class="secondary" type="submit" th:text="#{office.close}">Close report</button>
+            </form>
+            <form method="post" th:action="@{/games}" th:if="${o.finished}">
+                <input type="hidden" name="bot" value="PAWN">
+                <input type="hidden" name="color" value="RANDOM">
+                <button type="submit" th:text="#{office.newReport}">New report</button>
+            </form>
+        </aside>
+    </div>
+</main>
+
+<footer class="portal-footer">
+    <div class="portal-inner">
+        <span th:text="#{office.footer}">Operations Department · Internal use</span>
+        <span class="portal-links">
+            <a href="?lang=en" hreflang="en" lang="en">EN</a>
+            <a href="?lang=es" hreflang="es" lang="es">ES</a>
+            <a th:href="@{/games/{id}(id=${office.id}, view='board')}" th:text="#{office.standardView}">Standard view</a>
+        </span>
+    </div>
+</footer>
+</body>
+</html>

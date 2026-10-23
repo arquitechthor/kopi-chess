@@ -80,7 +80,7 @@ record GamePage(
         return rows;
     }
 
-    private static String statusKey(GameView view) {
+    static String statusKey(GameView view) {
         if (view.outcome().isPresent()) {
             // Exhaustive over the sealed GameOutcome: every ending needs a
             // sentence in both languages.
