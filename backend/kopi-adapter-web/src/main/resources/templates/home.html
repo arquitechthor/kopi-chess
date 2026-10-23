@@ -2,16 +2,32 @@
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head th:replace="~{fragments/layout :: head(#{home.title})}"></head>
 <body>
-<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: header}"></nav>
 
-<main class="page">
-    <h1 th:text="#{home.title}">Play chess. Understand your games.</h1>
-    <p class="lead" th:text="#{home.intro}">Play against five bots and review every game afterwards.</p>
+<main>
+    <section class="hero">
+        <div class="container">
+            <span class="eyebrow" th:text="#{home.eyebrow}">Open source · Chess and code</span>
+            <h1>
+                <span th:text="#{home.headline.play}">Play chess.</span>
+                <span class="gradient-text" th:text="#{home.headline.understand}">Understand your games.</span>
+            </h1>
+            <p class="hero-desc" th:text="#{home.intro}">Play against five bots and review every game afterwards.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/arquitechthor/kopi-chess"
+                   th:text="#{home.follow}">Follow the progress on GitHub</a>
+            </div>
+        </div>
+    </section>
 
-    <section class="notice" aria-labelledby="status-title">
-        <h2 id="status-title" th:text="#{home.status.title}">Under construction</h2>
-        <p th:text="#{home.status.body}">Kopi Chess is being built in the open, one phase at a time.</p>
-        <p class="muted" th:text="#{home.status.phase(1, 7)}">Current phase: 1 of 7.</p>
+    <section aria-labelledby="status-title">
+        <div class="container">
+            <div class="card">
+                <h2 id="status-title" th:text="#{home.status.title}">Under construction</h2>
+                <p th:text="#{home.status.body}">Kopi Chess is being built in the open, one phase at a time.</p>
+                <p class="muted" th:text="#{home.status.phase(2, 7)}">Current phase: 2 of 7.</p>
+            </div>
+        </div>
     </section>
 </main>
 

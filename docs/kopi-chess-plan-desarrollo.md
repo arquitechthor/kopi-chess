@@ -426,6 +426,9 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 - [ ] **`kopi-adapter-web`**:
   - Página de inicio: elegir bot y color (formulario Thymeleaf).
   - Página de partida: tablero Chessground, lista de jugadas, estado.
+  - Identidad visual de la familia de webs (diseño §11.6), con el tablero
+    de Chessground en la paleta de Kopi. La base (menú, pie, *tokens*) ya
+    está desde la fase 2.
   - `board.js`: leer `data-fen` y `data-legal-moves`, enviar la jugada,
     aplicar respuesta (FEN + última jugada del bot).
   - Fragmentos htmx para la lista de jugadas y el resultado.
