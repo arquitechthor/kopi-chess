@@ -337,7 +337,7 @@ Orden recomendado (cada punto con sus pruebas antes de pasar al siguiente):
 - [x] `Rules`: jaque, jaque mate, ahogado, material insuficiente (K-K, K+B-K,
       K+N-K, K+B-K+B mismo color), regla de 50 jugadas.
 - [x] **Hash Zobrist** en `Position` (tabla de aleatorios con semilla fija).
-- [ ] Triple repetición (necesita el historial: se resuelve en el agregado
+- [x] Triple repetición (necesita el historial: se resuelve en el agregado
       `Game`, fase 3, pero el hash se prepara aquí). **Hash listo:**
       `Position.zobristHash()`; el conteo se hace en la fase 3 (§6.1).
 - [x] **ADR-008** (repetición y 50 jugadas automáticas).
@@ -397,7 +397,7 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 
 ### 6.1 Dominio
 
-- [ ] Agregado **`Game`**: id, origen, estado, color humano, perfil, posición
+- [x] Agregado **`Game`**: id, origen, estado, color humano, perfil, posición
       inicial, lista de jugadas aplicadas, historial de hashes (repetición),
       resultado, motivo, versión.
   - `Game.start(...)`, `game.play(Move, Color)`, `game.resign(Color)`.
@@ -405,10 +405,20 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
     le toca, solo jugadas legales, fin de partida evaluado tras cada jugada.
   - Excepciones de dominio tipadas: `GameNotInProgress`, `NotYourTurn`,
     `IllegalMove`.
-- [ ] `GameOutcome` como *sealed interface* (`Checkmate`, `Stalemate`,
+  - **Hecho** en el paquete `domain.game`. `Game` es inmutable como
+    `Position`: `play` y `resign` devuelven la partida nueva con la versión
+    +1. Reciben también el instante (`Instant`) del cambio, que guardan las
+    tablas (`created_at`, `finished_at`, `played_at`); el reloj lo pone la
+    aplicación. Las excepciones son una familia *sealed*
+    (`GameRuleException` → `GameNotInProgressException`,
+    `NotYourTurnException`, `IllegalMoveException`). Orden de los finales:
+    mate, ahogado, material insuficiente, triple repetición, 50 jugadas
+    (ADR-008). Pendiente para la persistencia (§6.3): reconstruir una
+    partida guardada (por ejemplo, rejugando sus jugadas).
+- [x] `GameOutcome` como *sealed interface* (`Checkmate`, `Stalemate`,
       `InsufficientMaterial`, `ThreefoldRepetition`, `FiftyMoveRule`,
       `Resignation`).
-- [ ] `BotProfile` (enum `PAWN` … `QUEEN`).
+- [x] `BotProfile` (enum `PAWN` … `QUEEN`).
 
 ### 6.2 Aplicación
 
