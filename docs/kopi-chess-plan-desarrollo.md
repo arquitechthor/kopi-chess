@@ -450,8 +450,13 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
 
 ### 6.3 Adaptadores
 
-- [ ] **`kopi-adapter-bots`**: bot `PAWN` (aleatorio ponderado con semilla:
-      peso extra a capturas y jaques).
+- [x] **`kopi-adapter-bots`**: bot `PAWN` (aleatorio ponderado con semilla:
+      peso extra a capturas y jaques). **Hecho:** peso 1, +3 si captura, +2
+      si da jaque, +3 si corona dama. El azar llega como
+      `Supplier<RandomGenerator>`: `ThreadLocalRandom` en producción (el
+      bot atiende peticiones de varios hilos), con semilla en pruebas.
+      `KopiBots` implementa `BotPlayer`; hasta la fase 4 los demás perfiles
+      responden `BotUnavailableException` (503).
 - [ ] **`kopi-adapter-persistence`**:
   - Migración `V2__games.sql` con `game` y `game_move` (diseño §6.1).
   - Implementación de `GameRepository` con `JdbcClient` o Spring Data JDBC.
