@@ -29,13 +29,23 @@ jobs:
           cache: maven
           cache-dependency-path: backend/**/pom.xml
 
+      # Official release, pinned and checksum-verified (digest from the GitHub release).
+      # The "universal" build runs on any x86-64 CPU.
       - name: Install Stockfish (reference for the differential test)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends stockfish
+        env:
+          STOCKFISH_URL: https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-linux-x86-64-universal.tar.gz
+          STOCKFISH_SHA256: 9defc0d4e55d49c65a6d042f3e571a39fcea499ade6dbe741b53b8c65e03611f
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL --retry 3 --max-time 120 -o stockfish.tar.gz "$STOCKFISH_URL"
+          echo "$STOCKFISH_SHA256  stockfish.tar.gz" | sha256sum -c -
+          mkdir stockfish && tar -xzf stockfish.tar.gz -C stockfish
+          binary=$(find "$PWD/stockfish" -type f -name 'stockfish-linux-x86-64*' ! -name '*.*' | head -n 1)
+          test -n "$binary" && chmod +x "$binary" && "$binary" quit
+          echo "KOPI_STOCKFISH=$binary" >> "$GITHUB_ENV"
 
       - name: Verify (compile, unit + slow + integration tests, architecture rules)
         run: ./mvnw -B -ntp verify -Pslow-tests
-        env:
-          KOPI_STOCKFISH: /usr/games/stockfish
 
       - name: Upload coverage reports
         if: always()

@@ -61,7 +61,7 @@ class DifferentialTest {
 
     /// Stockfish's FEN with the en passant field cleared when no en passant
     /// capture is legal. Recent versions already write it that way, but
-    /// older ones (such as the Ubuntu package CI installs) may write the
+    /// older ones may write the
     /// target whenever a pawn stands next to it. The legal moves, compared
     /// in full, still catch any en passant mistake.
     private static String withoutUnusableEnPassant(String stockfishFen, Position position) {
