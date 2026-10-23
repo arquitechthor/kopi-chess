@@ -472,7 +472,7 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
     con pruebas unitarias; las jugadas se añaden (nunca se reescriben) y la
     partida y sus jugadas se guardan en una sola transacción. Los
     instantes se truncan a microsegundos, la precisión de PostgreSQL.
-- [ ] **`kopi-adapter-rest`**:
+- [x] **`kopi-adapter-rest`**:
   - `POST /games`, `GET /games/{id}`, `POST /games/{id}/moves`,
     `POST /games/{id}/resign`, `GET /games`, `GET /bots`.
   - `@RestControllerAdvice` que traduce excepciones de dominio a
@@ -480,6 +480,16 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
     según `Accept-Language` y una propiedad `code` estable.
   - Versión en `If-Match`.
   - Pruebas con `MockMvc`.
+  - **Hecho** bajo `/api/v1`. JSON con DTOs propios (`ApiModel`), no las
+    vistas de la aplicación: es el contrato público. Las respuestas llevan
+    `ETag: "<versión>"`; jugar y rendirse exigen `If-Match` y, sin él,
+    responden `428 Precondition Required` (RFC 6585). Además de los
+    códigos previstos: `404` (partida inexistente) y `503` (bot no
+    disponible). El idioma sale solo de `Accept-Language` (`ApiLocale`),
+    sin depender del adaptador web. Mensajes en `i18n/rest/messages*`, con
+    claves `rest.*`. Las pruebas usan los casos de uso reales sobre un
+    repositorio en memoria (sin *mocks*). Falta importarlo en
+    `kopi-bootstrap`, junto con el cableado de los casos de uso.
 - [ ] **`kopi-adapter-web`**:
   - Página de inicio: elegir bot y color (formulario Thymeleaf).
   - Página de partida: tablero Chessground, lista de jugadas, estado.
