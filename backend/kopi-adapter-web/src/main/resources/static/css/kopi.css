@@ -38,6 +38,12 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
+  /* Kopi Chess only: the board in the family's palette (design §11.6). */
+  --square-light: #c7cde4;
+  --square-dark: #6f64a8;
+  --square-highlight: rgba(34, 211, 238, 0.42);
+  --square-check: rgba(251, 113, 133, 0.85);
+
   /* Like the other sites, the UI is dark only. */
   color-scheme: dark;
 }
@@ -182,6 +188,87 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .card h2 { font-size: 19px; margin-bottom: 8px; }
 .card p:last-child { margin-bottom: 0; }
 .muted { color: var(--text-faint); font-size: 13.5px; }
+
+.notice-error {
+  color: var(--text); background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.4); border-radius: var(--radius-sm);
+  padding: 10px 14px; font-size: 14.5px;
+}
+
+/* ── New game form ───────────────────────────────────────── */
+.new-game { max-width: 820px; display: grid; gap: 22px; }
+.new-game fieldset { border: 0; padding: 0; margin: 0; }
+.new-game legend { font-weight: 700; margin-bottom: 10px; }
+.new-game .btn { justify-self: start; }
+.choices { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.choices-inline { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.choice {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; cursor: pointer;
+}
+.choice:has(input:checked) { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+.choice.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.choice input { accent-color: var(--cyan); margin: 0; }
+.choice-name { font-weight: 700; }
+.choice-level, .choice-desc { grid-column: 2; font-size: 13px; color: var(--text-muted); }
+.choice-level { color: var(--violet-strong); font-weight: 600; }
+
+/* ── Tables ──────────────────────────────────────────────── */
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.data-table th, .data-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.data-table th { color: var(--text-muted); font-weight: 600; font-size: 13px; }
+
+/* ── Game page ───────────────────────────────────────────── */
+.game-layout {
+  display: grid; grid-template-columns: minmax(0, 600px) minmax(260px, 1fr); gap: 32px;
+  align-items: start; padding-top: 40px; padding-bottom: 60px;
+}
+@media (max-width: 860px) { .game-layout { grid-template-columns: 1fr; padding-top: 20px; } }
+
+.board { width: 100%; aspect-ratio: 1 / 1; }
+.game-panel { max-width: none; display: grid; gap: 14px; }
+.game-status { font-size: clamp(22px, 2.6vw, 28px); margin: 0; }
+.panel-title { font-size: 15px; color: var(--text-muted); margin: 6px 0 0; }
+.panel-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.panel-actions form { margin: 0; }
+
+.move-list {
+  list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px;
+  font-size: 15px;
+}
+.move-list li { display: grid; grid-template-columns: 2.6em 1fr 1fr; }
+.move-number { color: var(--text-faint); }
+
+.promotion {
+  background: var(--surface); color: var(--text); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.promotion::backdrop { background: rgba(7, 10, 20, 0.7); }
+.promotion p { color: var(--text); font-weight: 700; margin-bottom: 12px; }
+.promotion-pieces { display: flex; gap: 10px; }
+.promotion-pieces button {
+  font-size: 34px; line-height: 1; width: 64px; height: 64px; cursor: pointer;
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+}
+.promotion-pieces button:hover, .promotion-pieces button:focus-visible { border-color: var(--cyan); }
+
+/* Chessground in Kopi's colours: a CSS checkerboard instead of the brown
+   image (a1 is dark), cyan for the last move and the destinations. */
+.cg-wrap cg-board {
+  background: repeating-conic-gradient(var(--square-dark) 0 25%, var(--square-light) 0 50%) 0 0 / 25% 25%;
+  border-radius: 6px;
+}
+cg-board square.last-move { background-color: var(--square-highlight); }
+cg-board square.selected { background-color: rgba(34, 211, 238, 0.55); }
+cg-board square.move-dest { background: radial-gradient(rgba(7, 10, 20, 0.45) 19%, transparent 20%); }
+cg-board square.move-dest:hover { background: var(--square-highlight); }
+cg-board square.oc.move-dest { background: radial-gradient(transparent 0%, transparent 79%, rgba(7, 10, 20, 0.4) 80%); }
+cg-board square.check { background: radial-gradient(ellipse at center, var(--square-check) 0%, rgba(251, 113, 133, 0) 75%); }
+/* White with a dark halo: readable on light and dark squares alike. */
+.cg-wrap coords { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 0 3px rgba(7, 10, 20, 0.95); }
 
 /* ── Footer ──────────────────────────────────────────────── */
 footer { padding: 40px 0; border-top: 1px solid var(--border); }

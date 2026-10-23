@@ -490,7 +490,7 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
     claves `rest.*`. Las pruebas usan los casos de uso reales sobre un
     repositorio en memoria (sin *mocks*). Falta importarlo en
     `kopi-bootstrap`, junto con el cableado de los casos de uso.
-- [ ] **`kopi-adapter-web`**:
+- [x] **`kopi-adapter-web`**:
   - Página de inicio: elegir bot y color (formulario Thymeleaf).
   - Página de partida: tablero Chessground, lista de jugadas, estado.
   - Identidad visual de la familia de webs (diseño §11.6), con el tablero
@@ -502,6 +502,16 @@ jugar contra el bot `PAWN`, terminar la partida, verla guardada.
   - Todos los textos con `#{...}` en inglés y español (categorías, motivos de
     fin y errores traducidos desde los enums del dominio).
   - Jugadas mostradas en notación de figuras (`♘f3`).
+  - **Hecho**, con dos cambios. **Sin htmx por ahora:** la jugada es un
+    formulario clásico con *Post/Redirect/Get* (`board.js` solo rellena y
+    envía el formulario; la respuesta es la página entera con la jugada del
+    bot). Es más simple, funciona igual en el modo oficina y recargar nunca
+    repite una jugada; htmx queda como mejora posterior. **Chessground
+    9.2.1** copiado en `static/vendor/` (descargado de npm con su SHA-512
+    verificado, GPL-3.0-or-later), sin CDN. Tablero en la paleta de Kopi
+    (casillas por CSS, resaltados en cian), coronación con un `<dialog>`,
+    partidas recientes en la portada y página 404 propia. Hasta la fase 4,
+    los bots que no juegan aparecen como «Próximamente».
 - [x] **`kopi-bootstrap`**: `@Configuration` que crea los casos de uso con sus
       adaptadores y los decora con transacciones. **Hecho**
       (`UseCaseConfiguration`) **sin** decorarlos con transacciones: el bot

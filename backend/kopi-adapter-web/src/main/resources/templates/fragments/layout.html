@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title)">
+<!--/* `extra`: more <link>/<script> tags for one page (`~{::link}`), or `~{}` for none. */-->
+<head th:fragment="head(title, extra)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#070a14">
     <title th:text="${title} + ' · ' + #{app.name}">Kopi Chess</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <th:block th:replace="${extra}"></th:block>
     <link rel="stylesheet" th:href="@{/css/kopi.css}">
     <script th:src="@{/js/nav.js}" defer></script>
 </head>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{notFound.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <h1 th:text="#{notFound.title}">Game not found</h1>
+            <p class="hero-desc" th:text="#{notFound.body}">There is no game at this address.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
