@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{review.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<!--/* A game that ended before any move: nothing to analyse. */-->
+<main class="container">
+    <section class="card review-pending">
+        <h1 th:text="#{review.title}">Game review</h1>
+        <p th:text="#{review.empty}">This game ended before any move: there is nothing to review.</p>
+        <div class="panel-actions">
+            <a class="btn btn-secondary" th:href="@{/games/{id}(id=${game.id})}" th:text="#{review.backToGame}">Back to the game</a>
+            <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

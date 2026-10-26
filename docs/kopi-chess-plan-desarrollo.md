@@ -753,12 +753,14 @@ mostrar la revisión.
 
 ### 8.5 Pantalla de revisión
 
-- [ ] Barra de progreso con la extensión SSE de htmx.
-- [ ] Lista de jugadas con icono + texto de categoría.
-- [ ] Tablero navegable (← →), flecha con la mejor jugada, línea principal en
-      SAN.
-- [ ] Gráfica de evaluación en SVG generado en el servidor.
-- [ ] Resumen: precisión por color, conteos, mates perdidos, nombre de la
+- [x] Barra de progreso en vivo. (Con `EventSource` nativo en `review.js`, no
+      con la extensión de htmx: htmx no está en el proyecto y no compensa
+      añadirlo para un solo flujo de eventos.)
+- [x] Lista de jugadas con icono + texto de categoría.
+- [x] Tablero navegable (← →), flecha con la mejor jugada, línea principal en
+      SAN (las 6 primeras jugadas; la de un mate perdido, entera).
+- [x] Gráfica de evaluación en SVG generado en el servidor.
+- [x] Resumen: precisión por color, conteos, mates perdidos, nombre de la
       apertura.
 
 ### Criterio de aceptación

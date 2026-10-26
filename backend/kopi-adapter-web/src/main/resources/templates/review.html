@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{review.title}, ~{::link})}">
+    <link rel="stylesheet" th:href="@{/vendor/chessground-9.2.1/chessground.base.css}">
+    <link rel="stylesheet" th:href="@{/vendor/chessground-9.2.1/chessground.cburnett.css}">
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<!--/* Plan §8.5: the review of a finished game. While the analysis runs, a
+       progress bar follows it (review.js, Server-Sent Events from the API);
+       once done, the board, the graph, the verdicts and the summary. */-->
+<main class="container" th:with="r=${review}">
+
+    <!--/* ── Not done yet ─────────────────────────────────────── */-->
+    <section class="card review-pending" th:if="${r.state.name() != 'DONE'}">
+        <span class="eyebrow" th:text="#{review.eyebrow(#{|bot.${r.botProfile}.name|})}">Analysis · against Pawn</span>
+        <h1 th:text="#{review.title}">Game review</h1>
+
+        <th:block th:if="${r.state.name() == 'FAILED'}">
+            <p class="notice-error" role="alert" th:text="#{review.failed(${r.error})}">The analysis could not be completed.</p>
+            <form method="post" th:action="@{/games/{id}/analysis(id=${r.id})}">
+                <button class="btn btn-primary" type="submit" th:text="#{review.retry}">Try again</button>
+            </form>
+        </th:block>
+
+        <th:block th:unless="${r.state.name() == 'FAILED'}">
+            <p class="review-status" aria-live="polite"
+               th:text="${r.state.name() == 'RUNNING'} ? #{review.running} : #{review.queued}">Analysing the game…</p>
+            <progress id="analysis-progress" class="review-progress" max="1" value="0"
+                      th:data-events="@{/api/v1/games/{id}/analysis/events(id=${r.id})}"
+                      th:data-progress-text="#{review.progress('{0}', '{1}')}"
+                      th:aria-label="#{review.running}"></progress>
+            <p class="muted" id="analysis-progress-text"></p>
+            <noscript>
+                <p class="muted">
+                    <span th:text="#{review.noscript}">Reload the page to see how it is going.</span>
+                    <a th:href="@{/games/{id}/analysis(id=${r.id})}" th:text="#{review.reload}">Reload</a>
+                </p>
+            </noscript>
+        </th:block>
+
+        <div class="panel-actions">
+            <a class="btn btn-secondary" th:href="@{/games/{id}(id=${r.id})}" th:text="#{review.backToGame}">Back to the game</a>
+        </div>
+    </section>
+
+    <!--/* ── Done ─────────────────────────────────────────────── */-->
+    <div class="game-layout review-layout" th:if="${r.state.name() == 'DONE'}">
+        <div class="board-column" role="region" th:aria-label="#{game.board}">
+            <div id="board" class="board" th:data-orientation="${r.orientation}"></div>
+            <div id="review-state" hidden th:data-steps="${r.boardJson}"></div>
+
+            <div class="review-nav">
+                <button type="button" class="btn btn-secondary" data-go="first" th:aria-label="#{review.first}" th:title="#{review.first}">⏮</button>
+                <button type="button" class="btn btn-secondary" data-go="previous" th:aria-label="#{review.previous}" th:title="#{review.previous}">◀</button>
+                <button type="button" class="btn btn-secondary" data-go="next" th:aria-label="#{review.next}" th:title="#{review.next}">▶</button>
+                <button type="button" class="btn btn-secondary" data-go="last" th:aria-label="#{review.last}" th:title="#{review.last}">⏭</button>
+            </div>
+
+            <figure class="eval-graph">
+                <svg th:attr="viewBox='0 0 ' + ${r.graph.width} + ' ' + ${r.graph.height}" preserveAspectRatio="none"
+                     role="img" th:aria-label="#{review.graph}">
+                    <rect class="eval-graph-black" x="0" y="0" th:attr="width=${r.graph.width},height=${r.graph.height}"/>
+                    <path class="eval-graph-white" th:attr="d=${r.graph.area}"/>
+                    <line class="eval-graph-middle" x1="0" th:attr="y1=${r.graph.height / 2},x2=${r.graph.width},y2=${r.graph.height / 2}"/>
+                    <polyline class="eval-graph-line" th:attr="points=${r.graph.line}"/>
+                    <circle th:each="m : ${r.graph.markers}" r="4" th:class="|eval-graph-marker cat-${m.category}|"
+                            th:attr="cx=${m.x},cy=${m.y},data-ply=${m.ply}"/>
+                </svg>
+                <figcaption class="muted" th:text="#{review.graph}">Evaluation over the game</figcaption>
+            </figure>
+        </div>
+
+        <aside class="game-panel card">
+            <span class="eyebrow" th:text="#{review.eyebrow(#{|bot.${r.botProfile}.name|})}">Analysis · against Pawn</span>
+            <h1 class="game-status" th:text="#{review.title}">Game review</h1>
+
+            <p class="review-opening">
+                <strong th:text="#{review.opening}">Opening</strong>:
+                <span th:if="${r.opening}" th:text="${r.opening.eco + ' · ' + r.opening.name}">C60 · Ruy Lopez</span>
+                <span th:unless="${r.opening}" th:text="#{review.noOpening}">No named opening</span>
+            </p>
+
+            <div class="table-scroll">
+                <table class="data-table review-summary">
+                    <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">
+                            <span th:text="#{review.accuracy}">Accuracy</span>
+                            <a class="muted" href="https://lichess.org/page/accuracy" th:text="#{review.accuracyNote}">Lichess formula</a>
+                        </th>
+                        <th scope="col" th:each="category : ${r.categories()}">
+                            <span th:class="|cat cat-${category}|" th:title="#{|category.${category}|}"
+                                  th:aria-label="#{|category.${category}|}"></span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="side : ${ {'WHITE', 'BLACK'} }" th:with="s=${side == 'WHITE' ? r.white : r.black}">
+                        <th scope="row" th:text="#{|color.${side}|}">White</th>
+                        <td th:text="${s.accuracy != null} ? ${#numbers.formatDecimal(s.accuracy, 1, 1)} + ' %' : '—'">87.5 %</td>
+                        <td th:each="count : ${s.counts}" th:text="${count}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!--/* One verdict per move; review.js shows the one of the current move.
+                   Without JavaScript they are all listed. */-->
+            <div class="review-details" aria-live="polite">
+                <p class="review-detail" data-ply="0" th:text="#{review.startPosition}">Starting position</p>
+                <div class="review-detail" th:each="p : ${r.plies}" th:attr="data-ply=${p.ply}">
+                    <p class="review-detail-head">
+                        <strong th:text="${p.label}">12… Nf6</strong>
+                        <span th:class="|cat cat-${p.category}|" aria-hidden="true"></span>
+                        <span th:text="#{|category.${p.category}|}">Blunder</span>
+                        <span class="muted" th:text="#{review.evaluation(${p.evaluation})}">Evaluation: +0.35</span>
+                    </p>
+                    <p th:if="${p.missedMate != null}" th:text="#{review.missedMate(${p.missedMate}, ${p.bestLine})}">The engine found mate in 2.</p>
+                    <p th:if="${p.missedMate == null and !p.played}" th:text="#{review.best(${p.bestMove}, ${p.bestLine})}">Best was g6.</p>
+                    <p th:if="${p.missedMate == null and p.played}" class="muted" th:text="#{review.engineMove}">The engine's move.</p>
+                </div>
+            </div>
+
+            <h2 class="panel-title" th:text="#{review.moves}">Moves</h2>
+            <ol class="move-list review-moves">
+                <li th:each="row : ${r.moveRows}">
+                    <span class="move-number" th:text="${row.number} + '.'">1.</span>
+                    <th:block th:each="cell : ${ {row.white, row.black} }">
+                        <button th:if="${cell != null}" type="button" class="review-move" th:attr="data-ply=${cell.ply}">
+                            <span th:text="${cell.san}">e4</span>
+                            <span th:class="|cat cat-${cell.category}|" th:title="#{|category.${cell.category}|}"
+                                  th:aria-label="#{|category.${cell.category}|}"></span>
+                        </button>
+                        <span th:if="${cell == null}"></span>
+                    </th:block>
+                </li>
+            </ol>
+
+            <p class="muted" th:text="#{review.engine(${r.engine})}">Analysed by Stockfish 19</p>
+            <div class="panel-actions">
+                <a class="btn btn-secondary" th:href="@{/games/{id}(id=${r.id})}" th:text="#{review.backToGame}">Back to the game</a>
+                <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script type="module" th:src="@{/js/review.js}"></script>
+</body>
+</html>

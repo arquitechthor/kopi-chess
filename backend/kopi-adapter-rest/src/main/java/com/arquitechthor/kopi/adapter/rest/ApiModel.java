@@ -161,7 +161,7 @@ final class ApiModel {
             var analysis = view.analysis().get();
             var moves = new ArrayList<MoveAnalysisResponse>();
             for (var move : analysis.moves()) {
-                moves.add(MoveAnalysisResponse.of(move, view.playedSan().get(move.ply() - 1)));
+                moves.add(MoveAnalysisResponse.of(move, view.moves().get(move.ply() - 1).san()));
             }
             return new AnalysisResponse(view.gameId().value(), AnalysisJob.State.DONE,
                     view.job().map(AnalysisJob::attempts).orElse(0), null, analysis.engine(),

@@ -1,5 +1,9 @@
 package com.arquitechthor.kopi.adapter.web;
 
+import com.arquitechthor.kopi.application.analysis.GetAnalysis;
+import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
+import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
+import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
@@ -12,10 +16,12 @@ import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
+import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
@@ -29,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -88,6 +94,21 @@ class WebAdapterTestApplication {
     }
 
     @Bean
+    SavedAnalyses savedAnalyses() {
+        return new SavedAnalyses();
+    }
+
+    @Bean
+    RequestAnalysisUseCase requestAnalysis(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        return new RequestAnalysis(games, analyses, clock);
+    }
+
+    @Bean
+    GetAnalysisUseCase getAnalysis(InMemoryGames games, QueuedAnalyses analyses, SavedAnalyses saved) {
+        return new GetAnalysis(games, analyses, saved);
+    }
+
+    @Bean
     PlayMoveUseCase playMove(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
         return new PlayMove(games, BOT, analyses, clock);
     }
@@ -139,16 +160,26 @@ class WebAdapterTestApplication {
         }
     }
 
-    /// The analysis queue: the games whose analysis was queued, nothing
-    /// more (analysing is not this adapter's business).
+    /// The analysis queue, in a map: tests put jobs in any state with
+    /// [#put] (analysing is not this adapter's business).
     static final class QueuedAnalyses implements AnalysisJobQueue {
 
-        final List<GameId> queued = new CopyOnWriteArrayList<>();
+        private final Map<GameId, AnalysisJob> jobs = new ConcurrentHashMap<>();
+        private final AtomicLong ids = new AtomicLong();
 
         @Override
         public AnalysisJob enqueue(GameId gameId, Instant now) {
-            queued.add(gameId);
-            return new AnalysisJob(queued.size(), gameId, AnalysisJob.State.QUEUED, 0, Optional.empty(), now);
+            return jobs.compute(gameId, (_, job) -> job == null || job.state() == AnalysisJob.State.FAILED
+                    ? new AnalysisJob(ids.incrementAndGet(), gameId, AnalysisJob.State.QUEUED, 0, Optional.empty(), now)
+                    : job);
+        }
+
+        void put(AnalysisJob job) {
+            jobs.put(job.gameId(), job);
+        }
+
+        void clear() {
+            jobs.clear();
         }
 
         @Override
@@ -158,7 +189,7 @@ class WebAdapterTestApplication {
 
         @Override
         public Optional<AnalysisJob> findByGameId(GameId gameId) {
-            return Optional.empty();
+            return Optional.ofNullable(jobs.get(gameId));
         }
 
         @Override
@@ -179,6 +210,26 @@ class WebAdapterTestApplication {
         @Override
         public int recoverStale(Instant lockedBefore, int maxAttempts) {
             return 0;
+        }
+    }
+
+    /// Finished analyses, in a map.
+    static final class SavedAnalyses implements AnalysisRepository {
+
+        private final Map<GameId, GameAnalysis> analyses = new ConcurrentHashMap<>();
+
+        @Override
+        public Optional<GameAnalysis> findByGameId(GameId id) {
+            return Optional.ofNullable(analyses.get(id));
+        }
+
+        @Override
+        public void save(GameAnalysis analysis) {
+            analyses.put(analysis.gameId(), analysis);
+        }
+
+        void clear() {
+            analyses.clear();
         }
     }
 }

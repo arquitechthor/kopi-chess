@@ -64,6 +64,8 @@
                     <input type="hidden" name="version" th:value="${game.version}">
                     <button class="btn btn-secondary" type="submit" th:text="#{game.resign}">Resign</button>
                 </form>
+                <a class="btn btn-secondary" th:if="${game.finished}" th:href="@{/games/{id}/analysis(id=${game.id})}"
+                   th:text="#{game.review}">Review the game</a>
                 <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
             </div>
         </div>

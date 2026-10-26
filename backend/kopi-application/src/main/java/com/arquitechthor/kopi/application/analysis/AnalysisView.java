@@ -13,18 +13,28 @@ import java.util.Optional;
 /// @param gameId    the game
 /// @param job       its analysis job; empty if the analysis was never asked
 ///                  for
-/// @param analysis  the result, once saved
-/// @param playedSan the game's moves in SAN, in order, to show next to each
-///                  verdict
+/// @param analysis   the result, once saved
+/// @param initialFen the game's starting position
+/// @param moves      the game's moves, in order, to show next to each
+///                   verdict and to step through on a board
 public record AnalysisView(GameId gameId, Optional<AnalysisJob> job, Optional<GameAnalysis> analysis,
-                           List<String> playedSan) {
+                           String initialFen, List<PlayedMove> moves) {
 
     public AnalysisView {
         Objects.requireNonNull(gameId, "gameId");
         Objects.requireNonNull(job, "job");
         Objects.requireNonNull(analysis, "analysis");
-        playedSan = List.copyOf(playedSan);
+        Objects.requireNonNull(initialFen, "initialFen");
+        moves = List.copyOf(moves);
     }
+
+    /// A move of the game, with the position it led to.
+    ///
+    /// @param ply      1 for the first move
+    /// @param uci      `e2e4`
+    /// @param san      `e4`
+    /// @param fenAfter the position after it
+    public record PlayedMove(int ply, String uci, String san, String fenAfter) {}
 
     /// Whether the analysis is saved and can be shown.
     public boolean isDone() {

@@ -333,7 +333,12 @@ class AnalysisUseCasesTest {
             assertThat(view.isDone()).isTrue();
             assertThat(view.job()).map(AnalysisJob::state).hasValue(State.DONE);
             assertThat(view.analysis()).hasValue(saved.get(game.id()));
-            assertThat(view.playedSan()).containsExactly("e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6", "Qxf7#");
+            assertThat(view.moves()).extracting(AnalysisView.PlayedMove::san)
+                    .containsExactly("e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6", "Qxf7#");
+            assertThat(view.initialFen()).isEqualTo(Position.initial().toFen());
+            assertThat(view.moves().getFirst().uci()).isEqualTo("e2e4");
+            assertThat(view.moves().getFirst().fenAfter())
+                    .isEqualTo("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
         }
 
         @Test
