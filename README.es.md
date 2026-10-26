@@ -30,13 +30,15 @@ La interfaz está disponible en **inglés y español**.
 
 ## Estado
 
-🚧 **En desarrollo: fase 6 de 7 (PGN e historial).** Ya se puede jugar contra
-cinco bots, de `PAWN` a Stockfish a plena fuerza, en el navegador, en el
-**modo oficina** o por la API REST, y cada partida terminada se analiza en
+🚧 **En desarrollo: fase 7 de 7 (estabilización y 1.0).** Ya se puede jugar
+contra cinco bots, de `PAWN` a Stockfish a plena fuerza, en el navegador, en el
+**modo oficina** o por la API REST; importar cualquier partida terminada en PGN
+(Lichess, Chess.com, sobre el tablero) y exportar las tuyas; consultar el
+historial y tu balance contra cada bot; y cada partida terminada se analiza en
 segundo plano: veredicto de cada jugada, precisión, mates perdidos y gráfica de
-evaluación
-([`v0.5.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.5.0)).
-Esta fase añade importar y exportar PGN y un historial de partidas.
+evaluación ([`v0.6.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.6.0)).
+Esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo: la
+versión 1.0.
 
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
