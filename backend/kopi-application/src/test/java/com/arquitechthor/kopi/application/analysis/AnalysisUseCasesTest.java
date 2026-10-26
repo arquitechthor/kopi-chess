@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.InMemoryGameRepository;
+import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJob.State;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
@@ -84,8 +85,39 @@ class AnalysisUseCasesTest {
         return over;
     }
 
+    private final RecordedEvents events = new RecordedEvents();
+
     private RunAnalysisJob runner(OpeningBook book, int maxAttempts) {
-        return new RunAnalysisJob(queue, games, engine, book, analyses, SETTINGS, maxAttempts, clock);
+        return new RunAnalysisJob(queue, games, engine, book, analyses, events, SETTINGS, maxAttempts, clock);
+    }
+
+    /// The events published, as text: `progress 3/8`, `completed`, `failed …`.
+    private static final class RecordedEvents implements AnalysisEvents {
+
+        final List<String> published = new ArrayList<>();
+        boolean broken;
+
+        @Override
+        public void progress(GameId gameId, int analysedPositions, int totalPositions) {
+            record("progress " + analysedPositions + "/" + totalPositions);
+        }
+
+        @Override
+        public void completed(GameId gameId) {
+            record("completed");
+        }
+
+        @Override
+        public void failed(GameId gameId, String reason) {
+            record("failed " + reason);
+        }
+
+        private void record(String event) {
+            published.add(event);
+            if (broken) {
+                throw new IllegalStateException("listener gone");
+            }
+        }
     }
 
     /// An engine that answers from a script: for the n-th position asked,
@@ -218,6 +250,31 @@ class AnalysisUseCasesTest {
         }
 
         @Test
+        void tellsHowFarItGotAndHowItEnded() {
+            var game = storedGame(SCHOLARS_MATE);
+            queue.enqueue(game.id(), NOW);
+            scriptScholarsMate();
+
+            runner(book, 3).runNext();
+
+            assertThat(events.published).containsExactly("progress 1/8", "progress 2/8", "progress 3/8",
+                    "progress 4/8", "progress 5/8", "progress 6/8", "progress 7/8", "progress 8/8", "completed");
+        }
+
+        @Test
+        void aBrokenListenerDoesNotBreakTheAnalysis() {
+            var game = storedGame(SCHOLARS_MATE);
+            queue.enqueue(game.id(), NOW);
+            scriptScholarsMate();
+            events.broken = true;
+
+            runner(book, 3).runNext();
+
+            assertThat(saved).containsKey(game.id());
+            assertThat(queue.findByGameId(game.id())).map(AnalysisJob::state).hasValue(State.DONE);
+        }
+
+        @Test
         void nothingQueuedNothingDone() {
             assertThat(runner(book, 3).runNext()).isFalse();
             assertThat(engine.calls).isZero();
@@ -239,6 +296,9 @@ class AnalysisUseCasesTest {
             runner.runNext();
             assertThat(queue.findByGameId(game.id())).map(AnalysisJob::state).hasValue(State.FAILED);
             assertThat(saved).isEmpty();
+            // Only the final failure is news: a retry is still on its way.
+            assertThat(events.published).singleElement()
+                    .satisfies(event -> assertThat(event).startsWith("failed").contains("not installed"));
         }
 
         @Test
@@ -251,6 +311,56 @@ class AnalysisUseCasesTest {
                 assertThat(job.state()).isEqualTo(State.FAILED);
                 assertThat(job.lastError()).hasValueSatisfying(error -> assertThat(error).contains("no longer exists"));
             });
+        }
+    }
+
+    @Nested
+    class Get {
+
+        private GetAnalysis reader() {
+            return new GetAnalysis(games, queue, analyses);
+        }
+
+        @Test
+        void aFinishedAnalysisWithItsJobAndTheMovesPlayed() {
+            var game = storedGame(SCHOLARS_MATE);
+            queue.enqueue(game.id(), NOW);
+            scriptScholarsMate();
+            runner(_ -> Optional.empty(), 3).runNext();
+
+            var view = reader().get(game.id());
+
+            assertThat(view.isDone()).isTrue();
+            assertThat(view.job()).map(AnalysisJob::state).hasValue(State.DONE);
+            assertThat(view.analysis()).hasValue(saved.get(game.id()));
+            assertThat(view.playedSan()).containsExactly("e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6", "Qxf7#");
+        }
+
+        @Test
+        void aQueuedAnalysisHasAJobButNoResultYet() {
+            var game = resigned("e2e4");
+            queue.enqueue(game.id(), NOW);
+
+            var view = reader().get(game.id());
+
+            assertThat(view.isDone()).isFalse();
+            assertThat(view.job()).map(AnalysisJob::state).hasValue(State.QUEUED);
+        }
+
+        @Test
+        void aGameNeverAnalysedHasNeither() {
+            var game = storedGame("e2e4");
+
+            var view = reader().get(game.id());
+
+            assertThat(view.job()).isEmpty();
+            assertThat(view.analysis()).isEmpty();
+        }
+
+        @Test
+        void anUnknownGameIsNotFound() {
+            assertThatThrownBy(() -> reader().get(new GameId(new UUID(7, 7))))
+                    .isInstanceOf(GameNotFoundException.class);
         }
     }
 

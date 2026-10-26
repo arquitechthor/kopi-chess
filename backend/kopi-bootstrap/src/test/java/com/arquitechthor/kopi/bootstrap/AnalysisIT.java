@@ -81,6 +81,14 @@ class AnalysisIT {
         assertThat(evaluations).hasSize(2).allMatch(text -> text.startsWith("cp ") || text.startsWith("mate "));
         assertThat(jdbc.sql("select opening_eco from analysis where game_id = cast(:id as uuid)")
                 .param("id", id).query(String.class).single()).isNotNull();
+
+        // And through the API: the result, and a stream that ends at once.
+        var analysis = mvc.get().uri("/api/v1/games/{id}/analysis", id).exchange();
+        assertThat(analysis).hasStatusOk().bodyJson().extractingPath("$.state").isEqualTo("DONE");
+        assertThat(analysis).bodyJson().extractingPath("$.moves.length()").isEqualTo(2);
+        assertThat(analysis).bodyJson().extractingPath("$.moves[0].san").isEqualTo("e4");
+        assertThat(mvc.get().uri("/api/v1/games/{id}/analysis/events", id).accept(MediaType.TEXT_EVENT_STREAM)
+                .exchange(Duration.ofSeconds(5))).bodyText().contains("event:completed");
     }
 
     @Test
