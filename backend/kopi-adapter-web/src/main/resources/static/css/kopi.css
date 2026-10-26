@@ -271,6 +271,58 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 }
 .promotion-pieces button:hover, .promotion-pieces button:focus-visible { border-color: var(--cyan); }
 
+/* ── Review page (plan §8.5) ──────────────────────────────── */
+.review-pending { margin: 40px auto 60px; display: grid; gap: 14px; }
+.review-pending h1 { font-size: clamp(24px, 3vw, 32px); margin: 0; }
+.review-status { margin: 0; color: var(--text); }
+.review-progress { width: 100%; height: 10px; accent-color: var(--cyan); }
+
+.review-nav { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.review-nav .btn { padding: 8px 14px; font-size: 16px; }
+
+.eval-graph { margin: 16px 0 0; }
+.eval-graph svg { display: block; width: 100%; height: 110px; border-radius: var(--radius-sm); }
+.eval-graph figcaption { margin-top: 6px; }
+.eval-graph-black { fill: var(--surface-2); }
+.eval-graph-white { fill: rgba(241, 245, 249, 0.82); }
+.eval-graph-middle { stroke: var(--violet); stroke-width: 1; stroke-dasharray: 4 4; opacity: .7; }
+.eval-graph-line { fill: none; stroke: var(--cyan); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.eval-graph-marker { stroke: var(--bg); stroke-width: 1.5; cursor: pointer; vector-effect: non-scaling-stroke; }
+
+.review-opening { margin: 0; color: var(--text); }
+.review-summary th, .review-summary td { padding: 6px 8px; text-align: center; }
+.review-summary th:first-child, .review-summary td:first-child { text-align: left; }
+.review-summary th a { display: block; font-size: 11.5px; font-weight: 400; }
+
+.review-details { min-height: 4.5em; }
+.review-detail { margin: 0; color: var(--text); }
+.review-detail p { margin: 0 0 4px; color: var(--text-muted); }
+.review-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--text); }
+
+.review-moves li { grid-template-columns: 2.6em 1fr 1fr; align-items: center; }
+.review-move {
+  display: inline-flex; align-items: center; gap: 6px; justify-self: start;
+  font: inherit; color: var(--text); background: none; border: 1px solid transparent;
+  border-radius: 6px; padding: 1px 6px; cursor: pointer;
+}
+.review-move:hover { border-color: var(--border-strong); }
+.review-move.is-current { border-color: var(--cyan); background: rgba(34, 211, 238, 0.12); }
+
+/* Move categories: a glyph and a colour (the name is in title/aria-label). */
+.cat { display: inline-block; min-width: 1.5em; font-weight: 800; font-size: 12.5px; text-align: center; }
+.cat::before { content: ""; }
+.cat-BOOK { color: var(--text-faint); }        .cat-BOOK::before { content: "◆"; }
+.cat-BEST { color: var(--cyan-strong); }       .cat-BEST::before { content: "★"; }
+.cat-GOOD { color: #86efac; }                  .cat-GOOD::before { content: "✓"; }
+.cat-INACCURACY { color: #fde68a; }            .cat-INACCURACY::before { content: "?!"; }
+.cat-MISTAKE { color: #fdba74; }               .cat-MISTAKE::before { content: "?"; }
+.cat-BLUNDER { color: var(--magenta); }        .cat-BLUNDER::before { content: "??"; }
+.cat-MISSED_MATE { color: var(--violet-strong); } .cat-MISSED_MATE::before { content: "#"; }
+/* The same colours as dots on the graph. */
+circle.cat-INACCURACY, circle.cat-MISTAKE { fill: #fdba74; }
+circle.cat-BLUNDER { fill: var(--magenta); }
+circle.cat-MISSED_MATE { fill: var(--violet-strong); }
+
 /* Chessground in Kopi's colours: a CSS checkerboard instead of the brown
    image (a1 is dark), cyan for the last move and the destinations. */
 .cg-wrap cg-board {
