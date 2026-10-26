@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Pgn;
@@ -14,9 +15,12 @@ import com.arquitechthor.kopi.domain.chess.Position;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -190,5 +194,37 @@ class JdbcGameRepositoryIT {
                 update game set status = 'FINISHED', result = 'WHITE_WIN', termination = 'DECLARED',
                        finished_at = created_at where id = :id""").param("id", game.id().value()).update())
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void filtersByOriginAndResultInSqlAsTheFilterDefinesThem() {
+        var inProgress = play(newGameWithId(Color.WHITE), "e2e4");
+        var resigned = newGameWithId(Color.WHITE).resign(Color.WHITE, START);
+        var importedWin = imported("1. e4 e5 2. Nf3 Nc6 1-0");
+        var importedDraw = imported("1. e4 e5 1/2-1/2");
+        var all = List.of(inProgress, resigned, importedWin, importedDraw);
+        all.forEach(repository::insert);
+
+        var filters = new ArrayList<GameFilter>();
+        filters.add(GameFilter.ALL);
+        for (var origin : GameOrigin.values()) {
+            filters.add(new GameFilter(Optional.of(origin), Optional.empty()));
+        }
+        for (var result : GameFilter.ResultFilter.values()) {
+            filters.add(new GameFilter(Optional.empty(), Optional.of(result)));
+            filters.add(new GameFilter(Optional.of(GameOrigin.IMPORTED), Optional.of(result)));
+        }
+        for (var filter : filters) {
+            var expected = all.stream().filter(filter::matches).map(Game::id).toList();
+            assertThat(repository.findRecent(filter, 0, 10)).as(filter.toString()).extracting(Game::id)
+                    .containsExactlyInAnyOrderElementsOf(expected);
+            assertThat(repository.count(filter)).as(filter.toString()).isEqualTo(expected.size());
+        }
+        assertThat(repository.count(new GameFilter(Optional.of(GameOrigin.PLAYED),
+                Optional.of(GameFilter.ResultFilter.BLACK_WIN)))).isOne();
+    }
+
+    private static Game newGameWithId(Color humanColor) {
+        return Game.start(new GameId(UUID.randomUUID()), humanColor, BotProfile.PAWN, Position.initial(), START);
     }
 }

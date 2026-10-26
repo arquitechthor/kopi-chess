@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{history.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<!--/* Plan §9: every game, a page at a time, filtered by origin and result.
+       A GET form, no JavaScript: the filters live in the address. */-->
+<main class="container history" th:with="h=${history}">
+    <h1 th:text="#{history.title}">History</h1>
+
+    <form class="history-filters" method="get" th:action="@{/games}">
+        <label>
+            <span th:text="#{history.origin}">Origin</span>
+            <select name="origin">
+                <option value="" th:text="#{history.all}">All</option>
+                <option th:each="o : ${h.origins()}" th:value="${o}" th:selected="${o == h.origin}"
+                        th:text="#{|history.origin.${o}|}">Played</option>
+            </select>
+        </label>
+        <label>
+            <span th:text="#{history.result}">Result</span>
+            <select name="result">
+                <option value="" th:text="#{history.all}">All</option>
+                <option th:each="r : ${h.results()}" th:value="${r}" th:selected="${r == h.result}"
+                        th:text="#{|history.result.${r}|}">1–0</option>
+            </select>
+        </label>
+        <button class="btn btn-secondary" type="submit" th:text="#{history.filter}">Filter</button>
+    </form>
+
+    <p class="muted" th:text="#{history.count(${h.total})}">12 games</p>
+
+    <p th:if="${#lists.isEmpty(h.rows)}" th:text="#{history.empty}">No games match.</p>
+    <div class="table-scroll" th:unless="${#lists.isEmpty(h.rows)}">
+        <table class="data-table history-table">
+            <thead>
+            <tr>
+                <th scope="col" th:text="#{recent.date}">Date</th>
+                <th scope="col" th:text="#{recent.bot}">Opponent</th>
+                <th scope="col" th:text="#{recent.color}">Your colour</th>
+                <th scope="col" th:text="#{recent.moves}">Moves</th>
+                <th scope="col" th:text="#{recent.result}">Result</th>
+                <th scope="col" th:text="#{history.forYou}">For you</th>
+                <th scope="col"><span class="sr-only" th:text="#{history.links}">Links</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${h.rows}">
+                <td><a th:href="@{/games/{id}(id=${row.id})}"
+                       th:text="${#temporals.format(row.createdAt, #messages.msg('recent.dateFormat'))}">23/10/2026 12:00</a></td>
+                <td th:text="${row.botProfile != null} ? #{|bot.${row.botProfile}.name|}
+                             : (${row.players.isEmpty()} ? #{recent.imported} : ${row.players})">Pawn</td>
+                <td th:text="${row.humanColor != null} ? #{|color.${row.humanColor}|} : '—'">White</td>
+                <td th:text="${row.moves}">12</td>
+                <td th:text="${row.result != null} ? #{|result.${row.result}|} : #{result.IN_PROGRESS}">1–0</td>
+                <td th:text="${row.forYou != null} ? #{|history.forYou.${row.forYou}|} : '—'"
+                    th:classappend="${row.forYou != null} ? |for-you-${row.forYou}|">Won</td>
+                <td><a th:if="${row.finished}" th:href="@{/games/{id}/analysis(id=${row.id})}"
+                       th:text="#{history.review}">Review</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav class="history-pages" th:aria-label="#{history.pages}" th:if="${h.totalPages > 1}">
+        <a class="btn btn-secondary" th:if="${h.previous}" th:href="@{${h.previous}}" th:text="#{history.previous}">Newer</a>
+        <span class="muted" th:text="#{history.page(${h.page + 1}, ${h.totalPages})}">Page 1 of 3</span>
+        <a class="btn btn-secondary" th:if="${h.next}" th:href="@{${h.next}}" th:text="#{history.next}">Older</a>
+    </nav>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

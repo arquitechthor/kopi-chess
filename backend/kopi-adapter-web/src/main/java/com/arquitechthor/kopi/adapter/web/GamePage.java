@@ -107,18 +107,9 @@ record GamePage(
         return "status.botToMove";
     }
 
-    /// `Morphy, Paul – Duke Karl`, from the PGN's `White` and `Black` tags
-    /// (`?` for one that is missing, as PGN itself writes it), or empty if
-    /// the PGN names neither: the page then just says "imported game".
+    /// An imported game's players (see [Players]).
     static String players(GameView view) {
-        var white = name(view, "White");
-        var black = name(view, "Black");
-        return white.equals("?") && black.equals("?") ? "" : white + " – " + black;
-    }
-
-    private static String name(GameView view, String tag) {
-        var name = view.pgnTags().getOrDefault(tag, "?").strip();
-        return name.isEmpty() ? "?" : name;
+        return Players.of(view.pgnTags());
     }
 
     private static String colorName(Color color) {

@@ -810,7 +810,9 @@ cualquier partida.
 - [x] REST: `POST /games/import` (texto plano o JSON; errores con línea,
       jugada y bando), `GET /games/{id}/pgn` (con enlace «Descargar PGN» en
       la partida y en la revisión).
-- [ ] **Historial**: listado paginado con filtros por origen y resultado.
+- [x] **Historial**: listado paginado con filtros por origen y resultado.
+      (`GameFilter` en el puerto, filtrado en SQL; página «Historial» con
+      «Para ti»: ganada, perdida, tablas o en curso; `GET /games?origin&result`.)
 - [ ] **Balance contra cada bot** (petición del 2026-10-26, después del
       historial): en la selección de bot de «Nueva partida», cuántas partidas
       llevas ganadas, perdidas, en tablas y sin terminar contra cada uno.

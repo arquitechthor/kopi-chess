@@ -76,6 +76,10 @@ img { max-width: 100%; display: block; }
   padding: 0 24px;
 }
 @media (max-width: 560px) { .container { padding: 0 16px; } }
+/* main is a flex item of the body (a column) with auto margins: without a
+   width it would shrink to its content, and a wide table would push the
+   page off the screen instead of scrolling inside .table-scroll. */
+main.container { width: 100%; }
 
 section { padding: 96px 0; position: relative; scroll-margin-top: 60px; }
 section + section { border-top: 1px solid var(--border); }
@@ -215,7 +219,9 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .choice-level { color: var(--violet-strong); font-weight: 600; }
 
 /* ── Tables ──────────────────────────────────────────────── */
-.table-scroll { overflow-x: auto; }
+/* position: the containing block of anything absolute inside (.sr-only), so it
+   is clipped with the table instead of widening the page. */
+.table-scroll { overflow-x: auto; position: relative; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 .data-table th, .data-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .data-table th { color: var(--text-muted); font-weight: 600; font-size: 13px; }
@@ -270,6 +276,25 @@ p { color: var(--text-muted); margin: 0 0 16px; }
   background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
 }
 .promotion-pieces button:hover, .promotion-pieces button:focus-visible { border-color: var(--cyan); }
+
+/* ── History (plan §9) ────────────────────────────────────── */
+.history { padding-top: 40px; padding-bottom: 60px; }
+.history h1 { font-size: clamp(26px, 3.4vw, 36px); }
+.history-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 18px; margin-bottom: 14px; }
+.history-filters label { display: grid; gap: 4px; font-size: 13.5px; color: var(--text-muted); }
+.history-filters select {
+  font: inherit; font-size: 14.5px; color: var(--text); background: var(--surface-2);
+  border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 10px;
+}
+.history-filters .btn { padding: 9px 16px; }
+.for-you-WON { color: #86efac; font-weight: 700; }
+.for-you-LOST { color: var(--magenta); font-weight: 700; }
+.for-you-DRAW { color: var(--text-muted); }
+.history-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* ── Import PGN (plan §9) ─────────────────────────────────── */
 .import-form { margin: 40px auto 60px; display: grid; gap: 12px; }

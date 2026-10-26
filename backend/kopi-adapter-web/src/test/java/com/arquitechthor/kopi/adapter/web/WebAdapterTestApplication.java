@@ -24,6 +24,7 @@ import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
@@ -158,13 +159,14 @@ class WebAdapterTestApplication {
         }
 
         @Override
-        public synchronized List<Game> findRecent(int offset, int limit) {
-            return games.values().stream().toList().reversed().stream().skip(offset).limit(limit).toList();
+        public synchronized List<Game> findRecent(GameFilter filter, int offset, int limit) {
+            return games.values().stream().filter(filter::matches).toList().reversed().stream()
+                    .skip(offset).limit(limit).toList();
         }
 
         @Override
-        public synchronized long count() {
-            return games.size();
+        public synchronized long count(GameFilter filter) {
+            return games.values().stream().filter(filter::matches).count();
         }
 
         synchronized void clear() {

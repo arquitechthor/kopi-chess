@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.persistence;
 import com.arquitechthor.kopi.adapter.persistence.GameRows.GameRow;
 import com.arquitechthor.kopi.adapter.persistence.GameRows.MoveRow;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
@@ -11,6 +12,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,9 +110,10 @@ public final class JdbcGameRepository implements GameRepository {
     }
 
     @Override
-    public List<Game> findRecent(int offset, int limit) {
-        var rows = jdbc.sql("select " + GAME_COLUMNS
-                        + " from game order by created_at desc, id limit :limit offset :offset")
+    public List<Game> findRecent(GameFilter filter, int offset, int limit) {
+        var where = Where.of(filter);
+        var rows = where.bind(jdbc.sql("select " + GAME_COLUMNS + " from game" + where.sql()
+                        + " order by created_at desc, id limit :limit offset :offset"))
                 .param("limit", limit)
                 .param("offset", offset)
                 .query(JdbcGameRepository::gameRow)
@@ -121,8 +124,41 @@ public final class JdbcGameRepository implements GameRepository {
     }
 
     @Override
-    public long count() {
-        return jdbc.sql("select count(*) from game").query(Long.class).single();
+    public long count(GameFilter filter) {
+        var where = Where.of(filter);
+        return where.bind(jdbc.sql("select count(*) from game" + where.sql())).query(Long.class).single();
+    }
+
+    /// A [GameFilter] in SQL: the `where` clause and its parameters. The
+    /// same criteria as `GameFilter.matches`, which the in-memory test
+    /// repositories use.
+    private record Where(String sql, Map<String, Object> params) {
+
+        static Where of(GameFilter filter) {
+            var conditions = new ArrayList<String>();
+            var params = new LinkedHashMap<String, Object>();
+            filter.origin().ifPresent(origin -> {
+                conditions.add("origin = :origin");
+                params.put("origin", origin.name());
+            });
+            filter.result().ifPresent(result -> {
+                if (result == GameFilter.ResultFilter.IN_PROGRESS) {
+                    conditions.add("status = 'IN_PROGRESS'");
+                } else {
+                    conditions.add("result = :result");
+                    params.put("result", result.name());
+                }
+            });
+            return new Where(conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions), params);
+        }
+
+        JdbcClient.StatementSpec bind(JdbcClient.StatementSpec statement) {
+            var bound = statement;
+            for (var param : params.entrySet()) {
+                bound = bound.param(param.getKey(), param.getValue());
+            }
+            return bound;
+        }
     }
 
     private void insertMoves(UUID gameId, List<MoveRow> moves) {

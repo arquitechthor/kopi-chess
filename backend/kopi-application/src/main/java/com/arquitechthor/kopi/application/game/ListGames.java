@@ -14,9 +14,9 @@ public final class ListGames implements ListGamesUseCase {
 
     @Override
     public GamePage list(ListGamesQuery query) {
-        var games = repository.findRecent(query.page() * query.size(), query.size()).stream()
+        var games = repository.findRecent(query.filter(), query.page() * query.size(), query.size()).stream()
                 .map(GameSummary::of)
                 .toList();
-        return new GamePage(games, query.page(), query.size(), repository.count());
+        return new GamePage(games, query.page(), query.size(), repository.count(query.filter()));
     }
 }
