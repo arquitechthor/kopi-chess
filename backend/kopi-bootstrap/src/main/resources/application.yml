@@ -5,6 +5,16 @@ spring:
   # (see compose.yaml) or from Testcontainers in tests and in TestKopiApplication.
   flyway:
     locations: classpath:db/migration
+  web:
+    resources:
+      # Static files get their content's hash in the URL (kopi-<hash>.css), and
+      # Thymeleaf's @{...} links follow: a new version is never hidden behind
+      # the browser's cache of the old one.
+      chain:
+        strategy:
+          content:
+            enabled: true
+            paths: /**
   messages:
     # One bundle per adapter that shows text to people; keys never clash (web: plain, REST: rest.*).
     basename: i18n/web/messages, i18n/rest/messages

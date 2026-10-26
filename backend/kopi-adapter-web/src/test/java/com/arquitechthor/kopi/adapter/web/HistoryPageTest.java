@@ -81,9 +81,15 @@ class HistoryPageTest {
 
         var html = page("/?lang=es");
 
-        // Pawn: one lost, one unfinished; the others never played.
-        assertThat(html).contains("Tu balance: ganadas 0 · perdidas 1 · tablas 0 · sin terminar 1")
-                .contains("Aún sin partidas.");
+        // Pawn: one lost, one unfinished, as a small table; the others never played.
+        assertThat(html).containsPattern("(?s)<caption class=\"sr-only\">Tu balance contra Peón</caption>"
+                        + "\\s*<tr><th scope=\"row\">Ganadas</th><td>0</td></tr>"
+                        + "\\s*<tr><th scope=\"row\">Perdidas</th><td>1</td></tr>"
+                        + "\\s*<tr><th scope=\"row\">Tablas</th><td>0</td></tr>"
+                        + "\\s*<tr><th scope=\"row\">Inconclusas</th><td>1</td></tr>")
+                .contains("Aún sin partidas.")
+                // Each bot with its picture.
+                .contains("src=\"/img/bots/pawn.jpg\"", "src=\"/img/bots/queen.jpg\"");
     }
 
     @Test

@@ -32,14 +32,23 @@
                         <label class="choice" th:each="bot, it : ${bots}" th:classappend="${!bot.available} ? 'is-disabled'">
                             <input type="radio" name="bot" th:value="${bot.profile}" th:checked="${it.first}"
                                    th:disabled="${!bot.available}" required>
+                            <img class="choice-avatar" th:src="@{|/img/bots/${#strings.toLowerCase(bot.profile)}.jpg|}"
+                                 alt="" width="64" height="64">
                             <span class="choice-name" th:text="#{|bot.${bot.profile}.name|}">Pawn</span>
                             <span class="choice-level" th:text="#{newGame.level(${bot.profile.level})}">Level 1</span>
                             <span class="choice-desc"
                                   th:text="${bot.available} ? #{|bot.${bot.profile}.description|} : #{newGame.comingSoon}">Plays like a child.</span>
-                            <!--/* The person's record against this bot (plan §9). */-->
-                            <span class="choice-record" th:with="r=${bot.record}"
-                                  th:text="${r.played() == 0} ? #{newGame.record.none}
-                                           : #{newGame.record(${r.won}, ${r.lost}, ${r.drawn}, ${r.unfinished})}">Your record: won 3 · lost 5 · drawn 1 · unfinished 2</span>
+                            <!--/* The person's record against this bot (plan §9): a small table, no
+                                   heading on screen (the caption is for screen readers). */-->
+                            <span class="choice-record" th:if="${bot.record.played() == 0}"
+                                  th:text="#{newGame.record.none}">No games yet.</span>
+                            <table class="choice-record" th:unless="${bot.record.played() == 0}" th:with="r=${bot.record}">
+                                <caption class="sr-only" th:text="#{newGame.record.caption(#{|bot.${bot.profile}.name|})}">Your record against Pawn</caption>
+                                <tr><th scope="row" th:text="#{newGame.record.won}">Won</th><td th:text="${r.won}">2</td></tr>
+                                <tr><th scope="row" th:text="#{newGame.record.lost}">Lost</th><td th:text="${r.lost}">2</td></tr>
+                                <tr><th scope="row" th:text="#{newGame.record.drawn}">Drawn</th><td th:text="${r.drawn}">1</td></tr>
+                                <tr><th scope="row" th:text="#{newGame.record.unfinished}">Unfinished</th><td th:text="${r.unfinished}">2</td></tr>
+                            </table>
                         </label>
                     </div>
                 </fieldset>
