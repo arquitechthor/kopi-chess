@@ -25,10 +25,21 @@ public interface GameRepository {
     ///                                       at `loadedVersion`
     void update(Game game, long loadedVersion);
 
-    /// Games ordered from the newest to the oldest, skipping `offset` and
+    /// The games that pass `filter`, from the newest to the oldest, skipping
+    /// `offset` and returning at most `limit`.
+    List<Game> findRecent(GameFilter filter, int offset, int limit);
+
+    /// How many games pass `filter`.
+    long count(GameFilter filter);
+
+    /// Every game, from the newest to the oldest, skipping `offset` and
     /// returning at most `limit`.
-    List<Game> findRecent(int offset, int limit);
+    default List<Game> findRecent(int offset, int limit) {
+        return findRecent(GameFilter.ALL, offset, limit);
+    }
 
     /// How many games are stored.
-    long count();
+    default long count() {
+        return count(GameFilter.ALL);
+    }
 }

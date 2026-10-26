@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.application.game;
 
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
@@ -42,15 +43,15 @@ public final class InMemoryGameRepository implements GameRepository {
     }
 
     @Override
-    public List<Game> findRecent(int offset, int limit) {
-        var newestFirst = new ArrayList<>(games.values());
+    public List<Game> findRecent(GameFilter filter, int offset, int limit) {
+        var newestFirst = new ArrayList<>(games.values().stream().filter(filter::matches).toList());
         newestFirst.sort(Comparator.comparing(Game::createdAt).reversed());
         return newestFirst.stream().skip(offset).limit(limit).toList();
     }
 
     @Override
-    public long count() {
-        return games.size();
+    public long count(GameFilter filter) {
+        return games.values().stream().filter(filter::matches).count();
     }
 
     /// Stores `game` behind the use case's back, as another request would.

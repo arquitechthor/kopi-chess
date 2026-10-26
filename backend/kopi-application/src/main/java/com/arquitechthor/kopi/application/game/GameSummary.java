@@ -9,6 +9,9 @@ import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /// One line of the list of games: enough to recognise a game, without its
@@ -18,6 +21,8 @@ import java.util.Optional;
 /// @param humanColor the person's colour; empty for an imported game
 /// @param botProfile the opponent; empty for an imported game
 /// @param plies      how many moves (half-moves) were played
+/// @param pgnTags    an imported game's PGN tags (its players…); empty for
+///                   a game played here
 public record GameSummary(
         GameId id,
         GameOrigin origin,
@@ -28,11 +33,16 @@ public record GameSummary(
         Optional<GameOutcome> outcome,
         Optional<GameResult> result,
         Instant createdAt,
-        Optional<Instant> finishedAt) {
+        Optional<Instant> finishedAt,
+        Map<String, String> pgnTags) {
+
+    public GameSummary {
+        pgnTags = Collections.unmodifiableMap(new LinkedHashMap<>(pgnTags));
+    }
 
     static GameSummary of(Game game) {
         return new GameSummary(game.id(), game.origin(), game.status(), game.humanColor(), game.botProfile(),
                 game.moves().size(),
-                game.outcome(), game.result(), game.createdAt(), game.finishedAt());
+                game.outcome(), game.result(), game.createdAt(), game.finishedAt(), game.pgnTags());
     }
 }

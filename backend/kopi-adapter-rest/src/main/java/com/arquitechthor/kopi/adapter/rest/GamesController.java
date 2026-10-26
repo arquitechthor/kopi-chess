@@ -19,8 +19,11 @@ import com.arquitechthor.kopi.application.game.PlayMoveCommand;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.ResignCommand;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import java.net.URI;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -86,9 +89,15 @@ class GamesController {
         return ok(getGame.get(new GameId(id)));
     }
 
+    /// A page of games, newest first, optionally only those of an `origin`
+    /// (`PLAYED`, `IMPORTED`) or a `result` (`WHITE_WIN`, `BLACK_WIN`,
+    /// `DRAW`, `IN_PROGRESS`).
     @GetMapping
-    GamePageResponse list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return GamePageResponse.of(listGames.list(new ListGamesQuery(page, size)));
+    GamePageResponse list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) GameOrigin origin,
+            @RequestParam(required = false) GameFilter.ResultFilter result) {
+        var filter = new GameFilter(Optional.ofNullable(origin), Optional.ofNullable(result));
+        return GamePageResponse.of(listGames.list(new ListGamesQuery(page, size, filter)));
     }
 
     /// The person's move and the bot's reply, in one request (design §10.1).
