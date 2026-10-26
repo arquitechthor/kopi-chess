@@ -64,8 +64,11 @@ class OfficeModeTest {
         assertThat(result).hasStatusOk().cookies().hasValue(OfficeController.VIEW_COOKIE, "office");
         assertThat(body(result))
                 .contains("<title>Informe de operaciones</title>", "Portal del empleado", "/css/office.css")
-                // None of Kopi's look, and no script at all.
-                .doesNotContain("Kopi Chess", "kopi.css", "<script", "chessground");
+                // None of Kopi's look, and no script but the one that types a
+                // clicked code into the field.
+                .doesNotContain("Kopi Chess", "kopi.css", "chessground", "board.js", "nav.js")
+                .containsOnlyOnce("<script")
+                .contains("/js/office.js");
         assertThat(body(mvc.get().uri("/games/{id}?lang=es", id).cookie(OFFICE).exchange()))
                 .contains("Informe de operaciones");
     }
@@ -96,9 +99,8 @@ class OfficeModeTest {
                 .containsPattern("<td class=\"piece-white\"\\s+title=\"e1 · Rey · Blancas\">R</td>")
                 .containsPattern("<td class=\"piece-white\"\\s+title=\"d1 · Dama · Blancas\">D</td>")
                 .containsPattern("<td\\s+title=\"e4\"></td>")
-                .contains("R rey, D dama, T torre, A alfil, C caballo, P peón.")
-                .contains("<span class=\"piece-white\">Verde: blancas.</span>")
-                .contains("<span class=\"piece-black\">Rojo: negras.</span>");
+                // No key under the board: nothing that spells out "chess".
+                .doesNotContain("rey", "Verde", "Rojo");
     }
 
     @Test
@@ -120,7 +122,10 @@ class OfficeModeTest {
         var id = newGame("WHITE");
 
         assertThat(body(mvc.get().uri("/games/{id}?lang=es", id).cookie(OFFICE).exchange()))
-                .contains("Caballo (C)", "Ca3 · Cc3 · Cf3 · Ch3", "Peón (P)")
+                .contains("Caballo (C)", "Peón (P)")
+                // Each code is a button that types itself into the field (office.js).
+                .containsPattern("<button type=\"button\" class=\"code\"\\s+data-code=\"Ca3\">Ca3</button> · "
+                        + "<button type=\"button\" class=\"code\"\\s+data-code=\"Cc3\">Cc3</button>")
                 .doesNotContain("Rey (R)");
     }
 

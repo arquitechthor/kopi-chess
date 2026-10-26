@@ -38,7 +38,8 @@ class OfficeMoveInputTest {
         @Test
         void knowsTheLetterOfEachPiece() {
             assertThat(spanish.king()).isEqualTo('R');
-            assertThat(spanish.pieceLetters()).containsExactly('R', 'D', 'T', 'A', 'C', 'P');
+            assertThat(List.of(spanish.king(), spanish.queen(), spanish.rook(), spanish.bishop(), spanish.knight(),
+                    spanish.pawn())).containsExactly('R', 'D', 'T', 'A', 'C', 'P');
         }
     }
 
