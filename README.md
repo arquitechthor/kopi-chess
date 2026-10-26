@@ -28,11 +28,11 @@ The UI is available in **English and Spanish**.
 
 ## Status
 
-🚧 **In development: phase 4 of 7 (five bots).** You can already play against
-the `PAWN` bot in the browser, in **office mode** or through the REST API, and
-games are saved
-([`v0.3.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.3.0)).
-The other four bots arrive in this phase.
+🚧 **In development: phase 5 of 7 (post-game analysis).** You can already play
+against five bots, from `PAWN` to full-strength Stockfish, in the browser, in
+**office mode** or through the REST API, and games are saved
+([`v0.4.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.4.0)).
+This phase adds an engine evaluation of every move of a finished game.
 
 - Technical design (Spanish): [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Development plan (Spanish): [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
