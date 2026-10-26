@@ -221,13 +221,26 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .data-table th { color: var(--text-muted); font-weight: 600; font-size: 13px; }
 
 /* ── Game page ───────────────────────────────────────────── */
+/* The board fits the screen's height as well as its width, so the whole of it
+   is visible without scrolling: at most 600px, and never taller than the
+   viewport minus the nav (61px), the top padding and a little air. */
 .game-layout {
-  display: grid; grid-template-columns: minmax(0, 600px) minmax(260px, 1fr); gap: 32px;
+  --board-size: max(280px, min(600px, 100vh - 125px));
+  --board-size: max(280px, min(600px, 100svh - 125px));
+  /* width: as a flex item with auto margins (body is a column), main would shrink to its content. */
+  width: 100%;
+  display: grid; grid-template-columns: minmax(0, var(--board-size)) minmax(260px, 1fr); gap: 32px;
   align-items: start; padding-top: 40px; padding-bottom: 60px;
 }
-@media (max-width: 860px) { .game-layout { grid-template-columns: 1fr; padding-top: 20px; } }
+@media (max-width: 860px) {
+  .game-layout {
+    --board-size: max(280px, 100vh - 100px);
+    --board-size: max(280px, 100svh - 100px);
+    grid-template-columns: 1fr; padding-top: 20px;
+  }
+}
 
-.board { width: 100%; aspect-ratio: 1 / 1; }
+.board { width: min(100%, var(--board-size)); aspect-ratio: 1 / 1; margin-inline: auto; }
 .game-panel { max-width: none; display: grid; gap: 14px; }
 .game-live { display: grid; gap: 14px; }
 .game-status { font-size: clamp(22px, 2.6vw, 28px); margin: 0; }
@@ -236,7 +249,9 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .panel-actions form { margin: 0; }
 
 .move-list {
-  list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto;
+  list-style: none; margin: 0; padding: 0; overflow-y: auto;
+  /* Beside the board, the panel is no taller than it (≈300px are the rest of the panel). */
+  max-height: clamp(120px, var(--board-size) - 300px, 360px);
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px;
   font-size: 15px;
 }
