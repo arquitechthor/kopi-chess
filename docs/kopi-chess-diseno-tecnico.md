@@ -731,7 +731,8 @@ Reglas del MVP:
 
 - **`BOOK`** — la posición resultante está en el libro de aperturas y aún no
   ha salido de él.
-- **`BEST`** — la jugada coincide con la mejor del motor (o pérdida ≈ 0).
+- **`BEST`** — la jugada coincide con la mejor del motor (o pérdida ≤ 0.01:
+  dos búsquedas de posiciones casi iguales nunca coinciden del todo).
 - **`GOOD`** — `loss < 0.1`
 - **`INACCURACY`** — `0.1 ≤ loss < 0.2`
 - **`MISTAKE`** — `0.2 ≤ loss < 0.3`
@@ -745,7 +746,10 @@ ajustar después con datos.
 
 Detalles a tratar explícitamente (con pruebas):
 
-- Evaluaciones de mate → `winChance = ±1`.
+- Evaluaciones de mate → `winChance = ±1`. Una posición que ya es mate es
+  `Evaluation.Checkmate(winner)`, no `MateIn(0)`: Stockfish da `mate 0`
+  desde el bando que mueve y, al pasarlo a las blancas, el cero pierde el
+  signo (ADR-005).
 - *Clamp* de centipeones (p. ej. ±1000) antes de la fórmula.
 - Posiciones ya decididas: con la fórmula de Win % un −200 cp en +900 apenas
   pesa, que es justo lo que queremos.
@@ -759,10 +763,19 @@ Precisión por jugada, también fórmula pública de Lichess:
 Accuracy% = 103.1668 · exp(−0.04354 · (Win%antes − Win%después)) − 3.1669
 ```
 
-MVP: precisión de la partida = **media armónica** de las precisiones por
-jugada de cada color (Lichess la combina además con una media ponderada por
-volatilidad; dejarlo para después). En la interfaz se muestra como
-«Precisión (fórmula Lichess)», enlazando a la explicación.
+Precisión de la partida, como Lichess: la media de dos medias de las
+precisiones por jugada de cada color (ADR-005):
+
+- **Media armónica**, que tira hacia las peores jugadas. Una precisión por
+  debajo de 1 cuenta como 1, para que un solo 0 no anule la partida.
+- **Media ponderada por volatilidad**: cada jugada pesa la desviación típica
+  del Win % en una ventana de posiciones (entre 0.5 y 12). Las ventanas
+  tienen una décima parte de la partida, entre 2 y 8 posiciones
+  (`Gatherers.windowSliding`), y las primeras repiten la inicial para que
+  haya una por jugada.
+
+En la interfaz se muestra como «Precisión (fórmula Lichess)», enlazando a la
+explicación.
 
 ### 8.5 Qué no hacemos todavía
 
