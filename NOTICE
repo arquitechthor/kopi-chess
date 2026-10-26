@@ -1,0 +1,24 @@
+Kopi Chess
+Copyright (C) 2026 Héctor Guzmán
+Licensed under the GNU General Public License, version 3 (see LICENSE).
+
+Kopi Chess includes or uses the following third-party work.
+
+Chessground 9.2.1
+  The interactive board, by Lichess. GPL-3.0-or-later.
+  https://github.com/lichess-org/chessground
+  Bundled in backend/kopi-adapter-web/src/main/resources/static/vendor/.
+  Its "cburnett" piece set is by Colin M. L. Burnett, GPLv2 or later.
+
+Stockfish 19
+  The chess engine behind the BISHOP, ROOK and QUEEN bots, by the
+  Stockfish developers. GPL-3.0.
+  https://stockfishchess.org
+  Downloaded into the Docker image at build time; not in this repository.
+
+lichess-org/chess-openings
+  Opening names, ECO codes and moves, by Lichess and its contributors.
+  CC0 1.0 (public domain): credited although not required.
+  https://github.com/lichess-org/chess-openings
+  Commit a6189a30dc273ccb21fc2536a9a2fefd5592a67a, bundled in
+  backend/kopi-adapter-openings/src/main/resources/openings/.

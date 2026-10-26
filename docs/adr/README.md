@@ -11,6 +11,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-005](005-clasificacion-basada-en-win-percent.md) — Clasificación de jugadas basada en Win %
 - [ADR-006](006-bots-propios-para-niveles-bajos.md) — Bots propios para los niveles bajos
 - [ADR-008](008-repeticion-y-50-jugadas-automaticas.md) — Repetición y 50 jugadas automáticas
+- [ADR-009](009-libro-de-aperturas-local.md) — Libro de aperturas local (CC0), en memoria
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
 - [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)
 - [ADR-013](013-modo-oficina-notacion-localizada.md) — Modo oficina: notación localizada solo en el adaptador web

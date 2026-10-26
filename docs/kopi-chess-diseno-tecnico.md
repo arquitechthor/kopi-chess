@@ -141,8 +141,9 @@ con pruebas que demuestran su corrección.
 - **Propuesta original:** API Lichess Opening Explorer (opcional).
 - **Cuestionamiento:** dependencia de red, límites de uso y condiciones
   cambiantes para algo que puede resolverse en local.
-- **Decisión:** dataset **lichess-org/chess-openings** (CC0, ~3.500
-  aperturas con su EPD) cargado en la BD. Búsqueda por posición, sin red.
+- **Decisión:** dataset **lichess-org/chess-openings** (CC0, 3.865
+  aperturas) incluido en la aplicación y cargado en memoria. Búsqueda por
+  posición, sin red (ADR-009).
 
 ### 2.6 Progreso del análisis
 
@@ -254,8 +255,8 @@ De la propuesta original se conserva, porque es acertado:
 - **Migraciones — Flyway.** Esquema versionado desde el primer commit.
 - **Motor — Stockfish 19 (o la estable vigente) vía UCI.** Fijar versión y
   hash del binario en el `Dockerfile`.
-- **Aperturas — lichess-org/chess-openings (CC0).** Cargado con una
-  migración Flyway o al arrancar.
+- **Aperturas — lichess-org/chess-openings (CC0).** Los TSV van como
+  recursos y se cargan en memoria (ADR-009).
 - **Interfaz web — Thymeleaf + htmx (servidas por Spring Boot).** HTML
   generado en el servidor; htmx para interacciones parciales sin escribir un
   SPA. Sin Node en el flujo principal.
@@ -328,7 +329,7 @@ kopi-chess/
 │   ├── kopi-adapter-persistence/     Spring Data JDBC / JdbcClient + Flyway.
 │   ├── kopi-adapter-stockfish/       Cliente UCI, pool de procesos.
 │   ├── kopi-adapter-bots/            Bots propios (niveles 1 y 2).
-│   ├── kopi-adapter-openings/        Libro de aperturas (tabla cargada desde TSV).
+│   ├── kopi-adapter-openings/        Libro de aperturas (en memoria, desde TSV).
 │   ├── kopi-bootstrap/               @SpringBootApplication, configuración, wiring.
 │   ├── kopi-architecture-tests/      Reglas ArchUnit sobre todos los módulos.
 │   └── kopi-labs/                    Ejemplos con features preview (--enable-preview). Nadie depende de él.
@@ -587,12 +588,6 @@ create table analysis_job (
     created_at   timestamptz not null
 );
 
-create table opening (
-    epd   text primary key,                  -- posición sin contadores
-    eco   text not null,
-    name  text not null
-);
-
 create index game_created_at_idx on game (created_at desc);
 create index analysis_job_queued_idx on analysis_job (created_at) where state = 'QUEUED';
 ```
@@ -798,11 +793,14 @@ Igual que en la propuesta original, con dos precisiones:
 ## 9. Libro de aperturas
 
 - Fuente: `lichess-org/chess-openings` (CC0). Archivos `a.tsv`…`e.tsv`
-  con `eco`, `name`, `pgn`; la versión `dist/` incluye `epd`.
-- Carga: el adaptador lee los TSV (empaquetados como recurso) y rellena la
-  tabla `opening`, o se genera una migración Flyway de datos.
-- Búsqueda: EPD de la posición (FEN sin contadores). Esto detecta
-  transposiciones, cosa que una búsqueda por secuencia de jugadas no hace.
+  con `eco`, `name`, `pgn`, fijados a un *commit* (la versión `dist/`, con
+  `epd`, no está en el repositorio: se genera).
+- Carga (ADR-009): `LichessOpeningBook` reproduce cada línea con las reglas
+  de Kopi y guarda en memoria la posición a la que llega. Sin tabla.
+- Búsqueda: por posición, con `Position.zobristHash()`, la misma «misma
+  posición» que la regla de repetición (sin relojes, captura al paso solo si
+  es utilizable), equivalente al EPD. Esto detecta transposiciones, cosa
+  que una búsqueda por secuencia de jugadas no hace.
 - La partida guarda la **última** apertura reconocida como su nombre.
 - Atribución en `NOTICE` aunque CC0 no lo exija.
 

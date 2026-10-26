@@ -720,17 +720,19 @@ mostrar la revisión.
 
 ### 8.2 Libro de aperturas
 
-- [ ] Descargar los TSV de `lichess-org/chess-openings` (versión con `epd`),
-      fijar el *commit* de origen.
-- [ ] Migración Flyway o cargador al arrancar que rellena la tabla `opening`.
-- [ ] Adaptador `OpeningBook.lookup(position)` por EPD.
-- [ ] Atribución en `NOTICE`.
-- [ ] **ADR-009** (libro local CC0).
+- [x] Descargar los TSV de `lichess-org/chess-openings`, fijar el *commit*
+      de origen. (Los originales, no `dist/`: Kopi calcula la posición.)
+- [x] Cargador al arrancar que reproduce cada línea y guarda las posiciones
+      en memoria (ADR-009: sin tabla `opening`).
+- [x] Adaptador `OpeningBook.lookup(position)` por posición
+      (`zobristHash`, equivalente al EPD).
+- [x] Atribución en `NOTICE`.
+- [x] **ADR-009** (libro local CC0).
 
 ### 8.3 Cola y *worker*
 
 - [ ] Migración `V3__analysis.sql`: `analysis`, `move_analysis`,
-      `analysis_job`, `opening`.
+      `analysis_job` (el libro de aperturas va en memoria, ADR-009).
 - [ ] `AnalysisJobQueue` con `FOR UPDATE SKIP LOCKED` (diseño §6.2).
 - [ ] *Worker*: bucle en hilo virtual que reclama trabajos; concurrencia
       configurable (1 por defecto).
