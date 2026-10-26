@@ -731,9 +731,9 @@ mostrar la revisión.
 
 ### 8.3 Cola y *worker*
 
-- [ ] Migración `V3__analysis.sql`: `analysis`, `move_analysis`,
+- [x] Migración `V3__analysis.sql`: `analysis`, `move_analysis`,
       `analysis_job` (el libro de aperturas va en memoria, ADR-009).
-- [ ] `AnalysisJobQueue` con `FOR UPDATE SKIP LOCKED` (diseño §6.2).
+- [x] `AnalysisJobQueue` con `FOR UPDATE SKIP LOCKED` (diseño §6.2).
 - [ ] *Worker*: bucle en hilo virtual que reclama trabajos; concurrencia
       configurable (1 por defecto).
 - [ ] Recuperación al arrancar: trabajos `RUNNING` antiguos → `QUEUED` o
@@ -742,7 +742,7 @@ mostrar la revisión.
       clasificar, guardar, publicar progreso.
 - [ ] Caso de uso `RequestAnalysis` (idempotente) y encolado automático al
       terminar una partida.
-- [ ] **ADR-007** (cola en PostgreSQL).
+- [x] **ADR-007** (cola en PostgreSQL).
 
 ### 8.4 Publicación de progreso
 

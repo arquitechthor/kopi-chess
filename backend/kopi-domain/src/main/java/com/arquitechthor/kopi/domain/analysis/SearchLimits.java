@@ -1,4 +1,4 @@
-package com.arquitechthor.kopi.application.port;
+package com.arquitechthor.kopi.domain.analysis;
 
 /// How far the engine searches each position (design §8.2): a fixed depth
 /// or a fixed number of nodes. Both give the same result on any machine,
