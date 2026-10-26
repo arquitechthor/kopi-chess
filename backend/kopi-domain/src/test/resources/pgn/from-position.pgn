@@ -1,0 +1,11 @@
+[Event "Composed"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "-"]
+[White "?"]
+[Black "?"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "3r2k1/3r1ppp/8/8/8/8/5PPP/R5K1 b - - 0 1"]
+
+1... Rd1+ 2. Rxd1 Rxd1# 0-1
