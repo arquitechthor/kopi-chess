@@ -975,10 +975,15 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
   | Dama    | `D`     | `Q`    |
   | Rey     | `R`     | `K`    |
 
-  Las blancas en mayúscula y las negras en minúscula (`C` / `c`), como en
-  los diagramas de texto: el color se distingue sin depender del estilo.
-  Una leyenda bajo la tabla lo recuerda. La última jugada se marca con
-  negrita en sus dos casillas.
+  Todas las letras en mayúscula; el bando se distingue por el **color**:
+  verde oscuro las blancas y rojo las negras (`#145a2c` / `#d42f2f`, con
+  contraste AA sobre blanco y sobre el resaltado, y distinta luminosidad
+  para quien no distingue bien el rojo del verde). El `title` de cada
+  casilla nombra la pieza y el bando («a8 · Torre · Negras»). Una leyenda
+  bajo la tabla lo recuerda, en los mismos colores. La última jugada se
+  marca con fondo amarillo en sus dos casillas. (Al principio eran
+  mayúsculas y minúsculas, como en los diagramas de texto; se cambió a
+  petición, tras jugar con ello.)
 - **A la derecha del tablero**, el listado de **jugadas legales** en
   notación algebraica del idioma (`Cf3`, `e4`, `O-O`), agrupadas por pieza y
   ordenadas. Debajo, las jugadas de la partida como una tabla de dos
