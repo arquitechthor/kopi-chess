@@ -110,6 +110,37 @@ class AnalysisIT {
         assertThat(missed.missedMateLine()).hasValue(List.of("Qxf7#"));
     }
 
+    @Test
+    void anImportedGameIsReviewedToo() throws Exception {
+        // Plan §9's acceptance: a game exported from Lichess, pasted in,
+        // gives a full review. The Opera game, in Lichess's format.
+        var pgn = """
+                [Event "Casual game"]
+                [Site "https://lichess.org/study/opera-game"]
+                [White "Morphy, Paul"]
+                [Black "Duke Karl / Count Isouard"]
+                [Result "1-0"]
+                [ECO "C41"]
+
+                1. e4 { [%eval 0.18] [%clk 0:10:00] } 1... e5 { [%clk 0:10:00] } 2. Nf3 d6 3. d4 Bg4?! (3... exd4)
+                4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6? 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5?? 10. Nxb5 cxb5
+                11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8
+                17. Rd8# 1-0
+                """;
+
+        var imported = mvc.post().uri("/api/v1/games/import").contentType(MediaType.TEXT_PLAIN).content(pgn)
+                .exchange();
+        assertThat(imported).hasStatus(HttpStatus.CREATED);
+        String id = JsonPath.read(imported.getResponse().getContentAsString(), "$.id");
+
+        assertThat(jobStateWithin(id, Duration.ofSeconds(90))).isEqualTo("DONE");
+        var analysis = mvc.get().uri("/api/v1/games/{id}/analysis", id).exchange();
+        assertThat(analysis).bodyJson().extractingPath("$.state").isEqualTo("DONE");
+        assertThat(analysis).bodyJson().extractingPath("$.moves.length()").isEqualTo(33);
+        assertThat(analysis).bodyJson().extractingPath("$.opening.eco").isEqualTo("C41");
+        assertThat(analysis).bodyJson().extractingPath("$.moves[32].san").isEqualTo("Rd8#");
+    }
+
     /// The job's state once it is `DONE` or `FAILED`, or as it is when the
     /// time is up.
     private String jobStateWithin(String gameId, Duration limit) throws InterruptedException {

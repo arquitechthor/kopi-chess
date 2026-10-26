@@ -9,11 +9,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.Pgn;
 import com.arquitechthor.kopi.domain.chess.Position;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameOutcome;
+import com.arquitechthor.kopi.domain.game.GameResult;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -124,8 +129,66 @@ class JdbcGameRepositoryIT {
 
         var page = repository.findRecent(0, 2);
 
-        assertThat(page).extracting(Game::botProfile).containsExactly(BotProfile.BISHOP, BotProfile.KNIGHT);
-        assertThat(repository.findRecent(2, 2)).extracting(Game::botProfile).containsExactly(BotProfile.PAWN);
+        assertThat(page).extracting(Game::botProfile)
+                .containsExactly(Optional.of(BotProfile.BISHOP), Optional.of(BotProfile.KNIGHT));
+        assertThat(repository.findRecent(2, 2)).extracting(Game::botProfile).containsExactly(Optional.of(BotProfile.PAWN));
         assertThat(repository.count()).isEqualTo(3);
+    }
+
+    private static final Instant START = Instant.parse("2026-10-26T15:00:00Z");
+
+    /// An imported game (plan §9) at `START`, from `pgn`.
+    private static Game imported(String pgn) {
+        return Game.imported(new GameId(UUID.randomUUID()), Pgn.parse(pgn), START);
+    }
+
+    @Test
+    void storesAndLoadsAnImportedGameWithItsTags() {
+        var game = imported("""
+                [Event "Paris"]
+                [White "Morphy, Paul"]
+                [Black "Duke Karl / Count \\"Isouard\\""]
+                [Result "0-1"]
+
+                1. f3 e5 2. g4 Qh4# 0-1""");
+
+        repository.insert(game);
+
+        assertThat(repository.findById(game.id())).hasValueSatisfying(loaded -> assertSameGame(loaded, game));
+        assertThat(jdbc.sql("select pgn_tags from game where id = :id").param("id", game.id().value())
+                .query(String.class).single()).startsWith("[Event \"Paris\"]\n");
+    }
+
+    @Test
+    void aDeclaredResultSurvivesTheRoundTrip() {
+        // White won without a mate on the board: as the PGN records it.
+        var game = imported("1. e4 e5 2. Nf3 Nc6 1-0");
+
+        repository.insert(game);
+
+        assertThat(repository.findById(game.id())).hasValueSatisfying(loaded -> {
+            assertSameGame(loaded, game);
+            assertThat(loaded.outcome()).hasValue(new GameOutcome.Declared(GameResult.WHITE_WIN));
+        });
+    }
+
+    @Test
+    void aGameFromAPositionKeepsItsFen() {
+        var game = imported("[FEN \"3r2k1/3r1ppp/8/8/8/8/5PPP/R5K1 b - - 0 1\"]\n\n1... Rd1+ 2. Rxd1 Rxd1# 0-1");
+
+        repository.insert(game);
+
+        assertThat(repository.findById(game.id())).hasValueSatisfying(loaded -> assertSameGame(loaded, game));
+    }
+
+    @Test
+    void theTableRefusesAPlayedGameWithADeclaredEnding() {
+        var game = play(newGame(Color.WHITE), "e2e4");
+        repository.insert(game);
+
+        assertThatThrownBy(() -> jdbc.sql("""
+                update game set status = 'FINISHED', result = 'WHITE_WIN', termination = 'DECLARED',
+                       finished_at = created_at where id = :id""").param("id", game.id().value()).update())
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

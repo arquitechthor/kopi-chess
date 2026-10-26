@@ -14,6 +14,7 @@ import com.arquitechthor.kopi.domain.analysis.SearchLimits;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Opening;
 import com.arquitechthor.kopi.domain.game.BotProfile;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
@@ -38,12 +39,21 @@ final class ApiModel {
     /// `POST /games/{id}/moves`.
     record PlayMoveRequest(String uci) {}
 
+    /// `POST /games/import`, in JSON.
+    record ImportPgnRequest(String pgn) {}
+
     /// A game: everything a client needs to show it and play on, with no
     /// chess rules on the client side (design §10.2).
     ///
+    /// @param origin     `PLAYED` here or `IMPORTED` from PGN
+    /// @param humanColor the person's colour; `null` for an imported game
+    /// @param botProfile the opponent; `null` for an imported game
     /// @param legalMoves the legal moves in UCI; empty when the game is over
+    /// @param pgnTags    an imported game's PGN tags (`White`, `Event`…);
+    ///                   empty for a game played here
     record GameResponse(
             UUID id,
+            GameOrigin origin,
             GameStatus status,
             Color humanColor,
             BotProfile botProfile,
@@ -58,16 +68,18 @@ final class ApiModel {
             GameResult result,
             long version,
             Instant createdAt,
-            Instant finishedAt) {
+            Instant finishedAt,
+            Map<String, String> pgnTags) {
 
         static GameResponse of(GameView view) {
             var moves = view.moves().stream().map(MoveResponse::of).toList();
-            return new GameResponse(view.id().value(), view.status(), view.humanColor(), view.botProfile(),
+            return new GameResponse(view.id().value(), view.origin(), view.status(), view.humanColor().orElse(null),
+                    view.botProfile().orElse(null),
                     view.fen(), view.sideToMove(), view.inCheck(), view.isHumanToMove(), moves,
                     view.lastMove().map(MoveResponse::of).orElse(null),
                     view.legalMoves().stream().map(GameView.LegalMoveView::uci).toList(),
                     view.outcome().map(OutcomeResponse::of).orElse(null), view.result().orElse(null),
-                    view.version(), view.createdAt(), view.finishedAt().orElse(null));
+                    view.version(), view.createdAt(), view.finishedAt().orElse(null), view.pgnTags());
         }
     }
 
@@ -80,7 +92,9 @@ final class ApiModel {
     }
 
     /// How a game ended: `{"termination": "CHECKMATE", "winner": "BLACK"}`.
-    /// `winner` is `null` for a draw.
+    /// `winner` is `null` for a draw. `DECLARED` is an imported game whose
+    /// PGN gives the result without the board showing why (a resignation,
+    /// time, an agreed draw).
     record OutcomeResponse(String termination, Color winner) {
 
         static OutcomeResponse of(GameOutcome outcome) {
@@ -93,6 +107,11 @@ final class ApiModel {
                 case GameOutcome.InsufficientMaterial _ -> new OutcomeResponse("INSUFFICIENT_MATERIAL", null);
                 case GameOutcome.ThreefoldRepetition _ -> new OutcomeResponse("THREEFOLD_REPETITION", null);
                 case GameOutcome.FiftyMoveRule _ -> new OutcomeResponse("FIFTY_MOVE_RULE", null);
+                case GameOutcome.Declared(var result) -> new OutcomeResponse("DECLARED", switch (result) {
+                    case WHITE_WIN -> Color.WHITE;
+                    case BLACK_WIN -> Color.BLACK;
+                    case DRAW -> null;
+                });
             };
         }
     }
@@ -100,6 +119,7 @@ final class ApiModel {
     /// One line of the list of games.
     record GameSummaryResponse(
             UUID id,
+            GameOrigin origin,
             GameStatus status,
             Color humanColor,
             BotProfile botProfile,
@@ -110,8 +130,8 @@ final class ApiModel {
             Instant finishedAt) {
 
         static GameSummaryResponse of(GameSummary summary) {
-            return new GameSummaryResponse(summary.id().value(), summary.status(), summary.humanColor(),
-                    summary.botProfile(), summary.plies(), summary.outcome().map(OutcomeResponse::of).orElse(null),
+            return new GameSummaryResponse(summary.id().value(), summary.origin(), summary.status(),
+                    summary.humanColor().orElse(null), summary.botProfile().orElse(null), summary.plies(), summary.outcome().map(OutcomeResponse::of).orElse(null),
                     summary.result().orElse(null), summary.createdAt(), summary.finishedAt().orElse(null));
         }
     }

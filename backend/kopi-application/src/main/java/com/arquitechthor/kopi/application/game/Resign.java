@@ -22,7 +22,8 @@ public final class Resign implements ResignUseCase {
     @Override
     public GameView resign(ResignCommand command) {
         var loaded = Games.loadAtVersion(repository, command.gameId(), command.expectedVersion());
-        var game = loaded.resign(loaded.humanColor(), clock.instant());
+        // An imported game has no person, but it is finished: resign refuses it as such.
+        var game = loaded.resign(loaded.humanColor().orElse(null), clock.instant());
         repository.update(game, loaded.version());
         AnalysisOnFinish.request(analyses, game, clock.instant());
         return GameView.of(game);

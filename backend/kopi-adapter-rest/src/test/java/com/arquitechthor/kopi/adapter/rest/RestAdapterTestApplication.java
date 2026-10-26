@@ -10,6 +10,8 @@ import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
+import com.arquitechthor.kopi.application.game.ImportPgn;
+import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
 import com.arquitechthor.kopi.application.game.ListGames;
 import com.arquitechthor.kopi.application.game.ListGamesUseCase;
 import com.arquitechthor.kopi.application.game.PlayMove;
@@ -77,6 +79,16 @@ class RestAdapterTestApplication {
     CreateGameUseCase createGame(InMemoryGames games, Clock clock) {
         var ids = new AtomicLong();
         return new CreateGame(games, BOT, () -> new GameId(new UUID(0, ids.incrementAndGet())), clock);
+    }
+
+    /// A small limit, so the test of the limit does not need 100 KB.
+    static final int PGN_LIMIT_BYTES = 4 * 1024;
+
+    @Bean
+    ImportPgnUseCase importPgn(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        var ids = new AtomicLong();
+        return new ImportPgn(games, () -> new GameId(new UUID(1, ids.incrementAndGet())), analyses, clock,
+                PGN_LIMIT_BYTES);
     }
 
     @Bean

@@ -537,7 +537,7 @@ create table game (
     termination      text,
     opening_eco      text,
     opening_name     text,
-    pgn_headers      jsonb,                  -- solo para importadas
+    pgn_tags         text,                   -- solo importadas: sus etiquetas en PGN (V4, ADR-015)
     version          bigint not null,
     created_at       timestamptz not null,
     finished_at      timestamptz

@@ -34,7 +34,7 @@ public final class JdbcGameRepository implements GameRepository {
 
     private static final String GAME_COLUMNS = """
             id, origin, status, human_color, bot_profile, initial_fen, result, termination,
-            version, created_at, finished_at""";
+            version, created_at, finished_at, pgn_tags""";
 
     private final JdbcClient jdbc;
     private final TransactionOperations transactions;
@@ -59,9 +59,9 @@ public final class JdbcGameRepository implements GameRepository {
         transactions.executeWithoutResult(_ -> {
             jdbc.sql("""
                     insert into game (id, origin, status, human_color, bot_profile, initial_fen, result,
-                                      termination, version, created_at, finished_at)
+                                      termination, version, created_at, finished_at, pgn_tags)
                     values (:id, :origin, :status, :humanColor, :botProfile, :initialFen, :result,
-                            :termination, :version, :createdAt, :finishedAt)""")
+                            :termination, :version, :createdAt, :finishedAt, :pgnTags)""")
                     .param("id", row.id())
                     .param("origin", row.origin())
                     .param("status", row.status())
@@ -73,6 +73,7 @@ public final class JdbcGameRepository implements GameRepository {
                     .param("version", row.version())
                     .param("createdAt", timestamp(row.createdAt()))
                     .param("finishedAt", timestamp(row.finishedAt()))
+                    .param("pgnTags", row.pgnTags())
                     .update();
             insertMoves(row.id(), GameRows.moveRows(game));
         });
@@ -171,7 +172,8 @@ public final class JdbcGameRepository implements GameRepository {
                 rs.getString("termination"),
                 rs.getLong("version"),
                 instant(rs, "created_at"),
-                instant(rs, "finished_at"));
+                instant(rs, "finished_at"),
+                rs.getString("pgn_tags"));
     }
 
     private static Instant instant(ResultSet rs, String column) throws SQLException {

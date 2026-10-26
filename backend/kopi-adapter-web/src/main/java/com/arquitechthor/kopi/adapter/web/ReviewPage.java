@@ -10,6 +10,7 @@ import com.arquitechthor.kopi.domain.analysis.MoveCategory;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Opening;
 import com.arquitechthor.kopi.domain.game.BotProfile;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -23,7 +24,9 @@ import java.util.stream.Collectors;
 /// each move, and the positions for the board to step through.
 ///
 /// @param id          the game
-/// @param botProfile  the opponent
+/// @param botProfile  the opponent; `null` for an imported game
+/// @param players     an imported game's players, `White – Black`; `null`
+///                    for a game played here
 /// @param orientation `white` or `black`: the person's side at the bottom
 /// @param state       `QUEUED`, `RUNNING`, `DONE` or `FAILED`
 /// @param error       why it failed, if it did
@@ -40,6 +43,7 @@ import java.util.stream.Collectors;
 record ReviewPage(
         String id,
         BotProfile botProfile,
+        String players,
         String orientation,
         AnalysisJob.State state,
         String error,
@@ -95,15 +99,17 @@ record ReviewPage(
     /// The review of a game whose analysis exists (queued, running, failed or
     /// done).
     static ReviewPage of(GameView game, AnalysisView view) {
-        var orientation = game.humanColor() == Color.WHITE ? "white" : "black";
+        var orientation = game.humanColor().orElse(Color.WHITE) == Color.WHITE ? "white" : "black";
+        var bot = game.botProfile().orElse(null);
+        var players = game.origin() == GameOrigin.IMPORTED ? GamePage.players(game) : null;
         if (view.analysis().isEmpty()) {
             var job = view.job().orElseThrow();
-            return new ReviewPage(game.id().toString(), game.botProfile(), orientation, job.state(),
+            return new ReviewPage(game.id().toString(), bot, players, orientation, job.state(),
                     job.lastError().orElse(null), null, null, null, null, null, List.of(), List.of(), "[]");
         }
         var analysis = view.analysis().get();
         var summary = analysis.summary();
-        return new ReviewPage(game.id().toString(), game.botProfile(), orientation, AnalysisJob.State.DONE, null,
+        return new ReviewPage(game.id().toString(), bot, players, orientation, AnalysisJob.State.DONE, null,
                 analysis.opening().orElse(null), analysis.engine(), side(summary.white()), side(summary.black()),
                 graph(analysis), rows(view, analysis), plies(view, analysis), boardJson(view, analysis));
     }

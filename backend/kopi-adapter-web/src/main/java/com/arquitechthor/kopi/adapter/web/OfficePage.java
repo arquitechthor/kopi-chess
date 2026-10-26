@@ -68,7 +68,7 @@ record OfficePage(
 
     static OfficePage of(GameView view, OfficeNotation notation) {
         var position = Fen.parse(view.fen());
-        var whiteAtBottom = view.humanColor() == Color.WHITE;
+        var whiteAtBottom = view.humanColor().orElse(Color.WHITE) == Color.WHITE;
         var lastMove = view.lastMove()
                 .map(move -> Set.of(move.uci().substring(0, 2), move.uci().substring(2, 4)))
                 .orElse(Set.of());

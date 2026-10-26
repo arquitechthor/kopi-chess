@@ -15,6 +15,8 @@ import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
+import com.arquitechthor.kopi.application.game.ImportPgn;
+import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
 import com.arquitechthor.kopi.application.game.ListGames;
 import com.arquitechthor.kopi.application.game.ListGamesUseCase;
 import com.arquitechthor.kopi.application.game.PlayMove;
@@ -86,6 +88,11 @@ class UseCaseConfiguration {
     @Bean
     ResignUseCase resign(GameRepository games, AnalysisJobQueue analyses, Clock clock) {
         return new Resign(games, analyses, clock);
+    }
+
+    @Bean
+    ImportPgnUseCase importPgn(GameRepository games, IdGenerator ids, AnalysisJobQueue analyses, Clock clock) {
+        return new ImportPgn(games, ids, analyses, clock, ImportPgn.DEFAULT_LIMIT_BYTES);
     }
 
     @Bean

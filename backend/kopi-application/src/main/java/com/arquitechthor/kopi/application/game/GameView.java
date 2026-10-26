@@ -6,12 +6,16 @@ import com.arquitechthor.kopi.domain.chess.San;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /// A game as the adapters show it: everything a page or a JSON response
@@ -19,9 +23,10 @@ import java.util.Optional;
 /// (design §10.2, §11.3).
 ///
 /// @param id          the game
+/// @param origin      played here or imported from PGN
 /// @param status      in progress or finished
-/// @param humanColor  the colour the person plays
-/// @param botProfile  the opponent
+/// @param humanColor  the colour the person plays; empty for an imported game
+/// @param botProfile  the opponent; empty for an imported game
 /// @param fen         the current position
 /// @param sideToMove  whose turn it is
 /// @param inCheck     whether the side to move is in check
@@ -33,11 +38,14 @@ import java.util.Optional;
 /// @param version     for optimistic locking (`If-Match`)
 /// @param createdAt   when it started
 /// @param finishedAt  when it ended, once it has
+/// @param pgnTags     an imported game's PGN tags (`White`, `Event`…); empty
+///                    for a game played here
 public record GameView(
         GameId id,
+        GameOrigin origin,
         GameStatus status,
-        Color humanColor,
-        BotProfile botProfile,
+        Optional<Color> humanColor,
+        Optional<BotProfile> botProfile,
         String fen,
         Color sideToMove,
         boolean inCheck,
@@ -47,11 +55,13 @@ public record GameView(
         Optional<GameResult> result,
         long version,
         Instant createdAt,
-        Optional<Instant> finishedAt) {
+        Optional<Instant> finishedAt,
+        Map<String, String> pgnTags) {
 
     public GameView {
         moves = List.copyOf(moves);
         legalMoves = List.copyOf(legalMoves);
+        pgnTags = Collections.unmodifiableMap(new LinkedHashMap<>(pgnTags));
     }
 
     /// A move of the game.
@@ -75,7 +85,7 @@ public record GameView(
 
     /// Whether it is the person's turn in a game still in progress.
     public boolean isHumanToMove() {
-        return status == GameStatus.IN_PROGRESS && sideToMove == humanColor;
+        return status == GameStatus.IN_PROGRESS && humanColor.filter(color -> color == sideToMove).isPresent();
     }
 
     static GameView of(Game game) {
@@ -89,8 +99,8 @@ public record GameView(
                         .sorted(Comparator.comparing(Move::toUci))
                         .map(move -> new LegalMoveView(move.toUci(), San.format(position, move)))
                         .toList();
-        return new GameView(game.id(), game.status(), game.humanColor(), game.botProfile(), position.toFen(),
-                position.sideToMove(), position.isInCheck(), moves, legalMoves, game.outcome(), game.result(),
-                game.version(), game.createdAt(), game.finishedAt());
+        return new GameView(game.id(), game.origin(), game.status(), game.humanColor(), game.botProfile(),
+                position.toFen(), position.sideToMove(), position.isInCheck(), moves, legalMoves, game.outcome(),
+                game.result(), game.version(), game.createdAt(), game.finishedAt(), game.pgnTags());
     }
 }

@@ -51,6 +51,8 @@ class GameRowsTest {
         assertThat(actual.version()).isEqualTo(expected.version());
         assertThat(actual.createdAt()).isEqualTo(expected.createdAt());
         assertThat(actual.finishedAt()).isEqualTo(expected.finishedAt());
+        assertThat(actual.origin()).isEqualTo(expected.origin());
+        assertThat(actual.pgnTags()).containsExactlyEntriesOf(expected.pgnTags());
     }
 
     @Test
@@ -60,7 +62,7 @@ class GameRowsTest {
         var row = GameRows.gameRow(game);
 
         assertThat(row).isEqualTo(new GameRow(ID.value(), "PLAYED", "IN_PROGRESS", "WHITE", "PAWN", Fen.INITIAL,
-                null, null, 2, START, null));
+                null, null, 2, START, null, null));
         assertThat(GameRows.moveRows(game)).extracting(GameRows.MoveRow::ply, GameRows.MoveRow::uci,
                         GameRows.MoveRow::san)
                 .containsExactly(
@@ -124,7 +126,7 @@ class GameRowsTest {
         var game = play(newGame(Color.WHITE), "e2e4");
         var row = GameRows.gameRow(game);
         var tampered = new GameRow(row.id(), row.origin(), row.status(), row.humanColor(), row.botProfile(),
-                row.initialFen(), row.result(), row.termination(), 7, row.createdAt(), row.finishedAt());
+                row.initialFen(), row.result(), row.termination(), 7, row.createdAt(), row.finishedAt(), null);
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
     }
@@ -135,7 +137,7 @@ class GameRowsTest {
         var game = play(newGame(Color.WHITE), "e2e4");
         var row = GameRows.gameRow(game);
         var tampered = new GameRow(row.id(), row.origin(), "FINISHED", row.humanColor(), row.botProfile(),
-                row.initialFen(), "WHITE_WIN", "CHECKMATE", row.version(), row.createdAt(), START);
+                row.initialFen(), "WHITE_WIN", "CHECKMATE", row.version(), row.createdAt(), START, null);
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
     }

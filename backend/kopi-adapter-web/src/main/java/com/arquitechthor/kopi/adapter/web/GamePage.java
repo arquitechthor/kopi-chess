@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.web;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.game.BotProfile;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.util.ArrayList;
@@ -24,8 +25,10 @@ import java.util.stream.Collectors;
 /// @param legalMovesJson  the legal moves in UCI as a JSON array, for the board
 /// @param lastMove        the last move in UCI, or empty
 /// @param moveRows        the moves, one row per move number
-/// @param botProfile      the opponent
-/// @param humanColor      the person's colour
+/// @param botProfile      the opponent; `null` for an imported game
+/// @param humanColor      the person's colour; `null` for an imported game
+/// @param players         an imported game's players, `White – Black`, from
+///                        its PGN; `null` for a game played here
 /// @param finished        whether the game is over
 /// @param statusKey       message key of the status line (`status.yourTurn`,
 ///                        `outcome.CHECKMATE.BLACK`…)
@@ -42,6 +45,7 @@ record GamePage(
         List<MoveRow> moveRows,
         BotProfile botProfile,
         Color humanColor,
+        String players,
         boolean finished,
         String statusKey) {
 
@@ -57,15 +61,17 @@ record GamePage(
                 view.id().toString(),
                 view.version(),
                 view.fen(),
-                colorName(view.humanColor()),
+                // An imported game has no "you": it is seen from White's side.
+                colorName(view.humanColor().orElse(Color.WHITE)),
                 colorName(view.sideToMove()),
                 view.isHumanToMove(),
                 view.inCheck(),
                 legalMoves,
                 view.lastMove().map(GameView.PlayedMoveView::uci).orElse(""),
                 rows(view.moves()),
-                view.botProfile(),
-                view.humanColor(),
+                view.botProfile().orElse(null),
+                view.humanColor().orElse(null),
+                view.origin() == GameOrigin.IMPORTED ? players(view) : null,
                 view.status() == GameStatus.FINISHED,
                 statusKey(view));
     }
@@ -91,12 +97,19 @@ record GamePage(
                 case GameOutcome.InsufficientMaterial _ -> "outcome.INSUFFICIENT_MATERIAL";
                 case GameOutcome.ThreefoldRepetition _ -> "outcome.THREEFOLD_REPETITION";
                 case GameOutcome.FiftyMoveRule _ -> "outcome.FIFTY_MOVE_RULE";
+                case GameOutcome.Declared(var result) -> "outcome.DECLARED." + result;
             };
         }
         if (view.isHumanToMove()) {
             return view.inCheck() ? "status.yourTurnInCheck" : "status.yourTurn";
         }
         return "status.botToMove";
+    }
+
+    /// `Morphy, Paul – Duke Karl`, from the PGN's `White` and `Black` tags
+    /// (`?` when one is missing, as PGN itself writes it).
+    static String players(GameView view) {
+        return view.pgnTags().getOrDefault("White", "?") + " – " + view.pgnTags().getOrDefault("Black", "?");
     }
 
     private static String colorName(Color color) {
