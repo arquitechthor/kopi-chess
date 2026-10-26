@@ -75,6 +75,14 @@ class ImportedGamePagesTest {
     }
 
     @Test
+    void aPgnWithoutNamesIsJustAnImportedGame() {
+        var game = Game.imported(new GameId(UUID.randomUUID()), Pgn.parse("1. e4 e5 2. Nf3 d6 1-0"), NOW);
+        games.insert(game);
+
+        assertThat(page("/games/{id}?lang=es", game.id())).contains(">Partida importada<").doesNotContain("? – ?");
+    }
+
+    @Test
     void itsReviewNamesThePlayers() {
         var game = imported();
         jobs.put(new AnalysisJob(1, game.id(), AnalysisJob.State.RUNNING, 1, Optional.empty(), NOW));

@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
 /// @param botProfile      the opponent; `null` for an imported game
 /// @param humanColor      the person's colour; `null` for an imported game
 /// @param players         an imported game's players, `White – Black`, from
-///                        its PGN; `null` for a game played here
+///                        its PGN (empty if it names neither); `null` for
+///                        a game played here
 /// @param finished        whether the game is over
 /// @param statusKey       message key of the status line (`status.yourTurn`,
 ///                        `outcome.CHECKMATE.BLACK`…)
@@ -107,9 +108,17 @@ record GamePage(
     }
 
     /// `Morphy, Paul – Duke Karl`, from the PGN's `White` and `Black` tags
-    /// (`?` when one is missing, as PGN itself writes it).
+    /// (`?` for one that is missing, as PGN itself writes it), or empty if
+    /// the PGN names neither: the page then just says "imported game".
     static String players(GameView view) {
-        return view.pgnTags().getOrDefault("White", "?") + " – " + view.pgnTags().getOrDefault("Black", "?");
+        var white = name(view, "White");
+        var black = name(view, "Black");
+        return white.equals("?") && black.equals("?") ? "" : white + " – " + black;
+    }
+
+    private static String name(GameView view, String tag) {
+        var name = view.pgnTags().getOrDefault(tag, "?").strip();
+        return name.isEmpty() ? "?" : name;
     }
 
     private static String colorName(Color color) {

@@ -15,6 +15,7 @@
             <p class="hero-desc" th:text="#{home.intro}">Play against five bots and review every game afterwards.</p>
             <div class="hero-actions">
                 <a class="btn btn-primary" href="#new-game" th:text="#{newGame.play}">Play</a>
+                <a class="btn btn-secondary" th:href="@{/games/import}" th:text="#{home.import}">Import a game</a>
             </div>
         </div>
     </section>
