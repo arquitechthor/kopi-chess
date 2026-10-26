@@ -788,8 +788,10 @@ cualquier partida.
 
 ### Tareas
 
-- [ ] **Parser PGN** en el dominio: etiquetas, jugadas en SAN, comentarios
+- [x] **Parser PGN** en el dominio: etiquetas, jugadas en SAN, comentarios
       `{...}`, variantes `(...)` (ignorarlas), NAG `$1`, resultado.
+      (`Pgn.parse`, `PgnGame`, `InvalidPgnException` con código, línea,
+      número de jugada y bando.)
   - Mensajes de error con número de jugada y texto: «Jugada 23… Nxe5: ilegal
     en esta posición».
   - Pruebas con PGN reales exportados de Lichess y Chess.com (guardar en
@@ -801,6 +803,13 @@ cualquier partida.
 - [ ] Web: página «Importar PGN» (textarea + subir archivo).
 - [ ] REST: `POST /games/import`, `GET /games/{id}/pgn`.
 - [ ] **Historial**: listado paginado con filtros por origen y resultado.
+- [ ] **Balance contra cada bot** (petición del 2026-10-26, después del
+      historial): en la selección de bot de «Nueva partida», cuántas partidas
+      llevas ganadas, perdidas, en tablas y sin terminar contra cada uno.
+  - Desde el punto de vista de la persona. Abandonar es perder; «sin
+    terminar» son las partidas `IN_PROGRESS`, que se pueden retomar.
+  - Las partidas importadas no cuentan (no tienen bot).
+  - Una consulta agregada (`group by bot_profile`), sin cargar partidas.
 
 ### Criterio de aceptación
 
