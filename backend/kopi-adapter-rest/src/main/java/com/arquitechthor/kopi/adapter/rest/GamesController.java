@@ -8,6 +8,7 @@ import com.arquitechthor.kopi.adapter.rest.ApiModel.GameResponse;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.PlayMoveRequest;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ListGamesQuery;
@@ -19,7 +20,9 @@ import com.arquitechthor.kopi.application.game.ResignUseCase;
 import com.arquitechthor.kopi.domain.game.GameId;
 import java.net.URI;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/// `/api/v1/games`: create, read, play and resign (design §10).
+/// `/api/v1/games`: create, read, play, resign and export as PGN (design §10).
 ///
 /// Thin on purpose: it turns HTTP into commands, calls a use case and turns
 /// the view into JSON. Rules, turns and versions are decided further in;
@@ -39,19 +42,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(API + "/games")
 class GamesController {
 
+    /// The registered media type of PGN files.
+    static final String PGN_MEDIA_TYPE = "application/x-chess-pgn";
+
     private final CreateGameUseCase createGame;
     private final GetGameUseCase getGame;
     private final ListGamesUseCase listGames;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
+    private final ExportPgnUseCase exportPgn;
 
     GamesController(CreateGameUseCase createGame, GetGameUseCase getGame, ListGamesUseCase listGames,
-            PlayMoveUseCase playMove, ResignUseCase resign) {
+            PlayMoveUseCase playMove, ResignUseCase resign, ExportPgnUseCase exportPgn) {
         this.createGame = createGame;
         this.getGame = getGame;
         this.listGames = listGames;
         this.playMove = playMove;
         this.resign = resign;
+        this.exportPgn = exportPgn;
     }
 
     /// `201 Created` with the new game; if the bot has White, its first move
@@ -94,6 +102,18 @@ class GamesController {
             @RequestHeader(name = HttpHeaders.IF_MATCH, required = false) String ifMatch) {
         var version = Versions.fromIfMatch(ifMatch);
         return ok(resign.resign(new ResignCommand(new GameId(id), version)));
+    }
+
+    /// The game as a `.pgn` file (plan §9): `application/x-chess-pgn`,
+    /// saved as `kopi-chess-<first 8 characters of the id>.pgn`.
+    @GetMapping(path = "/{id}/pgn", produces = PGN_MEDIA_TYPE)
+    ResponseEntity<String> pgn(@PathVariable UUID id) {
+        var pgn = exportPgn.export(new GameId(id));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(PGN_MEDIA_TYPE + ";charset=UTF-8"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("kopi-chess-" + id.toString().substring(0, 8) + ".pgn").build().toString())
+                .body(pgn);
     }
 
     private static ResponseEntity<GameResponse> ok(GameView view) {

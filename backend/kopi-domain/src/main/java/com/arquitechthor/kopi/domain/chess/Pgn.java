@@ -35,7 +35,14 @@ import java.util.regex.Pattern;
 /// (`{ [%clk 0:03:00] }`) are no trouble. What it never does is guess a
 /// move: every one must be legal SAN in its position (see [San#parse]), and
 /// the first that is not is reported with its line, number and side.
+///
+/// [#format] writes a game back, in the PGN standard's export format:
+/// reading what it writes gives the same game.
 public final class Pgn {
+
+    /// Movetext lines stay within this width (the standard's export format
+    /// recommends 80).
+    static final int LINE_WIDTH = 80;
 
     /// A move number before a move, possibly stuck to it: `12.`, `12...`,
     /// `12.e4`.
@@ -55,6 +62,51 @@ public final class Pgn {
     /// @throws InvalidPgnException with the problem and where it is
     public static PgnGame parse(String pgn) {
         return new Reader(pgn == null ? "" : pgn).game();
+    }
+
+    /// Writes `game` as PGN: its tags (with `SetUp` and `FEN` added if it
+    /// does not start from the standard position and has no `FEN` tag),
+    /// a blank line, and the moves numbered, `1... e5` if Black moves
+    /// first, ending with the result, in lines of at most [#LINE_WIDTH].
+    public static String format(PgnGame game) {
+        var pgn = new StringBuilder();
+        var tags = new LinkedHashMap<>(game.tags());
+        var fen = game.initialPosition().toFen();
+        if (!fen.equals(Fen.INITIAL) && !tags.containsKey("FEN")) {
+            tags.put("SetUp", "1");
+            tags.put("FEN", fen);
+        }
+        tags.forEach((name, value) -> pgn.append('[').append(name).append(" \"")
+                .append(value.replace("\\", "\\\\").replace("\"", "\\\""))
+                .append("\"]\n"));
+        if (!tags.isEmpty()) {
+            pgn.append('\n');
+        }
+
+        var words = new ArrayList<String>();
+        var position = game.initialPosition();
+        for (var move : game.moves()) {
+            var san = San.format(position, move);
+            if (position.sideToMove() == Color.WHITE) {
+                words.add(position.fullmoveNumber() + ". " + san);
+            } else if (words.isEmpty()) {
+                words.add(position.fullmoveNumber() + "... " + san);
+            } else {
+                words.add(san);
+            }
+            position = position.apply(move);
+        }
+        words.add(game.result().token());
+
+        var line = new StringBuilder();
+        for (var word : words) {
+            if (!line.isEmpty() && line.length() + 1 + word.length() > LINE_WIDTH) {
+                pgn.append(line).append('\n');
+                line.setLength(0);
+            }
+            line.append(line.isEmpty() ? "" : " ").append(word);
+        }
+        return pgn.append(line).append('\n').toString();
     }
 
     /// A one-pass reader over the text, keeping count of lines.

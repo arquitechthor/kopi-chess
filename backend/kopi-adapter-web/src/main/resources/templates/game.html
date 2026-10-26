@@ -66,6 +66,8 @@
                 </form>
                 <a class="btn btn-secondary" th:if="${game.finished}" th:href="@{/games/{id}/analysis(id=${game.id})}"
                    th:text="#{game.review}">Review the game</a>
+                <a class="btn btn-secondary" th:href="@{/api/v1/games/{id}/pgn(id=${game.id})}" download
+                   th:text="#{game.downloadPgn}">Download PGN</a>
                 <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
             </div>
         </div>

@@ -103,6 +103,9 @@ class ReviewPageTest {
         var playing = newGame();
 
         assertThat(page("/games/{id}?lang=en", id)).contains("/games/" + id + "/analysis", "Review the game");
+        // Any game, finished or not, can be saved as PGN.
+        assertThat(page("/games/{id}?lang=en", id)).contains("/api/v1/games/" + id + "/pgn", "Download PGN");
+        assertThat(page("/games/{id}?lang=es", playing)).contains("Descargar PGN");
         assertThat(page("/games/{id}?lang=en", playing)).doesNotContain("Review the game");
     }
 

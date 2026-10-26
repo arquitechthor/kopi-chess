@@ -9,7 +9,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -162,6 +164,100 @@ class PgnTest {
 
             assertThat(game.tag("Event")).hasValue("x");
             assertThat(game.moves()).hasSize(2);
+        }
+    }
+
+    @Nested
+    class Writing {
+
+        private static PgnGame game(String pgn) {
+            return Pgn.parse(pgn);
+        }
+
+        @Test
+        void tagsABlankLineAndNumberedMovesEndingWithTheResult() {
+            var game = game("[Event \"Fool's mate\"]\n[Result \"0-1\"]\n\n1. f3 e5 2. g4 Qh4# 0-1");
+
+            assertThat(Pgn.format(game)).isEqualTo("""
+                    [Event "Fool's mate"]
+                    [Result "0-1"]
+
+                    1. f3 e5 2. g4 Qh4# 0-1
+                    """);
+        }
+
+        @Test
+        void aGameFromAPositionCarriesItsFenAndBlackStartsWithDots() {
+            var game = new PgnGame(Map.of(),
+                    Fen.parse("3r2k1/3r1ppp/8/8/8/8/5PPP/R5K1 b - - 0 1"),
+                    Pgn.parse("[FEN \"3r2k1/3r1ppp/8/8/8/8/5PPP/R5K1 b - - 0 1\"] 1... Rd1+ 2. Rxd1 Rxd1#").moves(),
+                    PgnGame.Result.BLACK_WINS);
+
+            assertThat(Pgn.format(game)).isEqualTo("""
+                    [SetUp "1"]
+                    [FEN "3r2k1/3r1ppp/8/8/8/8/5PPP/R5K1 b - - 0 1"]
+
+                    1... Rd1+ 2. Rxd1 Rxd1# 0-1
+                    """);
+        }
+
+        @Test
+        void quotesAndBackslashesInTagsAreEscaped() {
+            var game = game("[Event \"The \\\"Opera\\\" game \\\\ 1858\"]\n\n1. e4 *");
+
+            assertThat(Pgn.format(game)).startsWith("[Event \"The \\\"Opera\\\" game \\\\ 1858\"]\n");
+        }
+
+        @Test
+        void longGamesWrapAtEightyColumns() {
+            var pgn = Pgn.format(Pgn.parse(resource("chesscom-immortal-game.pgn")));
+
+            var movetext = pgn.substring(pgn.indexOf("\n\n") + 2).lines().toList();
+            assertThat(movetext).hasSizeGreaterThan(2)
+                    .allSatisfy(line -> assertThat(line.length()).isLessThanOrEqualTo(Pgn.LINE_WIDTH));
+            assertThat(movetext.getLast()).endsWith("23. Be7# 1-0");
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"lichess-opera-game.pgn", "chesscom-immortal-game.pgn", "chesscom-bongcloud-draw.pgn",
+                "from-position.pgn"})
+        void readingWhatItWritesGivesTheSameGame(String file) {
+            var game = Pgn.parse(resource(file));
+
+            var again = Pgn.parse(Pgn.format(game));
+
+            assertThat(again.moves()).isEqualTo(game.moves());
+            assertThat(again.initialPosition().toFen()).isEqualTo(game.initialPosition().toFen());
+            assertThat(again.tags()).containsAllEntriesOf(game.tags());
+            assertThat(again.result()).isEqualTo(game.result());
+        }
+
+        @Test
+        void soDoRandomGamesWithCastlingPromotionsAndEnPassant() {
+            // Plan §9's acceptance: exporting and importing a game gives the
+            // same sequence of moves. Random games from the perft positions
+            // reach every kind of move.
+            var checked = new AtomicInteger();
+            RandomGames.play(20_261_026L, 60, 120, step -> {
+                // Every tenth position of each game: its whole game so far.
+                if (step.moves().isEmpty() || step.moves().size() % 10 != 0) {
+                    return;
+                }
+                var start = Fen.parse(step.start());
+                var moves = new ArrayList<Move>();
+                var position = start;
+                for (var uci : step.moves()) {
+                    var move = position.legalMoves().stream().filter(m -> m.toUci().equals(uci)).findFirst()
+                            .orElseThrow();
+                    moves.add(move);
+                    position = position.apply(move);
+                }
+                var game = new PgnGame(Map.of(), start, moves, PgnGame.Result.UNKNOWN);
+                assertThat(Pgn.parse(Pgn.format(game)).moves()).as(step.start() + " " + step.moves())
+                        .isEqualTo(moves);
+                checked.incrementAndGet();
+            });
+            assertThat(checked.get()).isGreaterThan(300);
         }
     }
 

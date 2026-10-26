@@ -142,6 +142,8 @@
             <p class="muted" th:text="#{review.engine(${r.engine})}">Analysed by Stockfish 19</p>
             <div class="panel-actions">
                 <a class="btn btn-secondary" th:href="@{/games/{id}(id=${r.id})}" th:text="#{review.backToGame}">Back to the game</a>
+                <a class="btn btn-secondary" th:href="@{/api/v1/games/{id}/pgn(id=${r.id})}" download
+                   th:text="#{game.downloadPgn}">Download PGN</a>
                 <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
             </div>
         </aside>

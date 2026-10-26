@@ -6,6 +6,8 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.ExportPgn;
+import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ListGames;
@@ -76,6 +78,11 @@ class WebAdapterTestApplication {
     CreateGameUseCase createGame(InMemoryGames games, Clock clock) {
         var ids = new AtomicLong();
         return new CreateGame(games, BOT, () -> new GameId(new UUID(0, ids.incrementAndGet())), clock);
+    }
+
+    @Bean
+    ExportPgnUseCase exportPgn(InMemoryGames games) {
+        return new ExportPgn(games);
     }
 
     @Bean
