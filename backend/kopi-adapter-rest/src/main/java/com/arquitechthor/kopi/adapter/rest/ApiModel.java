@@ -5,6 +5,7 @@ import com.arquitechthor.kopi.application.game.GamePage;
 import com.arquitechthor.kopi.application.game.GameSummary;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
+import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.domain.analysis.AnalysisSettings;
 import com.arquitechthor.kopi.domain.analysis.AnalysisSummary;
 import com.arquitechthor.kopi.domain.analysis.Evaluation;
@@ -145,8 +146,18 @@ final class ApiModel {
         }
     }
 
-    /// `GET /bots`: a bot and what it is like, in the response's language.
-    record BotResponse(BotProfile profile, int level, String description) {}
+    /// `GET /bots`: a bot and what it is like, in the response's language,
+    /// with the person's record against it.
+    record BotResponse(BotProfile profile, int level, String description, BotRecordResponse record) {}
+
+    /// `{"won": 3, "lost": 5, "drawn": 1, "unfinished": 2}`, from the
+    /// person's side: resigning is losing, unfinished games can be resumed.
+    record BotRecordResponse(int won, int lost, int drawn, int unfinished) {
+
+        static BotRecordResponse of(BotRecord record) {
+            return new BotRecordResponse(record.won(), record.lost(), record.drawn(), record.unfinished());
+        }
+    }
 
     /// `GET /games/{id}/analysis`, and `POST` (which answers before any
     /// result): how the analysis is going and, once `DONE`, the result.

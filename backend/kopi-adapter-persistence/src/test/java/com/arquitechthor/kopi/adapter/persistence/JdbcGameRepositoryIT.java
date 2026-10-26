@@ -6,6 +6,7 @@ import static com.arquitechthor.kopi.adapter.persistence.GameRowsTest.play;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
@@ -226,5 +227,25 @@ class JdbcGameRepositoryIT {
 
     private static Game newGameWithId(Color humanColor) {
         return Game.start(new GameId(UUID.randomUUID()), humanColor, BotProfile.PAWN, Position.initial(), START);
+    }
+
+    @Test
+    void theRecordAgainstEachBotIsCountedInSqlAsTallyDefinesIt() {
+        // Wins and losses with both colours, resignations and unfinished
+        // games, against two bots; an imported draw must not count.
+        var games = new ArrayList<Game>();
+        games.add(play(newGameWithId(Color.BLACK), "f2f3 e7e5 g2g4 d8h4"));                 // won as Black
+        games.add(play(newGameWithId(Color.WHITE), "f2f3 e7e5 g2g4 d8h4"));                 // lost as White
+        games.add(newGameWithId(Color.WHITE).resign(Color.WHITE, START));                    // resigned: lost
+        games.add(newGameWithId(Color.BLACK).resign(Color.WHITE, START));                    // the other side resigned: won
+        games.add(play(newGameWithId(Color.WHITE), "e2e4"));                                 // unfinished
+        games.add(Game.start(new GameId(UUID.randomUUID()), Color.WHITE, BotProfile.QUEEN, Position.initial(), START));
+        games.add(imported("1. e4 e5 1/2-1/2"));                                            // not against a bot
+        games.forEach(repository::insert);
+
+        assertThat(repository.recordsAgainstBots()).isEqualTo(BotRecord.tally(games.stream()));
+        assertThat(repository.recordsAgainstBots().get(BotProfile.PAWN)).isEqualTo(new BotRecord(2, 2, 0, 1));
+        assertThat(repository.recordsAgainstBots().get(BotProfile.QUEEN)).isEqualTo(new BotRecord(0, 0, 0, 1));
+        assertThat(repository.recordsAgainstBots().get(BotProfile.ROOK)).isEqualTo(BotRecord.NONE);
     }
 }

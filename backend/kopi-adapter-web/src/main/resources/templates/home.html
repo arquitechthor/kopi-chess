@@ -36,6 +36,10 @@
                             <span class="choice-level" th:text="#{newGame.level(${bot.profile.level})}">Level 1</span>
                             <span class="choice-desc"
                                   th:text="${bot.available} ? #{|bot.${bot.profile}.description|} : #{newGame.comingSoon}">Plays like a child.</span>
+                            <!--/* The person's record against this bot (plan §9). */-->
+                            <span class="choice-record" th:with="r=${bot.record}"
+                                  th:text="${r.played() == 0} ? #{newGame.record.none}
+                                           : #{newGame.record(${r.won}, ${r.lost}, ${r.drawn}, ${r.unfinished})}">Your record: won 3 · lost 5 · drawn 1 · unfinished 2</span>
                         </label>
                     </div>
                 </fieldset>
