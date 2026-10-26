@@ -704,18 +704,19 @@ mostrar la revisión.
 
 ### 8.1 Dominio
 
-- [ ] `Evaluation` (*sealed*: `Centipawns`, `MateIn`) con `whiteWinChance()`.
-- [ ] `WinChance` y fórmulas de Win % y precisión (diseño §8.3–8.4), con
+- [x] `Evaluation` (*sealed*: `Centipawns`, `MateIn`, `Checkmate`) con
+      `winChanceFor(color)`.
+- [x] `WinChance` y fórmulas de Win % y precisión (diseño §8.3–8.4), con
       pruebas contra valores calculados a mano.
-- [ ] `MoveClassifier`: entradas = evaluación antes, después, mejor jugada,
+- [x] `MoveClassifier`: entradas = evaluación antes, después, mejor jugada,
       jugada jugada, si estaba en libro, número de jugadas legales. Salida =
       categoría + datos que la justifican.
   - Pruebas por categoría con posiciones reales: un mate en 2 perdido, una
     dama colgada, una jugada única, una inexactitud en posición ganada.
-- [ ] `AnalysisSummary`: conteos por categoría y precisión por color.
+- [x] `AnalysisSummary`: conteos por categoría y precisión por color.
   - Recorrer pares de posiciones consecutivas y las ventanas de volatilidad
     con **Stream Gatherers** (`Gatherers.windowSliding`).
-- [ ] **ADR-005** (clasificación basada en Win %).
+- [x] **ADR-005** (clasificación basada en Win %).
 
 ### 8.2 Libro de aperturas
 
