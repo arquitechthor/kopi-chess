@@ -35,4 +35,26 @@ public class StockfishAdapterConfiguration {
     StockfishBots stockfishBots(EnginePool<UciEngine> stockfishPool, StockfishProperties properties) {
         return new StockfishBots(stockfishPool, properties.profiles(), properties.moveMargin());
     }
+
+    /// The analysis engines, apart from the bots'. `Threads` and `Hash` are
+    /// set once, when each engine starts: changing `Hash` clears it.
+    /// Closed on shutdown, like the bots' pool.
+    @Bean
+    StockfishAnalysis stockfishAnalysis(StockfishProperties properties) {
+        var binary = Path.of(properties.path());
+        var analysis = properties.analysis();
+        var pool = new EnginePool<>(analysis.poolSize(), () -> {
+            var engine = UciEngine.start(UciProcess.start(binary), properties.startTimeout());
+            try {
+                engine.setOption("Threads", analysis.threads());
+                engine.setOption("Hash", analysis.hashMb());
+                engine.waitUntilReady();
+                return engine;
+            } catch (RuntimeException e) {
+                engine.close();
+                throw e instanceof UciException uci ? uci : new UciException("Cannot configure the engine", e);
+            }
+        }, UciEngine::isAlive, analysis.waitTimeout());
+        return new StockfishAnalysis(pool, analysis.positionTimeout());
+    }
 }

@@ -18,6 +18,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /// @param moveMargin   time allowed on top of a profile's `movetime`
 ///                     before the move is given up
 /// @param profiles     how `BISHOP`, `ROOK` and `QUEEN` play
+/// @param analysis     the engines that judge finished games
 @ConfigurationProperties("kopi.stockfish")
 public record StockfishProperties(
         @DefaultValue("stockfish") String path,
@@ -25,10 +26,32 @@ public record StockfishProperties(
         @DefaultValue("10s") Duration startTimeout,
         @DefaultValue("5s") Duration waitTimeout,
         @DefaultValue("2s") Duration moveMargin,
-        Map<BotProfile, Profile> profiles) {
+        Map<BotProfile, Profile> profiles,
+        Analysis analysis) {
 
     public StockfishProperties {
         profiles = profiles == null ? Map.of() : Map.copyOf(profiles);
+        analysis = analysis == null ? Analysis.DEFAULTS : analysis;
+    }
+
+    /// The analysis engines (design §8.2): their own pool, so analysing a
+    /// game never makes a bot wait.
+    ///
+    /// @param poolSize        how many analysis engines may run at once
+    ///                        (one analysis at a time in the MVP)
+    /// @param threads         `Threads` of each engine
+    /// @param hashMb          `Hash` of each engine, in MB; fixed, so
+    ///                        results do not depend on the machine
+    /// @param waitTimeout     how long a position waits for a free engine
+    /// @param positionTimeout how long one position may take
+    public record Analysis(
+            @DefaultValue("1") int poolSize,
+            @DefaultValue("1") int threads,
+            @DefaultValue("64") int hashMb,
+            @DefaultValue("5m") Duration waitTimeout,
+            @DefaultValue("60s") Duration positionTimeout) {
+
+        static final Analysis DEFAULTS = new Analysis(1, 1, 64, Duration.ofMinutes(5), Duration.ofSeconds(60));
     }
 
     /// How one bot uses Stockfish.
