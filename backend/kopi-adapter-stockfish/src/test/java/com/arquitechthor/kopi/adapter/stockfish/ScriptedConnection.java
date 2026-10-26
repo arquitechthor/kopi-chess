@@ -18,6 +18,8 @@ final class ScriptedConnection implements UciConnection {
             "id author the Stockfish developers (see AUTHORS file)",
             "",
             "option name Threads type spin default 1 min 1 max 1024",
+            "option name Hash type spin default 16 min 1 max 33554432",
+            "option name MultiPV type spin default 1 min 1 max 256",
             "option name Skill Level type spin default 20 min 0 max 20",
             "option name UCI_LimitStrength type check default false",
             "option name UCI_Elo type spin default 1320 min 1320 max 3190",

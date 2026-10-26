@@ -700,10 +700,15 @@ Para N jugadas se analizan N+1 posiciones, no 2N.
 Configurable y registrado en `analysis.config`:
 
 - Límite por posición: `depth` **o** `nodes` (más reproducible que tiempo
-  entre máquinas distintas). Valor inicial sugerido: `depth 16–18`, a medir.
+  entre máquinas distintas). Medido (`docs/notas/presupuesto-analisis.md`):
+  la profundidad no acota el tiempo (a `depth 18` una posición tardó 93 s),
+  los nodos sí; propuesta `nodes 1000000` (~1 s por posición).
 - `MultiPV = 2`: permite saber si la mejor jugada era «única» (útil para
   futuras etiquetas como «solo jugada»).
-- `Threads = 1`, `Hash` fijo; un análisis concurrente en el MVP.
+- `Threads = 1`, `Hash` fijo (64 MB), puestos una vez al arrancar cada
+  motor; un análisis concurrente en el MVP, con **su propio *pool* de
+  motores**, aparte del de los bots, para que una partida no espere detrás
+  de un análisis.
 - *Timeout* total por partida y reintentos limitados.
 
 ### 8.3 Clasificación (fórmula pública)
