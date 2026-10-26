@@ -984,14 +984,15 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
   verde oscuro las blancas y rojo las negras (`#145a2c` / `#d42f2f`, con
   contraste AA sobre blanco y sobre el resaltado, y distinta luminosidad
   para quien no distingue bien el rojo del verde). El `title` de cada
-  casilla nombra la pieza y el bando («a8 · Torre · Negras»). Una leyenda
-  bajo la tabla lo recuerda, en los mismos colores. La última jugada se
+  casilla nombra la pieza y el bando («a8 · Torre · Negras»). **Sin
+  leyenda** bajo la tabla: delataría que es ajedrez. La última jugada se
   marca con fondo amarillo en sus dos casillas. (Al principio eran
-  mayúsculas y minúsculas, como en los diagramas de texto; se cambió a
-  petición, tras jugar con ello.)
+  mayúsculas y minúsculas, con una leyenda; se cambió a petición, tras
+  jugar con ello.)
 - **A la derecha del tablero**, el listado de **jugadas legales** en
   notación algebraica del idioma (`Cf3`, `e4`, `O-O`), agrupadas por pieza y
-  ordenadas. Debajo, las jugadas de la partida como una tabla de dos
+  ordenadas. Al pulsar un código se escribe en el campo de texto, listo para
+  registrarlo (`office.js`; sin JavaScript se copian a mano). Debajo, las jugadas de la partida como una tabla de dos
   columnas (blancas / negras) y el estado (turno, jaque, resultado).
 - **Entrada de texto** (`<input>` dentro de un `<form>`) con un botón de
   enviar, con aspecto de campo de búsqueda o de formulario de la empresa.
@@ -1027,15 +1028,16 @@ Una apariencia alternativa de la página de partida, pensada para dos cosas:
   idiomas (ADR-011). El adaptador traduce las letras de pieza para mostrar
   y hace la correspondencia de la entrada contra las jugadas legales
   formateadas. No hace falta `San.parse` en otro idioma.
-- **Sin JavaScript:** formulario clásico (`POST` + redirección,
-  *Post/Redirect/Get*), con htmx solo como mejora opcional. Es la prueba de
+- **Sin JavaScript para jugar:** formulario clásico (`POST` + redirección,
+  *Post/Redirect/Get*). El único script, `office.js`, solo escribe en el
+  campo el código pulsado: una mejora que no hace falta para jugar. Es la prueba de
   que la interfaz es un adaptador más: mismos casos de uso
   (`PlayMove`, `GetGame`), otra presentación.
 - **Activación:** un enlace discreto en la página de partida («Vista de
   texto» / «Text view») y un parámetro `?view=office`; la preferencia se
   guarda en una *cookie*, como el idioma. Desde el modo oficina se vuelve
   con un enlace igual de discreto en el pie.
-- **Textos:** todas las etiquetas, la leyenda, los errores y el «contenido
+- **Textos:** todas las etiquetas, los errores y el «contenido
   de relleno» de la empresa ficticia van en los archivos de mensajes, en
   inglés y español. Las letras de pieza también (`piece.letter.KNIGHT=C`).
 - **Accesibilidad de regalo:** una tabla con cabeceras y un campo de texto

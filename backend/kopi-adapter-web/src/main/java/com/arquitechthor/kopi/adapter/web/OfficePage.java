@@ -30,8 +30,6 @@ import java.util.Set;
 /// @param history    the moves played, one row per move number
 /// @param finished   whether the game is over
 /// @param statusKey  message key of the status line (as on the board page)
-/// @param letters    the piece letters for the legend: king, queen, rook,
-///                   bishop, knight, pawn
 record OfficePage(
         String id,
         long version,
@@ -41,8 +39,7 @@ record OfficePage(
         List<GamePage.MoveRow> history,
         boolean finished,
         boolean humanToMove,
-        String statusKey,
-        List<Character> letters) {
+        String statusKey) {
 
     /// A row of the board table.
     record Rank(String label, List<Cell> cells) {}
@@ -104,8 +101,7 @@ record OfficePage(
 
         return new OfficePage(view.id().toString(), view.version(), files, ranks,
                 view.isHumanToMove() ? groups(view, position, notation) : List.of(), history,
-                view.status() == GameStatus.FINISHED, view.isHumanToMove(), GamePage.statusKey(view),
-                notation.pieceLetters());
+                view.status() == GameStatus.FINISHED, view.isHumanToMove(), GamePage.statusKey(view));
     }
 
     /// The legal moves grouped by the piece that moves, king first, each

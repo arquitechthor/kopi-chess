@@ -79,7 +79,6 @@ h2 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
 .piece-black { color: var(--piece-black); }
 .grid td.piece-white, .grid td.piece-black { font-weight: 700; }
 
-.legend { color: var(--ink-soft); font-size: 12.5px; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
 
 .entry { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
 .entry label { font-weight: 600; }
@@ -96,6 +95,12 @@ button.secondary { background: var(--paper); color: var(--ink); border-color: #b
 .codes { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
 .codes dt { color: var(--ink-soft); }
 .codes dd { margin: 0; font-family: Consolas, "Courier New", monospace; }
+/* Valid codes look like plain links: a click types them into the field. */
+.codes button.code {
+  font: inherit; padding: 0; background: none; border: 0; border-radius: 0;
+  color: var(--accent); cursor: pointer;
+}
+.codes button.code:hover, .codes button.code:focus-visible { text-decoration: underline; }
 
 .log { border-collapse: collapse; width: 100%; font-family: Consolas, "Courier New", monospace; }
 .log th { text-align: left; font: 600 12.5px "Segoe UI", Tahoma, Arial, sans-serif; color: var(--ink-soft); }

@@ -1,6 +1,5 @@
 package com.arquitechthor.kopi.adapter.web;
 
-import java.util.List;
 import java.util.Locale;
 import org.springframework.context.MessageSource;
 
@@ -16,7 +15,7 @@ import org.springframework.context.MessageSource;
 /// @param rook   the letter of the rook (`R`, `T`)
 /// @param bishop the letter of the bishop (`B`, `A`)
 /// @param knight the letter of the knight (`N`, `C`)
-/// @param pawn   the letter of the pawn, for the board and its legend (`P`)
+/// @param pawn   the letter of the pawn, for the board (`P`)
 record OfficeNotation(char king, char queen, char rook, char bishop, char knight, char pawn) {
 
     static OfficeNotation of(char king, char queen, char rook, char bishop, char knight) {
@@ -51,9 +50,4 @@ record OfficeNotation(char king, char queen, char rook, char bishop, char knight
         return localised.toString();
     }
 
-    /// King, queen, rook, bishop, knight, pawn: the order of the legend and
-    /// of the groups of legal moves.
-    List<Character> pieceLetters() {
-        return List.of(king, queen, rook, bishop, knight, pawn);
-    }
 }

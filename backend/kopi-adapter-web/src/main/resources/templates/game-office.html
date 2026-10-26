@@ -2,7 +2,9 @@
 <!--/*
   Office mode (design §11.5): a game that looks like a page of an internal
   company portal. Deliberately none of Kopi's look (no logo, palette or
-  menu), no JavaScript, and a neutral tab title. The company is not named:
+  menu), a neutral tab title, and no key under the board: nothing that says
+  "chess". Playing needs no JavaScript; office.js only types a clicked code
+  into the field. The company is not named:
   no real organisation is imitated.
 */-->
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
@@ -11,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{office.tabTitle}">Operations report</title>
     <link rel="stylesheet" th:href="@{/css/office.css}">
+    <script th:src="@{/js/office.js}" defer></script>
 </head>
 <body>
 <header class="portal-header">
@@ -66,12 +69,6 @@
                 </tr>
                 </tbody>
             </table>
-            <p class="legend">
-                <span th:text="#{office.legend}">Key:</span>
-                <span th:text="#{office.legendPieces(${o.letters[0]}, ${o.letters[1]}, ${o.letters[2]}, ${o.letters[3]}, ${o.letters[4]}, ${o.letters[5]})}">K king…</span>
-                <span class="piece-white" th:text="#{office.legendWhite}">Green: white.</span>
-                <span class="piece-black" th:text="#{office.legendBlack}">Red: black.</span>
-            </p>
 
             <form class="entry" method="post" th:action="@{/games/{id}/office-moves(id=${o.id})}" th:if="${o.humanToMove}">
                 <label for="move" th:text="#{office.codeLabel}">Operation code</label>
@@ -88,7 +85,11 @@
                 <dl class="codes">
                     <th:block th:each="group : ${o.groups}">
                         <dt th:text="#{|piece.${group.piece}|} + ' (' + ${group.letter} + ')'">King (K)</dt>
-                        <dd th:text="${#strings.listJoin(group.moves, ' · ')}">Kf1 · Ke2</dd>
+                        <!--/* A click types the code into the field (office.js); without
+                               JavaScript they are plain text to copy by hand. */-->
+                        <dd><th:block th:each="code, it : ${group.moves}"><button type="button" class="code"
+                                th:data-code="${code}" th:text="${code}">Kf1</button><th:block
+                                th:unless="${it.last}"> · </th:block></th:block></dd>
                     </th:block>
                 </dl>
             </section>
