@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.web;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Fen;
+import com.arquitechthor.kopi.domain.chess.Piece;
 import com.arquitechthor.kopi.domain.chess.PieceType;
 import com.arquitechthor.kopi.domain.chess.Position;
 import com.arquitechthor.kopi.domain.chess.Square;
@@ -46,9 +47,24 @@ record OfficePage(
     /// A row of the board table.
     record Rank(String label, List<Cell> cells) {}
 
-    /// A square: the letter of its piece (upper case for White, lower case
-    /// for Black) or empty, and whether the last move touched it.
-    record Cell(String square, String piece, boolean lastMove) {}
+    /// A square: the letter of its piece (always upper case) or empty, the
+    /// piece's side (`null` for an empty square; the template colours it),
+    /// and whether the last move touched it.
+    record Cell(String square, String piece, PieceType pieceType, Color side, boolean lastMove) {
+
+        /// The cell's CSS classes (`piece-white`, `piece-black`, `is-last`),
+        /// or `null` for none, so the template leaves the attribute out.
+        public String cssClass() {
+            var classes = new ArrayList<String>();
+            if (side != null) {
+                classes.add(side == Color.WHITE ? "piece-white" : "piece-black");
+            }
+            if (lastMove) {
+                classes.add("is-last");
+            }
+            return classes.isEmpty() ? null : String.join(" ", classes);
+        }
+    }
 
     /// The legal moves of one kind of piece.
     record MoveGroup(PieceType piece, char letter, List<String> moves) {}
@@ -70,7 +86,10 @@ record OfficePage(
             var cells = new ArrayList<Cell>();
             for (int column = 0; column < 8; column++) {
                 var square = Square.of(whiteAtBottom ? column : 7 - column, rank);
-                cells.add(new Cell(square.toString(), letter(position, square, notation),
+                var piece = position.pieceAt(square);
+                cells.add(new Cell(square.toString(),
+                        piece.map(p -> String.valueOf(letterOf(p.type(), notation))).orElse(""),
+                        piece.map(Piece::type).orElse(null), piece.map(Piece::color).orElse(null),
                         lastMove.contains(square.toString())));
             }
             ranks.add(new Rank(String.valueOf(rank + 1), cells));
@@ -87,16 +106,6 @@ record OfficePage(
                 view.isHumanToMove() ? groups(view, position, notation) : List.of(), history,
                 view.status() == GameStatus.FINISHED, view.isHumanToMove(), GamePage.statusKey(view),
                 notation.pieceLetters());
-    }
-
-    private static String letter(Position position, Square square, OfficeNotation notation) {
-        return position.pieceAt(square)
-                .map(piece -> {
-                    var letter = letterOf(piece.type(), notation);
-                    return String.valueOf(piece.color() == Color.WHITE
-                            ? Character.toUpperCase(letter) : Character.toLowerCase(letter));
-                })
-                .orElse("");
     }
 
     /// The legal moves grouped by the piece that moves, king first, each

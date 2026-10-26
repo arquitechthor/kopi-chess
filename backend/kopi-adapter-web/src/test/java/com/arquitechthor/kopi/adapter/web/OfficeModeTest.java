@@ -86,14 +86,19 @@ class OfficeModeTest {
 
         var page = body(mvc.get().uri("/games/{id}?lang=es", id).cookie(OFFICE).exchange());
 
-        assertThat(Pattern.compile("<td[^>]*title=\"[a-h][1-8]\"").matcher(page).results().count()).isEqualTo(64);
+        assertThat(Pattern.compile("<td[^>]*title=\"[a-h][1-8][^\"]*\"").matcher(page).results().count()).isEqualTo(64);
         // White at the bottom: rank 8 first, files a to h; Spanish letters,
-        // White upper case and Black lower case.
+        // all upper case, the side told by colour (and named in the title).
         assertThat(page).containsPattern("(?s)<th scope=\"col\">a</th>.*<th scope=\"col\">h</th>")
-                .containsPattern("(?s)<th scope=\"row\">8</th>\\s*<td title=\"a8\">t</td>\\s*<td title=\"b8\">c</td>")
-                .containsPattern("<td title=\"e1\">R</td>")
-                .containsPattern("<td title=\"d1\">D</td>")
-                .contains("R rey, D dama, T torre, A alfil, C caballo, P peón.");
+                .containsPattern("(?s)<th scope=\"row\">8</th>\\s*"
+                        + "<td class=\"piece-black\"\\s+title=\"a8 · Torre · Negras\">T</td>\\s*"
+                        + "<td class=\"piece-black\"\\s+title=\"b8 · Caballo · Negras\">C</td>")
+                .containsPattern("<td class=\"piece-white\"\\s+title=\"e1 · Rey · Blancas\">R</td>")
+                .containsPattern("<td class=\"piece-white\"\\s+title=\"d1 · Dama · Blancas\">D</td>")
+                .containsPattern("<td\\s+title=\"e4\"></td>")
+                .contains("R rey, D dama, T torre, A alfil, C caballo, P peón.")
+                .contains("<span class=\"piece-white\">Verde: blancas.</span>")
+                .contains("<span class=\"piece-black\">Rojo: negras.</span>");
     }
 
     @Test
@@ -103,10 +108,11 @@ class OfficeModeTest {
         var page = body(mvc.get().uri("/games/{id}?lang=es", id).cookie(OFFICE).exchange());
 
         assertThat(page).containsPattern("(?s)<th scope=\"col\">h</th>.*<th scope=\"col\">a</th>")
-                .containsPattern("(?s)<th scope=\"row\">1</th>\\s*<td title=\"h1\">T</td>")
-                // The bot opened with a3: both squares marked.
-                .containsPattern("class=\"is-last\"[^>]*title=\"a2\"|title=\"a2\"[^>]*class=\"is-last\"")
-                .containsPattern("class=\"is-last\"[^>]*title=\"a3\"|title=\"a3\"[^>]*class=\"is-last\"");
+                .containsPattern("(?s)<th scope=\"row\">1</th>\\s*<td class=\"piece-white\"\\s+title=\"h1 · Torre · Blancas\">T</td>")
+                // The bot opened with a3: both squares marked, the empty one
+                // and the one with White's pawn.
+                .containsPattern("<td class=\"is-last\"\\s+title=\"a2\"></td>")
+                .containsPattern("<td class=\"piece-white is-last\"\\s+title=\"a3 · Peón · Blancas\">P</td>");
     }
 
     @Test

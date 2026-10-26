@@ -18,7 +18,9 @@
   --ok-bg: #e6f4ea;
   --bad: #9b2c2c;
   --bad-bg: #fdecec;
-  --mark: #fff3bf;
+  --mark: #fff7cc;
+  --piece-white: #145a2c;
+  --piece-black: #d42f2f;
   color-scheme: light;
 }
 
@@ -69,6 +71,13 @@ h2 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
 .grid th { background: #f8f9fa; color: var(--ink-soft); font-weight: normal; font-size: 12.5px; }
 .grid td { font-size: 15px; }
 .grid td.is-last { font-weight: 700; background: var(--mark); }
+
+/* The side of a piece is its colour. A dark green and a brighter red, so
+   they differ in lightness too (red-green colour blindness is common);
+   each cell's title also names the side. */
+.piece-white { color: var(--piece-white); }
+.piece-black { color: var(--piece-black); }
+.grid td.piece-white, .grid td.piece-black { font-weight: 700; }
 
 .legend { color: var(--ink-soft); font-size: 12.5px; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
 

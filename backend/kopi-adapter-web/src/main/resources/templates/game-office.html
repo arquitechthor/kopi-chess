@@ -57,15 +57,20 @@
                 <tbody>
                 <tr th:each="rank : ${o.ranks}">
                     <th scope="row" th:text="${rank.label}">8</th>
-                    <td th:each="cell : ${rank.cells}" th:classappend="${cell.lastMove} ? 'is-last'"
-                        th:title="${cell.square}" th:text="${cell.piece}">T</td>
+                    <!--/* The side is the colour (green White, red Black); the title
+                           names it too, for whoever cannot tell the colours apart. */-->
+                    <td th:each="cell : ${rank.cells}" th:class="${cell.cssClass()}"
+                        th:title="${cell.side == null} ? ${cell.square}
+                                  : ${cell.square} + ' · ' + #{|piece.${cell.pieceType}|} + ' · ' + #{|color.${cell.side}|}"
+                        th:text="${cell.piece}">T</td>
                 </tr>
                 </tbody>
             </table>
             <p class="legend">
                 <span th:text="#{office.legend}">Key:</span>
                 <span th:text="#{office.legendPieces(${o.letters[0]}, ${o.letters[1]}, ${o.letters[2]}, ${o.letters[3]}, ${o.letters[4]}, ${o.letters[5]})}">K king…</span>
-                <span th:text="#{office.legendCase}">Upper case: white; lower case: black.</span>
+                <span class="piece-white" th:text="#{office.legendWhite}">Green: white.</span>
+                <span class="piece-black" th:text="#{office.legendBlack}">Red: black.</span>
             </p>
 
             <form class="entry" method="post" th:action="@{/games/{id}/office-moves(id=${o.id})}" th:if="${o.humanToMove}">
