@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.adapter.rest;
 
+import com.arquitechthor.kopi.application.analysis.AnalysisNotPossibleException;
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
 import com.arquitechthor.kopi.application.game.VersionMismatchException;
@@ -31,7 +32,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 /// | `INVALID_REQUEST`       | 400    |
 /// | `INVALID_UCI`           | 400    |
 /// | `GAME_NOT_FOUND`        | 404    |
+/// | `ANALYSIS_NOT_FOUND`    | 404    |
 /// | `GAME_NOT_IN_PROGRESS`  | 409    |
+/// | `GAME_NOT_FINISHED`     | 409    |
+/// | `NOTHING_TO_ANALYSE`    | 409    |
 /// | `NOT_YOUR_TURN`         | 409    |
 /// | `VERSION_MISMATCH`      | 412    |
 /// | `ILLEGAL_MOVE`          | 422    |
@@ -75,6 +79,20 @@ class ApiExceptionHandler {
     @ExceptionHandler
     ProblemDetail notFound(GameNotFoundException e, HttpServletRequest request) {
         return problem(HttpStatus.NOT_FOUND, "GAME_NOT_FOUND", request, e.gameId());
+    }
+
+    @ExceptionHandler
+    ProblemDetail analysisNotFound(AnalysisController.AnalysisNotFoundException e, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, "ANALYSIS_NOT_FOUND", request, e.gameId());
+    }
+
+    @ExceptionHandler
+    ProblemDetail analysisNotPossible(AnalysisNotPossibleException e, HttpServletRequest request) {
+        var code = switch (e.reason()) {
+            case NOT_FINISHED -> "GAME_NOT_FINISHED";
+            case NO_MOVES -> "NOTHING_TO_ANALYSE";
+        };
+        return problem(HttpStatus.CONFLICT, code, request, e.gameId());
     }
 
     @ExceptionHandler

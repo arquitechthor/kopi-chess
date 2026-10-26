@@ -739,16 +739,16 @@ mostrar la revisión.
 - [x] Recuperación al arrancar: trabajos `RUNNING` antiguos → `QUEUED` o
       `FAILED` tras N intentos.
 - [x] Caso de uso `RunAnalysisJob`: N+1 posiciones, una búsqueda por posición,
-      clasificar, guardar. (Publicar el progreso queda para §8.4.)
+      clasificar, guardar, publicar progreso (§8.4).
 - [x] Caso de uso `RequestAnalysis` (idempotente) y encolado automático al
       terminar una partida.
 - [x] **ADR-007** (cola en PostgreSQL).
 
 ### 8.4 Publicación de progreso
 
-- [ ] Puerto `AnalysisEvents` y adaptador SSE (`SseEmitter`) con registro de
+- [x] Puerto `AnalysisEvents` y adaptador SSE (`SseEmitter`) con registro de
       suscriptores por `gameId`.
-- [ ] Endpoints REST: `POST/GET /games/{id}/analysis` y
+- [x] Endpoints REST: `POST/GET /games/{id}/analysis` y
       `/analysis/events`.
 
 ### 8.5 Pantalla de revisión

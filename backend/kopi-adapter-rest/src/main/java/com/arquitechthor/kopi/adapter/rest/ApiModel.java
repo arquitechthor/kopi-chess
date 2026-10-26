@@ -1,15 +1,26 @@
 package com.arquitechthor.kopi.adapter.rest;
 
+import com.arquitechthor.kopi.application.analysis.AnalysisView;
 import com.arquitechthor.kopi.application.game.GamePage;
 import com.arquitechthor.kopi.application.game.GameSummary;
 import com.arquitechthor.kopi.application.game.GameView;
+import com.arquitechthor.kopi.application.port.AnalysisJob;
+import com.arquitechthor.kopi.domain.analysis.AnalysisSettings;
+import com.arquitechthor.kopi.domain.analysis.AnalysisSummary;
+import com.arquitechthor.kopi.domain.analysis.Evaluation;
+import com.arquitechthor.kopi.domain.analysis.MoveAnalysis;
+import com.arquitechthor.kopi.domain.analysis.MoveCategory;
+import com.arquitechthor.kopi.domain.analysis.SearchLimits;
 import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.Opening;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /// The JSON of the API: requests and responses as records.
@@ -116,4 +127,128 @@ final class ApiModel {
 
     /// `GET /bots`: a bot and what it is like, in the response's language.
     record BotResponse(BotProfile profile, int level, String description) {}
+
+    /// `GET /games/{id}/analysis`, and `POST` (which answers before any
+    /// result): how the analysis is going and, once `DONE`, the result.
+    /// Every result field is `null` until then.
+    ///
+    /// @param state    `QUEUED`, `RUNNING`, `DONE` or `FAILED`
+    /// @param attempts how many times a worker has tried it
+    /// @param error    why the last attempt failed, if it did
+    record AnalysisResponse(
+            UUID gameId,
+            AnalysisJob.State state,
+            int attempts,
+            String error,
+            String engine,
+            SettingsResponse settings,
+            OpeningResponse opening,
+            SummaryResponse summary,
+            List<MoveAnalysisResponse> moves,
+            Instant startedAt,
+            Instant completedAt) {
+
+        /// The job alone, before there is a result.
+        static AnalysisResponse of(AnalysisJob job) {
+            return new AnalysisResponse(job.gameId().value(), job.state(), job.attempts(),
+                    job.lastError().orElse(null), null, null, null, null, null, null, null);
+        }
+
+        static AnalysisResponse of(AnalysisView view) {
+            if (view.analysis().isEmpty()) {
+                return of(view.job().orElseThrow());
+            }
+            var analysis = view.analysis().get();
+            var moves = new ArrayList<MoveAnalysisResponse>();
+            for (var move : analysis.moves()) {
+                moves.add(MoveAnalysisResponse.of(move, view.playedSan().get(move.ply() - 1)));
+            }
+            return new AnalysisResponse(view.gameId().value(), AnalysisJob.State.DONE,
+                    view.job().map(AnalysisJob::attempts).orElse(0), null, analysis.engine(),
+                    SettingsResponse.of(analysis.settings()),
+                    analysis.opening().map(OpeningResponse::of).orElse(null),
+                    SummaryResponse.of(analysis.summary()), moves, analysis.startedAt(), analysis.completedAt());
+        }
+    }
+
+    /// How the engine searched: `{"limit": "NODES", "limitValue": 1000000,
+    /// "multiPv": 2, "missedMateLimit": 5}`.
+    record SettingsResponse(String limit, long limitValue, int multiPv, int missedMateLimit) {
+
+        static SettingsResponse of(AnalysisSettings settings) {
+            return switch (settings.limits()) {
+                case SearchLimits.Depth(var plies) ->
+                    new SettingsResponse("DEPTH", plies, settings.multiPv(), settings.missedMateLimit());
+                case SearchLimits.Nodes(var count) ->
+                    new SettingsResponse("NODES", count, settings.multiPv(), settings.missedMateLimit());
+            };
+        }
+    }
+
+    /// `{"eco": "C60", "name": "Ruy Lopez"}`. Names are in English in every
+    /// language (design §12).
+    record OpeningResponse(String eco, String name) {
+
+        static OpeningResponse of(Opening opening) {
+            return new OpeningResponse(opening.eco(), opening.name());
+        }
+    }
+
+    /// An evaluation from White's point of view, one field set:
+    /// `{"cp": 34, "mate": null, "checkmate": null}`,
+    /// `{"cp": null, "mate": -3, "checkmate": null}` (Black mates in three),
+    /// `{"cp": null, "mate": null, "checkmate": "WHITE"}` (the winner).
+    record EvaluationResponse(Integer cp, Integer mate, Color checkmate) {
+
+        static EvaluationResponse of(Evaluation evaluation) {
+            return switch (evaluation) {
+                case Evaluation.Centipawns(var cp) -> new EvaluationResponse(cp, null, null);
+                case Evaluation.MateIn(var moves) -> new EvaluationResponse(null, moves, null);
+                case Evaluation.Checkmate(var winner) -> new EvaluationResponse(null, null, winner);
+            };
+        }
+    }
+
+    /// One move's verdict. `san` is the move played; `bestLine` is the
+    /// engine's line in SAN, starting with `bestMove` (in UCI).
+    ///
+    /// @param winChanceLoss what the move gave away, 0 to 2 (design §8.3)
+    /// @param missedMateIn  for a `MISSED_MATE`, the mate that was there
+    record MoveAnalysisResponse(
+            int ply,
+            String san,
+            MoveCategory category,
+            EvaluationResponse before,
+            EvaluationResponse after,
+            String bestMove,
+            List<String> bestLine,
+            double winChanceLoss,
+            Integer missedMateIn) {
+
+        static MoveAnalysisResponse of(MoveAnalysis move, String san) {
+            var classification = move.classification();
+            return new MoveAnalysisResponse(move.ply(), san, classification.category(),
+                    EvaluationResponse.of(move.before()), EvaluationResponse.of(move.after()), move.bestMove(),
+                    move.bestLine(), classification.loss(),
+                    classification.missedMate().isPresent() ? classification.missedMate().getAsInt() : null);
+        }
+    }
+
+    /// Both sides' accuracy and counts.
+    record SummaryResponse(SideResponse white, SideResponse black) {
+
+        static SummaryResponse of(AnalysisSummary summary) {
+            return new SummaryResponse(SideResponse.of(summary.white()), SideResponse.of(summary.black()));
+        }
+    }
+
+    /// One side: `accuracy` from 0 to 100 (Lichess's formula, design §8.4;
+    /// `null` if the side never moved) and how many moves of each category.
+    record SideResponse(Double accuracy, Map<MoveCategory, Integer> counts) {
+
+        static SideResponse of(AnalysisSummary.Side side) {
+            return new SideResponse(side.accuracy().isPresent() ? side.accuracy().getAsDouble() : null,
+                    side.counts());
+        }
+    }
 }

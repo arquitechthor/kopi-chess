@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.application.analysis;
 
+import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
@@ -37,6 +38,10 @@ import java.util.Optional;
 ///    The game's opening is the last named position it went through.
 /// 4. Save the [GameAnalysis] and mark the job `DONE`.
 ///
+/// Along the way it tells [AnalysisEvents] how far it got after every
+/// position, and how it ended. Publishing is best effort: a listener that
+/// fails never fails the analysis.
+///
 /// If the engine cannot answer, the job goes back to the queue until it has
 /// been tried `maxAttempts` times, then `FAILED`. Anything else (the game
 /// is gone, a bug) fails it at once: trying again would fail the same way.
@@ -47,6 +52,7 @@ public final class RunAnalysisJob implements RunAnalysisJobUseCase {
     private final ChessEngine engine;
     private final OpeningBook book;
     private final AnalysisRepository analyses;
+    private final AnalysisEvents events;
     private final AnalysisSettings settings;
     private final int maxAttempts;
     private final Clock clock;
@@ -54,12 +60,14 @@ public final class RunAnalysisJob implements RunAnalysisJobUseCase {
     /// @param settings    how every game is analysed
     /// @param maxAttempts how many times a job is tried before it fails
     public RunAnalysisJob(AnalysisJobQueue queue, GameRepository games, ChessEngine engine, OpeningBook book,
-            AnalysisRepository analyses, AnalysisSettings settings, int maxAttempts, Clock clock) {
+            AnalysisRepository analyses, AnalysisEvents events, AnalysisSettings settings, int maxAttempts,
+            Clock clock) {
         this.queue = Objects.requireNonNull(queue, "queue");
         this.games = Objects.requireNonNull(games, "games");
         this.engine = Objects.requireNonNull(engine, "engine");
         this.book = Objects.requireNonNull(book, "book");
         this.analyses = Objects.requireNonNull(analyses, "analyses");
+        this.events = Objects.requireNonNull(events, "events");
         this.settings = Objects.requireNonNull(settings, "settings");
         this.clock = Objects.requireNonNull(clock, "clock");
         if (maxAttempts < 1) {
@@ -78,16 +86,31 @@ public final class RunAnalysisJob implements RunAnalysisJobUseCase {
         try {
             analyses.save(analyse(job));
             queue.complete(job.id());
+            publish(() -> events.completed(job.gameId()));
         } catch (EngineUnavailableException e) {
             if (job.attempts() < maxAttempts) {
                 queue.retry(job.id(), describe(e));
             } else {
-                queue.fail(job.id(), describe(e));
+                fail(job, describe(e));
             }
         } catch (RuntimeException e) {
-            queue.fail(job.id(), describe(e));
+            fail(job, describe(e));
         }
         return true;
+    }
+
+    private void fail(AnalysisJob job, String reason) {
+        queue.fail(job.id(), reason);
+        publish(() -> events.failed(job.gameId(), reason));
+    }
+
+    /// Tells the listeners, whatever they do: the analysis is what matters.
+    private static void publish(Runnable event) {
+        try {
+            event.run();
+        } catch (RuntimeException _) {
+            // AnalysisEvents promises not to throw; this keeps the promise for it
+        }
     }
 
     private GameAnalysis analyse(AnalysisJob job) {
@@ -102,6 +125,8 @@ public final class RunAnalysisJob implements RunAnalysisJobUseCase {
         var verdicts = new ArrayList<EngineAnalysis>();
         for (var position : positions) {
             verdicts.add(engine.analyse(position, settings.limits(), settings.multiPv()));
+            var analysed = verdicts.size();
+            publish(() -> events.progress(game.id(), analysed, positions.size()));
         }
 
         var classifier = new MoveClassifier(settings.missedMateLimit());

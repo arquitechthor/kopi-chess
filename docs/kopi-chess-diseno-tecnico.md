@@ -852,6 +852,29 @@ Prefijo `/api/v1`. Errores en formato **`ProblemDetail`** (RFC 9457).
 - **`GET /games/{id}/analysis/events`** — SSE: `progress`, `completed`,
   `failed`.
 
+`GET /analysis` devuelve el estado del trabajo (`QUEUED`, `RUNNING`,
+`DONE`, `FAILED`) y, cuando está `DONE`, el resultado; `404
+ANALYSIS_NOT_FOUND` si nunca se pidió. Pedir el análisis de una partida en
+juego o sin jugadas es un `409` (`GAME_NOT_FINISHED`,
+`NOTHING_TO_ANALYSE`).
+
+```json
+{ "state": "DONE", "engine": "Stockfish 19",
+  "settings": { "limit": "NODES", "limitValue": 1000000, "multiPv": 2, "missedMateLimit": 5 },
+  "opening": { "eco": "C20", "name": "King's Pawn Game" },
+  "summary": { "white": { "accuracy": 87.4, "counts": { "BEST": 12, "BLUNDER": 1 } }, "black": { "…": "…" } },
+  "moves": [ { "ply": 1, "san": "e4", "category": "BOOK",
+               "before": { "cp": 30, "mate": null, "checkmate": null },
+               "after":  { "cp": 35, "mate": null, "checkmate": null },
+               "bestMove": "e2e4", "bestLine": ["e4", "e5", "Nf3"],
+               "winChanceLoss": -0.01, "missedMateIn": null } ] }
+```
+
+Los eventos SSE llevan JSON: `progress` con
+`{"analysedPositions": 12, "totalPositions": 81}`, `failed` con
+`{"reason": "…"}`. Quien se suscribe a un análisis ya terminado recibe en
+el acto `completed` o `failed`, y el flujo se cierra.
+
 ### 10.1 Jugada
 
 ```http

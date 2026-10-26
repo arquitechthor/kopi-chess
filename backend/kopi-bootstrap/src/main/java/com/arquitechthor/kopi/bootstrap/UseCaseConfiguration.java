@@ -3,6 +3,8 @@ package com.arquitechthor.kopi.bootstrap;
 import com.arquitechthor.kopi.adapter.bots.KopiBots;
 import com.arquitechthor.kopi.adapter.openings.LichessOpeningBook;
 import com.arquitechthor.kopi.adapter.stockfish.StockfishBots;
+import com.arquitechthor.kopi.application.analysis.GetAnalysis;
+import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJob;
@@ -17,6 +19,7 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
@@ -106,9 +109,16 @@ class UseCaseConfiguration {
     }
 
     @Bean
+    GetAnalysisUseCase getAnalysis(GameRepository games, AnalysisJobQueue queue, AnalysisRepository analyses) {
+        return new GetAnalysis(games, queue, analyses);
+    }
+
+    /// `events` is the REST adapter's Server-Sent Events registry.
+    @Bean
     RunAnalysisJobUseCase runAnalysisJob(AnalysisJobQueue queue, GameRepository games, ChessEngine engine,
-            OpeningBook book, AnalysisRepository analyses, AnalysisProperties properties, Clock clock) {
-        return new RunAnalysisJob(queue, games, engine, book, analyses, properties.settings(),
+            OpeningBook book, AnalysisRepository analyses, AnalysisEvents events, AnalysisProperties properties,
+            Clock clock) {
+        return new RunAnalysisJob(queue, games, engine, book, analyses, events, properties.settings(),
                 properties.maxAttempts(), clock);
     }
 
