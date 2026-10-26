@@ -804,7 +804,9 @@ cualquier partida.
       partida: ADR-015.)
 - [x] Límites: tamaño máximo de PGN (100 KB), una partida por importación en
       el MVP.
-- [ ] Web: página «Importar PGN» (textarea + subir archivo).
+- [x] Web: página «Importar PGN» (textarea + subir archivo). Los errores
+      dicen la línea, la jugada y el bando, y citan la línea; el texto se
+      conserva para corregirlo ahí.
 - [x] REST: `POST /games/import` (texto plano o JSON; errores con línea,
       jugada y bando), `GET /games/{id}/pgn` (con enlace «Descargar PGN» en
       la partida y en la revisión).

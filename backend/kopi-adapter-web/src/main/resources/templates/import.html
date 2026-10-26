@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{import.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<!--/* Plan §9: bring in a game played elsewhere and review it. No JavaScript:
+       a classic multipart form; a refused PGN comes back with the text kept. */-->
+<main class="container">
+    <form class="card import-form" method="post" enctype="multipart/form-data" th:action="@{/games/import}">
+        <span class="eyebrow" th:text="#{import.eyebrow}">Lichess · Chess.com · over the board</span>
+        <h1 th:text="#{import.title}">Import a game</h1>
+        <p th:text="#{import.intro}">Paste the PGN of a finished game, or choose a .pgn file.</p>
+
+        <div class="notice-error import-error" role="alert" th:if="${importError}" th:with="e=${importError}">
+            <p>
+                <strong th:if="${e.atMove()}" th:text="#{import.at.move(${e.line}, ${e.moveNumber}, ${e.dots}, ${e.text})}">Line 4, move 3… Nxe5:</strong>
+                <strong th:if="${!e.atMove() and e.line > 0}" th:text="#{import.at.line(${e.line})}">Line 1:</strong>
+                <span th:text="#{${'import.error.' + e.code}(${e.limitKb})}">not a legal move in that position.</span>
+            </p>
+            <pre class="import-quote" th:if="${e.quote != null}" th:text="${e.quote}">3. Bb5 Nxe5 *</pre>
+        </div>
+
+        <label for="pgn" class="import-label" th:text="#{import.paste}">PGN</label>
+        <textarea id="pgn" name="pgn" rows="14" spellcheck="false" autocomplete="off"
+                  th:placeholder="#{import.placeholder}" th:text="${pgn}"></textarea>
+
+        <label for="file" class="import-label" th:text="#{import.file}">Or a .pgn file</label>
+        <input id="file" name="file" type="file" accept=".pgn,application/x-chess-pgn,text/plain">
+
+        <p class="muted" th:text="#{import.limits}">One finished game, up to 100 KB. Its analysis starts by itself.</p>
+        <div class="panel-actions">
+            <button class="btn btn-primary" type="submit" th:text="#{import.submit}">Import and review</button>
+        </div>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

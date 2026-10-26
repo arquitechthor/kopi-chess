@@ -10,6 +10,8 @@ import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
+import com.arquitechthor.kopi.application.game.ImportPgn;
+import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
 import com.arquitechthor.kopi.application.game.ListGames;
 import com.arquitechthor.kopi.application.game.ListGamesUseCase;
 import com.arquitechthor.kopi.application.game.PlayMove;
@@ -78,6 +80,13 @@ class WebAdapterTestApplication {
     CreateGameUseCase createGame(InMemoryGames games, Clock clock) {
         var ids = new AtomicLong();
         return new CreateGame(games, BOT, () -> new GameId(new UUID(0, ids.incrementAndGet())), clock);
+    }
+
+    @Bean
+    ImportPgnUseCase importPgn(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        var ids = new AtomicLong();
+        return new ImportPgn(games, () -> new GameId(new UUID(1, ids.incrementAndGet())), analyses, clock,
+                ImportPgn.DEFAULT_LIMIT_BYTES);
     }
 
     @Bean
