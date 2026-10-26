@@ -700,6 +700,18 @@ FINISHED ─► RequestAnalysis ─► analysis_job(QUEUED)
             guardar move_analysis + summary ─► AnalysisEvents (SSE)
 ```
 
+En el código (§8.3 del plan): finalizar una partida (`PlayMove`, `Resign`)
+la encola sin que nadie lo pida; si encolar falla, la partida queda
+guardada igualmente y el análisis se puede pedir después
+(`RequestAnalysis`). Un `AnalysisWorker` en `kopi-bootstrap` (hilos
+virtuales, `kopi.analysis.workers`, 1 por defecto) llama a
+`RunAnalysisJob` en bucle; al arrancar devuelve a la cola, o da por
+fallidos, los trabajos que un arranque anterior dejó en `RUNNING`. Una
+jugada es `BOOK` mientras todas las posiciones hasta ella, la suya
+incluida, tengan nombre en el libro; la primera sin nombre cierra el libro
+para el resto de la partida. La apertura de la partida es la última
+posición con nombre por la que pasó.
+
 Optimización clave: **una sola búsqueda por posición**. La evaluación
 «después» de la jugada *k* es la evaluación «antes» de la jugada *k+1*.
 Para N jugadas se analizan N+1 posiciones, no 2N.

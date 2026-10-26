@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 /// The whole application, from the REST API to PostgreSQL: the use cases
 /// wired in [UseCaseConfiguration], the `PAWN` bot and the real database.
-@SpringBootTest
+@SpringBootTest(properties = {AnalysisIT.FAST_NODES, AnalysisIT.FAST_POLL})
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class GameApiIT {

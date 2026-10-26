@@ -13,7 +13,7 @@ import java.util.Optional;
 
 /// A [GameRepository] in a map, with the same optimistic locking contract
 /// the database adapter must honour.
-final class InMemoryGameRepository implements GameRepository {
+public final class InMemoryGameRepository implements GameRepository {
 
     private final Map<GameId, Game> games = new LinkedHashMap<>();
     int writes;

@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.arquitechthor.kopi.application.analysis.InMemoryAnalysisJobQueue;
+import com.arquitechthor.kopi.application.port.AnalysisJob;
+import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.domain.chess.Color;
@@ -21,6 +24,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,6 +37,7 @@ class GameUseCasesTest {
 
     private final InMemoryGameRepository repository = new InMemoryGameRepository();
     private final ScriptedBot bot = new ScriptedBot();
+    private final InMemoryAnalysisJobQueue analyses = new InMemoryAnalysisJobQueue();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     private int nextId = 1;
 
@@ -46,7 +51,7 @@ class GameUseCasesTest {
     }
 
     private GameView play(GameView game, String uci) {
-        return new PlayMove(repository, bot, clock).play(new PlayMoveCommand(game.id(), uci, game.version()));
+        return new PlayMove(repository, bot, analyses, clock).play(new PlayMoveCommand(game.id(), uci, game.version()));
     }
 
     @Nested
@@ -151,7 +156,7 @@ class GameUseCasesTest {
         void anUnknownGameIsReported() {
             var id = newId();
 
-            assertThatThrownBy(() -> new PlayMove(repository, bot, clock).play(new PlayMoveCommand(id, "e2e4", 0)))
+            assertThatThrownBy(() -> new PlayMove(repository, bot, analyses, clock).play(new PlayMoveCommand(id, "e2e4", 0)))
                     .isInstanceOfSatisfying(GameNotFoundException.class, e -> assertThat(e.gameId()).isEqualTo(id));
         }
 
@@ -187,7 +192,7 @@ class GameUseCasesTest {
         @Test
         void aFinishedGameTakesNoMoreMoves() {
             var game = create(Color.WHITE);
-            var resigned = new Resign(repository, clock).resign(new ResignCommand(game.id(), 0));
+            var resigned = new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), 0));
 
             assertThatThrownBy(() -> play(resigned, "e2e4")).isInstanceOf(GameNotInProgressException.class);
         }
@@ -198,7 +203,7 @@ class GameUseCasesTest {
             var stuck = Game.start(newId(), Color.BLACK, BotProfile.PAWN, Fen.parse(Fen.INITIAL), NOW);
             repository.insert(stuck);
 
-            assertThatThrownBy(() -> new PlayMove(repository, bot, clock)
+            assertThatThrownBy(() -> new PlayMove(repository, bot, analyses, clock)
                             .play(new PlayMoveCommand(stuck.id(), "e7e5", 0)))
                     .isInstanceOfSatisfying(NotYourTurnException.class,
                             e -> assertThat(e.color()).isEqualTo(Color.BLACK));
@@ -230,7 +235,7 @@ class GameUseCasesTest {
             var game = create(Color.WHITE);
             var later = Clock.offset(clock, Duration.ofMinutes(3));
 
-            var after = new PlayMove(repository, bot, later).play(new PlayMoveCommand(game.id(), "e2e4", 0));
+            var after = new PlayMove(repository, bot, analyses, later).play(new PlayMoveCommand(game.id(), "e2e4", 0));
 
             assertThat(repository.findById(after.id()).orElseThrow().moves())
                     .allSatisfy(played -> assertThat(played.playedAt()).isEqualTo(NOW.plusSeconds(180)));
@@ -244,7 +249,7 @@ class GameUseCasesTest {
         void thePersonResignsAndTheBotWins() {
             var game = create(Color.WHITE);
 
-            var after = new Resign(repository, clock).resign(new ResignCommand(game.id(), 0));
+            var after = new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), 0));
 
             assertThat(after.outcome()).contains(new GameOutcome.Resignation(Color.WHITE));
             assertThat(after.result()).contains(GameResult.BLACK_WIN);
@@ -256,8 +261,99 @@ class GameUseCasesTest {
         void needsTheCurrentVersion() {
             var game = play(create(Color.WHITE), "e2e4");
 
-            assertThatThrownBy(() -> new Resign(repository, clock).resign(new ResignCommand(game.id(), 0)))
+            assertThatThrownBy(() -> new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), 0)))
                     .isInstanceOf(VersionMismatchException.class);
+        }
+    }
+
+    /// Finishing a game queues its analysis (plan §8.3).
+    @Nested
+    class QueueTheAnalysis {
+
+        @Test
+        void aMoveThatEndsTheGameQueuesIt() {
+            bot.playing("e7e5", "d8h4");
+            var game = play(create(Color.WHITE), "f2f3");
+
+            var after = play(game, "g2g4");
+
+            assertThat(after.status()).isEqualTo(GameStatus.FINISHED);
+            assertThat(analyses.findByGameId(after.id())).map(AnalysisJob::state).hasValue(AnalysisJob.State.QUEUED);
+        }
+
+        @Test
+        void aGameThatGoesOnQueuesNothing() {
+            var after = play(create(Color.WHITE), "e2e4");
+
+            assertThat(analyses.findByGameId(after.id())).isEmpty();
+        }
+
+        @Test
+        void aResignationQueuesIt() {
+            var game = play(create(Color.WHITE), "e2e4");
+
+            var after = new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), game.version()));
+
+            assertThat(analyses.findByGameId(after.id())).isPresent();
+        }
+
+        @Test
+        void aResignationBeforeAnyMoveHasNothingToAnalyse() {
+            var game = create(Color.WHITE);
+
+            new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), 0));
+
+            assertThat(analyses.findByGameId(game.id())).isEmpty();
+        }
+
+        @Test
+        void ifQueuingFailsTheGameIsStillSaved() {
+            var game = play(create(Color.WHITE), "e2e4");
+            AnalysisJobQueue broken = new BrokenQueue();
+
+            var after = new Resign(repository, broken, clock).resign(new ResignCommand(game.id(), game.version()));
+
+            assertThat(after.status()).isEqualTo(GameStatus.FINISHED);
+            assertThat(repository.findById(game.id()).orElseThrow().status()).isEqualTo(GameStatus.FINISHED);
+        }
+    }
+
+    /// A queue whose database is down.
+    private static final class BrokenQueue implements AnalysisJobQueue {
+
+        @Override
+        public AnalysisJob enqueue(GameId gameId, Instant now) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public Optional<AnalysisJob> claimNext(Instant now) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public Optional<AnalysisJob> findByGameId(GameId gameId) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public void complete(long jobId) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public void retry(long jobId, String error) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public void fail(long jobId, String error) {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
+        public int recoverStale(Instant lockedBefore, int maxAttempts) {
+            throw new IllegalStateException("database down");
         }
     }
 
