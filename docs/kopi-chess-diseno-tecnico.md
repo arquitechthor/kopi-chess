@@ -553,27 +553,30 @@ create table game_move (
     primary key (game_id, ply)
 );
 
+-- Fase 5 (V3__analysis.sql): solo resultados; el estado vive en analysis_job (ADR-007).
 create table analysis (
-    game_id         uuid primary key references game(id) on delete cascade,
-    status          text not null,           -- PENDING | RUNNING | COMPLETED | FAILED
-    engine_name     text,
-    engine_version  text,
-    config          jsonb not null,          -- profundidad/tiempo, multipv, versión del clasificador
-    summary         jsonb,                   -- precisión por color, conteos por categoría
-    started_at      timestamptz,
-    completed_at    timestamptz,
-    error           text
+    game_id           uuid primary key references game(id) on delete cascade,
+    engine            text not null,          -- 'Stockfish 19'
+    limit_kind        text not null,          -- DEPTH | NODES
+    limit_value       bigint not null,
+    multi_pv          int  not null,
+    missed_mate_limit int  not null,
+    first_mover       text not null,          -- WHITE | BLACK
+    opening_eco       text,                   -- última apertura reconocida (§9)
+    opening_name      text,
+    started_at        timestamptz not null,
+    completed_at      timestamptz not null
 );
 
 create table move_analysis (
-    game_id         uuid not null,
+    game_id         uuid not null references analysis(game_id) on delete cascade,
     ply             int  not null,
-    eval_before     jsonb not null,          -- {"cp": 34} | {"mate": 3}, perspectiva BLANCAS
-    eval_after      jsonb not null,
-    best_move_uci   text,
-    best_line_san   jsonb,                   -- ["Nf3","Nc6",...]
+    eval_before     text not null,           -- 'cp 34' | 'mate -3' | 'checkmate WHITE', perspectiva BLANCAS
+    eval_after      text not null,
+    best_move_uci   text not null,
+    best_line_san   text not null,           -- 'Nf3 Nc6 Bb5'
     classification  text not null,
-    win_chance_loss numeric(5,4),
+    win_chance_loss double precision not null,
     missed_mate_in  int,
     primary key (game_id, ply),
     foreign key (game_id, ply) references game_move(game_id, ply) on delete cascade
@@ -581,16 +584,22 @@ create table move_analysis (
 
 create table analysis_job (
     id           bigserial primary key,
-    game_id      uuid not null unique references game(id),
+    game_id      uuid not null unique references game(id) on delete cascade,
     state        text not null,              -- QUEUED | RUNNING | DONE | FAILED
     attempts     int  not null default 0,
-    locked_at    timestamptz,
+    last_error   text,
+    locked_at    timestamptz,                -- solo mientras RUNNING
     created_at   timestamptz not null
 );
 
 create index game_created_at_idx on game (created_at desc);
 create index analysis_job_queued_idx on analysis_job (created_at) where state = 'QUEUED';
 ```
+
+Sin `jsonb` (el diseño inicial lo usaba para evaluaciones, configuración y
+resumen): las evaluaciones van como texto con un `CHECK` de formato, la
+configuración en columnas, y el **resumen no se guarda**: se calcula de las
+jugadas (`GameAnalysis.summary()`), así que no puede contradecirlas.
 
 Decisiones:
 

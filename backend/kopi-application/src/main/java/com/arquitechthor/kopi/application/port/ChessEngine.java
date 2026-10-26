@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.application.port;
 
+import com.arquitechthor.kopi.domain.analysis.SearchLimits;
 import com.arquitechthor.kopi.domain.chess.Position;
 
 /// A chess engine used to *judge* positions, for post-game analysis

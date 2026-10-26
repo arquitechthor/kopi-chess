@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.arquitechthor.kopi.application.port.EngineAnalysis;
 import com.arquitechthor.kopi.application.port.EngineUnavailableException;
-import com.arquitechthor.kopi.application.port.SearchLimits;
 import com.arquitechthor.kopi.domain.analysis.Evaluation;
+import com.arquitechthor.kopi.domain.analysis.SearchLimits;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Fen;
 import com.arquitechthor.kopi.domain.chess.Move;

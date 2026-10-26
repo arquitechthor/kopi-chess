@@ -10,6 +10,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-004](004-reglas-propias-perft.md) — Reglas de ajedrez propias, verificadas con *perft*
 - [ADR-005](005-clasificacion-basada-en-win-percent.md) — Clasificación de jugadas basada en Win %
 - [ADR-006](006-bots-propios-para-niveles-bajos.md) — Bots propios para los niveles bajos
+- [ADR-007](007-cola-de-analisis-en-postgresql.md) — Cola de análisis en PostgreSQL
 - [ADR-008](008-repeticion-y-50-jugadas-automaticas.md) — Repetición y 50 jugadas automáticas
 - [ADR-009](009-libro-de-aperturas-local.md) — Libro de aperturas local (CC0), en memoria
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
