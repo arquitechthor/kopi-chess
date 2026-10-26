@@ -266,6 +266,47 @@ class GameUseCasesTest {
         }
     }
 
+    @Nested
+    class Export {
+
+        @Test
+        void aFinishedGameWithTheSevenTagsAndItsResult() {
+            bot.playing("e7e5", "d8h4");
+            var game = play(play(create(Color.WHITE), "f2f3"), "g2g4");
+
+            assertThat(new ExportPgn(repository).export(game.id())).isEqualTo("""
+                    [Event "Kopi Chess"]
+                    [Site "Kopi Chess"]
+                    [Date "2026.10.23"]
+                    [Round "-"]
+                    [White "Player"]
+                    [Black "Kopi Pawn"]
+                    [Result "0-1"]
+                    [Termination "normal"]
+                    [PlyCount "4"]
+
+                    1. f3 e5 2. g4 Qh4# 0-1
+                    """);
+        }
+
+        @Test
+        void aGameInProgressIsUnterminated() {
+            bot.playing("e2e4");
+            var game = create(Color.BLACK);
+
+            var pgn = new ExportPgn(repository).export(game.id());
+
+            assertThat(pgn).contains("[White \"Kopi Pawn\"]", "[Black \"Player\"]", "[Result \"*\"]",
+                    "[Termination \"unterminated\"]").endsWith("1. e4 *\n");
+        }
+
+        @Test
+        void anUnknownGameIsNotFound() {
+            assertThatThrownBy(() -> new ExportPgn(repository).export(newId()))
+                    .isInstanceOf(GameNotFoundException.class);
+        }
+    }
+
     /// Finishing a game queues its analysis (plan §8.3).
     @Nested
     class QueueTheAnalysis {

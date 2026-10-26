@@ -796,12 +796,15 @@ cualquier partida.
     en esta posición».
   - Pruebas con PGN reales exportados de Lichess y Chess.com (guardar en
     `src/test/resources/pgn/`).
-- [ ] **Exportador PGN** (las partidas propias con etiquetas estándar).
+- [x] **Exportador PGN** (las partidas propias con etiquetas estándar).
+      (`Pgn.format` y el caso de uso `ExportPgn`: Seven Tag Roster,
+      `Termination`, `PlyCount`; líneas de 80 columnas.)
 - [ ] Caso de uso `ImportPgn`: crea una partida `IMPORTED` terminada y encola
       su análisis.
 - [ ] Límites: tamaño máximo de PGN, una partida por importación en el MVP.
 - [ ] Web: página «Importar PGN» (textarea + subir archivo).
-- [ ] REST: `POST /games/import`, `GET /games/{id}/pgn`.
+- [ ] REST: `POST /games/import`, `GET /games/{id}/pgn` (este, hecho; con
+      enlace «Descargar PGN» en la partida y en la revisión).
 - [ ] **Historial**: listado paginado con filtros por origen y resultado.
 - [ ] **Balance contra cada bot** (petición del 2026-10-26, después del
       historial): en la selección de bot de «Nueva partida», cuántas partidas
