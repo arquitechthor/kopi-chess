@@ -1,7 +1,9 @@
 package com.arquitechthor.kopi.adapter.web;
 
+import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
 import com.arquitechthor.kopi.application.game.ListGamesQuery;
 import com.arquitechthor.kopi.application.game.ListGamesUseCase;
+import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -11,7 +13,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-/// The landing page: choose a bot and a colour, and see the latest games.
+/// The landing page: choose a bot (seeing your record against each) and a
+/// colour, and see the latest games.
 @Controller
 class HomeController {
 
@@ -23,18 +26,21 @@ class HomeController {
     static final int RECENT_GAMES = 10;
 
     private final ListGamesUseCase listGames;
+    private final GetBotRecordsUseCase botRecords;
 
-    HomeController(ListGamesUseCase listGames) {
+    HomeController(ListGamesUseCase listGames, GetBotRecordsUseCase botRecords) {
         this.listGames = listGames;
+        this.botRecords = botRecords;
     }
 
-    /// A bot as the form shows it.
-    record BotChoice(BotProfile profile, boolean available) {}
+    /// A bot as the form shows it, with the person's record against it.
+    record BotChoice(BotProfile profile, boolean available, BotRecord record) {}
 
     @GetMapping("/")
     String home(Model model) {
+        var records = botRecords.records();
         List<BotChoice> bots = Arrays.stream(BotProfile.values())
-                .map(profile -> new BotChoice(profile, AVAILABLE_BOTS.contains(profile)))
+                .map(profile -> new BotChoice(profile, AVAILABLE_BOTS.contains(profile), records.get(profile)))
                 .toList();
         model.addAttribute("bots", bots);
         model.addAttribute("recentGames", listGames.list(new ListGamesQuery(0, RECENT_GAMES)).games());

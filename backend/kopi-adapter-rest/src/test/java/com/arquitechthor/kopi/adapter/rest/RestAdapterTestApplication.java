@@ -9,6 +9,8 @@ import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
+import com.arquitechthor.kopi.application.game.GetBotRecords;
+import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ImportPgn;
 import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
@@ -22,6 +24,7 @@ import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
+import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
@@ -90,6 +93,11 @@ class RestAdapterTestApplication {
         var ids = new AtomicLong();
         return new ImportPgn(games, () -> new GameId(new UUID(1, ids.incrementAndGet())), analyses, clock,
                 PGN_LIMIT_BYTES);
+    }
+
+    @Bean
+    GetBotRecordsUseCase botRecords(InMemoryGames games) {
+        return new GetBotRecords(games);
     }
 
     @Bean
@@ -169,6 +177,11 @@ class RestAdapterTestApplication {
         @Override
         public synchronized long count(GameFilter filter) {
             return games.values().stream().filter(filter::matches).count();
+        }
+
+        @Override
+        public synchronized Map<BotProfile, BotRecord> recordsAgainstBots() {
+            return BotRecord.tally(games.values().stream());
         }
 
         synchronized void clear() {

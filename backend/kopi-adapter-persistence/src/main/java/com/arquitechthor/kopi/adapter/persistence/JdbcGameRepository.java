@@ -3,8 +3,10 @@ package com.arquitechthor.kopi.adapter.persistence;
 import com.arquitechthor.kopi.adapter.persistence.GameRows.GameRow;
 import com.arquitechthor.kopi.adapter.persistence.GameRows.MoveRow;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
 import java.sql.ResultSet;
@@ -13,6 +15,8 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +131,33 @@ public final class JdbcGameRepository implements GameRepository {
     public long count(GameFilter filter) {
         var where = Where.of(filter);
         return where.bind(jdbc.sql("select count(*) from game" + where.sql())).query(Long.class).single();
+    }
+
+    /// One aggregate query: the person's side is `human_color`, so a win
+    /// is a result that names it. The same counts as `BotRecord.tally`.
+    @Override
+    public Map<BotProfile, BotRecord> recordsAgainstBots() {
+        var records = new EnumMap<BotProfile, BotRecord>(BotProfile.class);
+        for (var profile : BotProfile.values()) {
+            records.put(profile, BotRecord.NONE);
+        }
+        jdbc.sql("""
+                select bot_profile,
+                       count(*) filter (where (result = 'WHITE_WIN' and human_color = 'WHITE')
+                                           or (result = 'BLACK_WIN' and human_color = 'BLACK')) as won,
+                       count(*) filter (where (result = 'WHITE_WIN' and human_color = 'BLACK')
+                                           or (result = 'BLACK_WIN' and human_color = 'WHITE')) as lost,
+                       count(*) filter (where result = 'DRAW') as drawn,
+                       count(*) filter (where status = 'IN_PROGRESS') as unfinished
+                  from game
+                 where origin = 'PLAYED'
+                 group by bot_profile""")
+                .query((rs, _) -> Map.entry(BotProfile.valueOf(rs.getString("bot_profile")),
+                        new BotRecord(rs.getInt("won"), rs.getInt("lost"), rs.getInt("drawn"),
+                                rs.getInt("unfinished"))))
+                .list()
+                .forEach(entry -> records.put(entry.getKey(), entry.getValue()));
+        return Collections.unmodifiableMap(records);
     }
 
     /// A [GameFilter] in SQL: the `where` clause and its parameters. The

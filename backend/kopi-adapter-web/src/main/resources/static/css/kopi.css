@@ -217,6 +217,7 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .choice-name { font-weight: 700; }
 .choice-level, .choice-desc { grid-column: 2; font-size: 13px; color: var(--text-muted); }
 .choice-level { color: var(--violet-strong); font-weight: 600; }
+.choice-record { grid-column: 2; font-size: 12.5px; color: var(--text-faint); }
 
 /* ── Tables ──────────────────────────────────────────────── */
 /* position: the containing block of anything absolute inside (.sr-only), so it

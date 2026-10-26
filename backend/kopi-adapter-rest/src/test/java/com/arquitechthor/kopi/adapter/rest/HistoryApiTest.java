@@ -47,6 +47,17 @@ class HistoryApiTest {
     }
 
     @Test
+    void theBotsComeWithTheRecordAgainstEach() {
+        // The game against Pawn is still going; the imported one is no bot's.
+        var bots = mvc.get().uri("/api/v1/bots").exchange();
+
+        assertThat(bots).bodyJson().extractingPath("$[0].profile").isEqualTo("PAWN");
+        assertThat(bots).bodyJson().extractingPath("$[0].record.unfinished").isEqualTo(1);
+        assertThat(bots).bodyJson().extractingPath("$[0].record.won").isEqualTo(0);
+        assertThat(bots).bodyJson().extractingPath("$[4].record.unfinished").isEqualTo(0);
+    }
+
+    @Test
     void anUnknownFilterIsABadRequest() {
         assertThat(mvc.get().uri("/api/v1/games?result=MAYBE")).hasStatus(HttpStatus.BAD_REQUEST)
                 .bodyJson().extractingPath("$.code").isEqualTo("INVALID_REQUEST");

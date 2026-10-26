@@ -14,6 +14,8 @@ import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
+import com.arquitechthor.kopi.application.game.GetBotRecords;
+import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ImportPgn;
 import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
@@ -93,6 +95,11 @@ class UseCaseConfiguration {
     @Bean
     ImportPgnUseCase importPgn(GameRepository games, IdGenerator ids, AnalysisJobQueue analyses, Clock clock) {
         return new ImportPgn(games, ids, analyses, clock, ImportPgn.DEFAULT_LIMIT_BYTES);
+    }
+
+    @Bean
+    GetBotRecordsUseCase botRecords(GameRepository games) {
+        return new GetBotRecords(games);
     }
 
     @Bean

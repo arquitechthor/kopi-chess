@@ -1,8 +1,10 @@
 package com.arquitechthor.kopi.application.port;
 
+import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /// Where games are kept. Implemented by the persistence adapter.
@@ -31,6 +33,10 @@ public interface GameRepository {
 
     /// How many games pass `filter`.
     long count(GameFilter filter);
+
+    /// The person's record against each of the five bots, as
+    /// [BotRecord#tally] defines it.
+    Map<BotProfile, BotRecord> recordsAgainstBots();
 
     /// Every game, from the newest to the oldest, skipping `offset` and
     /// returning at most `limit`.

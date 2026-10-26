@@ -74,6 +74,19 @@ class HistoryPageTest {
     }
 
     @Test
+    void theBotChoiceShowsTheRecordAgainstEachBot() {
+        played(true);   // lost
+        played(false);  // unfinished
+        imported();     // does not count
+
+        var html = page("/?lang=es");
+
+        // Pawn: one lost, one unfinished; the others never played.
+        assertThat(html).contains("Tu balance: ganadas 0 · perdidas 1 · tablas 0 · sin terminar 1")
+                .contains("Aún sin partidas.");
+    }
+
+    @Test
     void listsEveryGameWithWhatItMeantForYou() {
         var lost = played(true);
         played(false);
