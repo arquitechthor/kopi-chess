@@ -3,7 +3,7 @@ package com.arquitechthor.kopi.domain.game;
 import com.arquitechthor.kopi.domain.chess.Color;
 import java.util.Objects;
 
-/// How a game ended. A sealed interface: these six records are every way a
+/// How a game ended. A sealed interface: these seven records are every way a
 /// game can finish, and a `switch` over them must handle all of them (the
 /// web adapter's translations, the PGN termination, the database column).
 ///
@@ -43,12 +43,24 @@ public sealed interface GameOutcome {
         }
     }
 
+    /// An imported game whose PGN gives a result the moves do not show: a
+    /// resignation, a loss on time, a draw by agreement… The PGN says who
+    /// won, not how (phase 6). Never the ending of a game played here.
+    ///
+    /// @param result the result the PGN records
+    record Declared(GameResult result) implements GameOutcome {
+        public Declared {
+            Objects.requireNonNull(result, "result");
+        }
+    }
+
     /// The score this ending gives.
     default GameResult result() {
         return switch (this) {
             case Checkmate(var winner) -> winsFor(winner);
             case Resignation(var resigned) -> winsFor(resigned.opposite());
             case Stalemate _, InsufficientMaterial _, ThreefoldRepetition _, FiftyMoveRule _ -> GameResult.DRAW;
+            case Declared(var declared) -> declared;
         };
     }
 

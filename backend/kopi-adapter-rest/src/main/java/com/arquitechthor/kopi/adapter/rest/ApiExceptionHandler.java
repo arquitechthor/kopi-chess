@@ -3,12 +3,16 @@ package com.arquitechthor.kopi.adapter.rest;
 import com.arquitechthor.kopi.application.analysis.AnalysisNotPossibleException;
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
+import com.arquitechthor.kopi.application.game.PgnTooLargeException;
 import com.arquitechthor.kopi.application.game.VersionMismatchException;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.InvalidPgnException;
 import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
 import com.arquitechthor.kopi.domain.game.GameRuleException;
 import com.arquitechthor.kopi.domain.game.IllegalMoveException;
+import com.arquitechthor.kopi.domain.game.InvalidImportException;
 import com.arquitechthor.kopi.domain.game.NotYourTurnException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.MessageSource;
@@ -36,6 +40,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 /// | `GAME_NOT_IN_PROGRESS`  | 409    |
 /// | `GAME_NOT_FINISHED`     | 409    |
 /// | `NOTHING_TO_ANALYSE`    | 409    |
+/// | `PGN_TOO_LARGE`         | 413    |
+/// | `INVALID_PGN`           | 422    |
+/// | `UNFINISHED_IMPORT`     | 422    |
+/// | `IMPORT_WITHOUT_MOVES`  | 422    |
+/// | `RESULT_CONTRADICTS_BOARD` | 422 |
 /// | `NOT_YOUR_TURN`         | 409    |
 /// | `VERSION_MISMATCH`      | 412    |
 /// | `ILLEGAL_MOVE`          | 422    |
@@ -93,6 +102,41 @@ class ApiExceptionHandler {
             case NO_MOVES -> "NOTHING_TO_ANALYSE";
         };
         return problem(HttpStatus.CONFLICT, code, request, e.gameId());
+    }
+
+    @ExceptionHandler
+    ProblemDetail pgnTooLarge(PgnTooLargeException e, HttpServletRequest request) {
+        return problem(HttpStatus.CONTENT_TOO_LARGE, "PGN_TOO_LARGE", request, e.limitBytes() / 1024);
+    }
+
+    /// Where the PGN goes wrong, for people (`detail`: «Línea 7, jugada 9…
+    /// Nxe5: no es legal en esa posición.») and for programs (`pgnProblem`,
+    /// `line`, `moveNumber`, `side`, `text`).
+    @ExceptionHandler
+    ProblemDetail invalidPgn(InvalidPgnException e, HttpServletRequest request) {
+        var locale = ApiLocale.of(request.getHeader(HttpHeaders.ACCEPT_LANGUAGE));
+        var where = e.side().isPresent()
+                ? messages.getMessage("rest.pgn.at.move", new Object[] {e.line(), e.moveNumber().getAsInt(),
+                        e.side().get() == Color.WHITE ? "." : "…", e.text()}, locale)
+                : messages.getMessage("rest.pgn.at.line", new Object[] {e.line()}, locale);
+        var problem = problem(HttpStatus.UNPROCESSABLE_CONTENT, "INVALID_PGN", request,
+                where + " " + messages.getMessage("rest.pgn." + e.problem(), null, locale));
+        problem.setProperty("pgnProblem", e.problem().name());
+        problem.setProperty("line", e.line());
+        problem.setProperty("text", e.text());
+        problem.setProperty("moveNumber", e.moveNumber().isPresent() ? e.moveNumber().getAsInt() : null);
+        problem.setProperty("side", e.side().orElse(null));
+        return problem;
+    }
+
+    @ExceptionHandler
+    ProblemDetail invalidImport(InvalidImportException e, HttpServletRequest request) {
+        var code = switch (e.problem()) {
+            case NO_MOVES -> "IMPORT_WITHOUT_MOVES";
+            case NOT_FINISHED -> "UNFINISHED_IMPORT";
+            case RESULT_CONTRADICTS_BOARD -> "RESULT_CONTRADICTS_BOARD";
+        };
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, code, request);
     }
 
     @ExceptionHandler

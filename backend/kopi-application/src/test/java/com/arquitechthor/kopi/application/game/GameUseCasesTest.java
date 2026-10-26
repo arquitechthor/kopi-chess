@@ -11,14 +11,17 @@ import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Fen;
+import com.arquitechthor.kopi.domain.chess.InvalidPgnException;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import com.arquitechthor.kopi.domain.game.IllegalMoveException;
+import com.arquitechthor.kopi.domain.game.InvalidImportException;
 import com.arquitechthor.kopi.domain.game.NotYourTurnException;
 import java.time.Clock;
 import java.time.Duration;
@@ -267,6 +270,76 @@ class GameUseCasesTest {
     }
 
     @Nested
+    class Import {
+
+        private static final String OPERA = """
+                [Event "Paris"]
+                [White "Morphy, Paul"]
+                [Black "Duke Karl / Count Isouard"]
+                [Result "1-0"]
+
+                1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7
+                8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7
+                14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# 1-0""";
+
+        private ImportPgn importer(int limitBytes) {
+            return new ImportPgn(repository, GameUseCasesTest.this::newId, analyses, clock, limitBytes);
+        }
+
+        @Test
+        void storesAFinishedImportedGameAndQueuesItsAnalysis() {
+            var game = importer(ImportPgn.DEFAULT_LIMIT_BYTES).importPgn(OPERA);
+
+            assertThat(game.origin()).isEqualTo(GameOrigin.IMPORTED);
+            assertThat(game.status()).isEqualTo(GameStatus.FINISHED);
+            assertThat(game.humanColor()).isEmpty();
+            assertThat(game.botProfile()).isEmpty();
+            assertThat(game.outcome()).contains(new GameOutcome.Checkmate(Color.WHITE));
+            assertThat(game.pgnTags()).containsEntry("White", "Morphy, Paul");
+            assertThat(game.moves()).hasSize(33);
+            assertThat(game.isHumanToMove()).isFalse();
+            assertThat(repository.findById(game.id())).isPresent();
+            assertThat(analyses.findByGameId(game.id())).map(AnalysisJob::state).hasValue(AnalysisJob.State.QUEUED);
+        }
+
+        @Test
+        void exportingItGivesBackItsOwnTags() {
+            var game = importer(ImportPgn.DEFAULT_LIMIT_BYTES).importPgn(OPERA);
+
+            var pgn = new ExportPgn(repository).export(game.id());
+
+            assertThat(pgn).startsWith("[Event \"Paris\"]\n[White \"Morphy, Paul\"]")
+                    .doesNotContain("Kopi").endsWith("17. Rd8# 1-0\n");
+        }
+
+        @Test
+        void aTextOverTheLimitIsNotEvenRead() {
+            assertThatThrownBy(() -> importer(100).importPgn(OPERA))
+                    .isInstanceOfSatisfying(PgnTooLargeException.class,
+                            e -> assertThat(e.limitBytes()).isEqualTo(100));
+            assertThat(repository.count()).isZero();
+        }
+
+        @Test
+        void anInvalidPgnStoresNothing() {
+            assertThatThrownBy(() -> importer(ImportPgn.DEFAULT_LIMIT_BYTES).importPgn("1. e4 e5 2. Ke9 1-0"))
+                    .isInstanceOf(InvalidPgnException.class);
+            assertThatThrownBy(() -> importer(ImportPgn.DEFAULT_LIMIT_BYTES).importPgn("1. e4 e5 *"))
+                    .isInstanceOf(InvalidImportException.class);
+            assertThat(repository.count()).isZero();
+        }
+
+        @Test
+        void anImportedGameCannotBePlayedOrResigned() {
+            var game = importer(ImportPgn.DEFAULT_LIMIT_BYTES).importPgn("1. e4 e5 1-0");
+
+            assertThatThrownBy(() -> play(game, "g1f3")).isInstanceOf(GameNotInProgressException.class);
+            assertThatThrownBy(() -> new Resign(repository, analyses, clock).resign(new ResignCommand(game.id(), 0)))
+                    .isInstanceOf(GameNotInProgressException.class);
+        }
+    }
+
+    @Nested
     class Export {
 
         @Test
@@ -423,10 +496,10 @@ class GameUseCasesTest {
             var last = list.list(new ListGamesQuery(2, 2));
 
             assertThat(first.games()).extracting(GameSummary::botProfile)
-                    .containsExactly(BotProfile.QUEEN, BotProfile.ROOK);
+                    .containsExactly(Optional.of(BotProfile.QUEEN), Optional.of(BotProfile.ROOK));
             assertThat(first.total()).isEqualTo(5);
             assertThat(first.totalPages()).isEqualTo(3);
-            assertThat(last.games()).extracting(GameSummary::botProfile).containsExactly(BotProfile.PAWN);
+            assertThat(last.games()).extracting(GameSummary::botProfile).containsExactly(Optional.of(BotProfile.PAWN));
         }
 
         @Test

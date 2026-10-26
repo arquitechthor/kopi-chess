@@ -31,7 +31,8 @@
     </div>
 
     <aside class="game-panel card">
-        <span class="eyebrow" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
+        <span class="eyebrow" th:if="${game.players == null}" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
+        <span class="eyebrow" th:unless="${game.players == null}" th:text="#{game.imported(${game.players})}">Imported game</span>
 
         <!--/* Everything that changes with a move. board.js asks the server for just
                this fragment (POST …/live-moves) instead of reloading the page. */-->

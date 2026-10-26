@@ -15,10 +15,12 @@ final class BotTurn {
     /// turn. The move goes through [Game#play] like any other, so the bot
     /// cannot break the rules either.
     static Game playIfBotToMove(Game game, BotPlayer bot, Clock clock) {
-        if (game.status() != GameStatus.IN_PROGRESS || game.currentPosition().sideToMove() != game.botColor()) {
+        var botColor = game.botColor();
+        if (game.status() != GameStatus.IN_PROGRESS || botColor.isEmpty()
+                || game.currentPosition().sideToMove() != botColor.get()) {
             return game;
         }
-        var move = bot.chooseMove(game.currentPosition(), game.botProfile());
-        return game.play(move, game.botColor(), clock.instant());
+        var move = bot.chooseMove(game.currentPosition(), game.botProfile().orElseThrow());
+        return game.play(move, botColor.get(), clock.instant());
     }
 }

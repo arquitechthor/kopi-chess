@@ -50,9 +50,11 @@ class GameTest {
             assertThat(game.id()).isEqualTo(ID);
             assertThat(game.origin()).isEqualTo(GameOrigin.PLAYED);
             assertThat(game.status()).isEqualTo(GameStatus.IN_PROGRESS);
-            assertThat(game.humanColor()).isEqualTo(Color.WHITE);
-            assertThat(game.botColor()).isEqualTo(Color.BLACK);
-            assertThat(game.botProfile()).isEqualTo(BotProfile.PAWN);
+            assertThat(game.humanColor()).hasValue(Color.WHITE);
+            assertThat(game.botColor()).hasValue(Color.BLACK);
+            assertThat(game.botProfile()).hasValue(BotProfile.PAWN);
+            assertThat(game.origin()).isEqualTo(GameOrigin.PLAYED);
+            assertThat(game.pgnTags()).isEmpty();
             assertThat(game.initialPosition()).isEqualTo(Position.initial());
             assertThat(game.currentPosition()).isEqualTo(Position.initial());
             assertThat(game.moves()).isEmpty();

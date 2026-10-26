@@ -5,12 +5,14 @@ import static com.arquitechthor.kopi.adapter.rest.RestAdapterConfiguration.API;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.CreateGameRequest;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.GamePageResponse;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.GameResponse;
+import com.arquitechthor.kopi.adapter.rest.ApiModel.ImportPgnRequest;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.PlayMoveRequest;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
+import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
 import com.arquitechthor.kopi.application.game.ListGamesQuery;
 import com.arquitechthor.kopi.application.game.ListGamesUseCase;
 import com.arquitechthor.kopi.application.game.PlayMoveCommand;
@@ -33,7 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/// `/api/v1/games`: create, read, play, resign and export as PGN (design §10).
+/// `/api/v1/games`: create, read, play, resign, and import and export PGN
+/// (design §10).
 ///
 /// Thin on purpose: it turns HTTP into commands, calls a use case and turns
 /// the view into JSON. Rules, turns and versions are decided further in;
@@ -51,15 +54,18 @@ class GamesController {
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
     private final ExportPgnUseCase exportPgn;
+    private final ImportPgnUseCase importPgn;
 
     GamesController(CreateGameUseCase createGame, GetGameUseCase getGame, ListGamesUseCase listGames,
-            PlayMoveUseCase playMove, ResignUseCase resign, ExportPgnUseCase exportPgn) {
+            PlayMoveUseCase playMove, ResignUseCase resign, ExportPgnUseCase exportPgn,
+            ImportPgnUseCase importPgn) {
         this.createGame = createGame;
         this.getGame = getGame;
         this.listGames = listGames;
         this.playMove = playMove;
         this.resign = resign;
         this.exportPgn = exportPgn;
+        this.importPgn = importPgn;
     }
 
     /// `201 Created` with the new game; if the bot has White, its first move
@@ -102,6 +108,30 @@ class GamesController {
             @RequestHeader(name = HttpHeaders.IF_MATCH, required = false) String ifMatch) {
         var version = Versions.fromIfMatch(ifMatch);
         return ok(resign.resign(new ResignCommand(new GameId(id), version)));
+    }
+
+    /// Imports a finished game from PGN (plan §9): `201 Created` with the
+    /// game, its analysis already queued. The PGN comes as the body, as
+    /// plain text (`curl --data-binary @game.pgn`) or the PGN media type.
+    @PostMapping(path = "/import", consumes = {MediaType.TEXT_PLAIN_VALUE, PGN_MEDIA_TYPE})
+    ResponseEntity<GameResponse> importText(@RequestBody(required = false) String pgn) {
+        return imported(pgn);
+    }
+
+    /// The same, with the PGN in JSON: `{"pgn": "1. e4 e5 … 1-0"}`.
+    @PostMapping(path = "/import", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<GameResponse> importJson(@RequestBody(required = false) ImportPgnRequest request) {
+        return imported(request == null ? null : request.pgn());
+    }
+
+    private ResponseEntity<GameResponse> imported(String pgn) {
+        if (pgn == null || pgn.isBlank()) {
+            throw new InvalidRequestException("the PGN is missing");
+        }
+        var view = importPgn.importPgn(pgn);
+        return ResponseEntity.created(URI.create(API + "/games/" + view.id()))
+                .eTag(Versions.etag(view.version()))
+                .body(GameResponse.of(view));
     }
 
     /// The game as a `.pgn` file (plan §9): `application/x-chess-pgn`,

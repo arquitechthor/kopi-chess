@@ -7,6 +7,7 @@ import com.arquitechthor.kopi.domain.chess.PgnGame;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import com.arquitechthor.kopi.domain.game.PlayedMove;
 import java.time.ZoneOffset;
@@ -36,7 +37,7 @@ import java.util.Objects;
 /// says `normal` for a finished game (checkmate, resignation, a draw by the
 /// rules) and `unterminated` for one still being played, whose result is
 /// `*`. The tags are in English whatever the visitor's language: PGN is an
-/// exchange format.
+/// exchange format. An imported game is exported with the tags it came with.
 public final class ExportPgn implements ExportPgnUseCase {
 
     private static final DateTimeFormatter PGN_DATE = DateTimeFormatter.ofPattern("yyyy.MM.dd", Locale.ROOT);
@@ -57,6 +58,15 @@ public final class ExportPgn implements ExportPgnUseCase {
             case DRAW -> PgnGame.Result.DRAW;
         }).orElse(PgnGame.Result.UNKNOWN);
 
+        var moves = game.moves().stream().map(PlayedMove::move).toList();
+        if (game.origin() == GameOrigin.IMPORTED) {
+            // Its own tags, as imported (players, event, date…), with the
+            // result as Kopi stores it.
+            var tags = new LinkedHashMap<>(game.pgnTags());
+            tags.put("Result", result.token());
+            return Pgn.format(new PgnGame(tags, game.initialPosition(), moves, result));
+        }
+
         var tags = new LinkedHashMap<String, String>();
         tags.put("Event", "Kopi Chess");
         tags.put("Site", "Kopi Chess");
@@ -67,14 +77,12 @@ public final class ExportPgn implements ExportPgnUseCase {
         tags.put("Result", result.token());
         tags.put("Termination", finished ? "normal" : "unterminated");
         tags.put("PlyCount", String.valueOf(game.moves().size()));
-
-        var moves = game.moves().stream().map(PlayedMove::move).toList();
         return Pgn.format(new PgnGame(tags, game.initialPosition(), moves, result));
     }
 
     /// `Player` for the person, `Kopi Pawn` … `Kopi Queen` for the bot.
     private static String player(Game game, Color side) {
-        return side == game.humanColor() ? "Player" : "Kopi " + botName(game.botProfile());
+        return game.humanColor().orElseThrow() == side ? "Player" : "Kopi " + botName(game.botProfile().orElseThrow());
     }
 
     private static String botName(BotProfile profile) {

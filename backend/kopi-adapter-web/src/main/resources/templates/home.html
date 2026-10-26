@@ -74,8 +74,8 @@
                     <tr th:each="summary : ${recentGames}">
                         <td><a th:href="@{/games/{id}(id=${summary.id})}"
                                th:text="${#temporals.format(summary.createdAt, #messages.msg('recent.dateFormat'))}">23/10/2026 12:00</a></td>
-                        <td th:text="#{|bot.${summary.botProfile}.name|}">Pawn</td>
-                        <td th:text="#{|color.${summary.humanColor}|}">White</td>
+                        <td th:text="${summary.botProfile.isPresent()} ? #{|bot.${summary.botProfile.get()}.name|} : #{recent.imported}">Pawn</td>
+                        <td th:text="${summary.humanColor.isPresent()} ? #{|color.${summary.humanColor.get()}|} : '—'">White</td>
                         <td th:text="${(summary.plies + 1) / 2}">12</td>
                         <td th:text="${summary.result.isPresent()} ? #{|result.${summary.result.get()}|} : #{result.IN_PROGRESS}">In progress</td>
                     </tr>

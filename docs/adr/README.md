@@ -17,6 +17,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)
 - [ADR-013](013-modo-oficina-notacion-localizada.md) — Modo oficina: notación localizada solo en el adaptador web
 - [ADR-014](014-sin-transaccion-en-los-casos-de-uso.md) — Sin transacción alrededor de los casos de uso
+- [ADR-015](015-partidas-importadas.md) — Partidas importadas: final declarado y sin tablas automáticas
 
 ## Plantilla
 

@@ -30,7 +30,8 @@ public final class PlayMove implements PlayMoveUseCase {
     @Override
     public GameView play(PlayMoveCommand command) {
         var loaded = Games.loadAtVersion(repository, command.gameId(), command.expectedVersion());
-        var game = loaded.play(command.uci(), loaded.humanColor(), clock.instant());
+        // An imported game has no person, but it is finished: play refuses it as such.
+        var game = loaded.play(command.uci(), loaded.humanColor().orElse(null), clock.instant());
         game = BotTurn.playIfBotToMove(game, bot, clock);
         repository.update(game, loaded.version());
         AnalysisOnFinish.request(analyses, game, clock.instant());

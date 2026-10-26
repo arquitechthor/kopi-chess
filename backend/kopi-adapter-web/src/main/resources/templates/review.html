@@ -14,7 +14,7 @@
 
     <!--/* ── Not done yet ─────────────────────────────────────── */-->
     <section class="card review-pending" th:if="${r.state.name() != 'DONE'}">
-        <span class="eyebrow" th:text="#{review.eyebrow(#{|bot.${r.botProfile}.name|})}">Analysis · against Pawn</span>
+        <span class="eyebrow" th:text="${r.players == null} ? #{review.eyebrow(#{|bot.${r.botProfile}.name|})} : #{review.eyebrowImported(${r.players})}">Analysis · against Pawn</span>
         <h1 th:text="#{review.title}">Game review</h1>
 
         <th:block th:if="${r.state.name() == 'FAILED'}">
@@ -73,7 +73,7 @@
         </div>
 
         <aside class="game-panel card">
-            <span class="eyebrow" th:text="#{review.eyebrow(#{|bot.${r.botProfile}.name|})}">Analysis · against Pawn</span>
+            <span class="eyebrow" th:text="${r.players == null} ? #{review.eyebrow(#{|bot.${r.botProfile}.name|})} : #{review.eyebrowImported(${r.players})}">Analysis · against Pawn</span>
             <h1 class="game-status" th:text="#{review.title}">Game review</h1>
 
             <p class="review-opening">
