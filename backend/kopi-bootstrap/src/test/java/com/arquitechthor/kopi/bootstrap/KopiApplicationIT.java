@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
-@SpringBootTest
+@SpringBootTest(properties = {AnalysisIT.FAST_NODES, AnalysisIT.FAST_POLL})
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class KopiApplicationIT {

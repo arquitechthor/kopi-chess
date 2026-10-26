@@ -10,6 +10,8 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.port.AnalysisJob;
+import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -79,13 +82,18 @@ class RestAdapterTestApplication {
     }
 
     @Bean
-    PlayMoveUseCase playMove(InMemoryGames games, Clock clock) {
-        return new PlayMove(games, BOT, clock);
+    QueuedAnalyses analyses() {
+        return new QueuedAnalyses();
     }
 
     @Bean
-    ResignUseCase resign(InMemoryGames games, Clock clock) {
-        return new Resign(games, clock);
+    PlayMoveUseCase playMove(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        return new PlayMove(games, BOT, analyses, clock);
+    }
+
+    @Bean
+    ResignUseCase resign(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        return new Resign(games, analyses, clock);
     }
 
     /// A [GameRepository] in a map, honouring the optimistic locking contract.
@@ -123,6 +131,49 @@ class RestAdapterTestApplication {
 
         synchronized void clear() {
             games.clear();
+        }
+    }
+
+    /// The analysis queue: the games whose analysis was queued, nothing
+    /// more (analysing is not this adapter's business).
+    static final class QueuedAnalyses implements AnalysisJobQueue {
+
+        final List<GameId> queued = new CopyOnWriteArrayList<>();
+
+        @Override
+        public AnalysisJob enqueue(GameId gameId, Instant now) {
+            queued.add(gameId);
+            return new AnalysisJob(queued.size(), gameId, AnalysisJob.State.QUEUED, 0, Optional.empty(), now);
+        }
+
+        @Override
+        public Optional<AnalysisJob> claimNext(Instant now) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AnalysisJob> findByGameId(GameId gameId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void complete(long jobId) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void retry(long jobId, String error) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void fail(long jobId, String error) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int recoverStale(Instant lockedBefore, int maxAttempts) {
+            return 0;
         }
     }
 }

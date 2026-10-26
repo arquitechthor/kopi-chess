@@ -734,13 +734,13 @@ mostrar la revisión.
 - [x] Migración `V3__analysis.sql`: `analysis`, `move_analysis`,
       `analysis_job` (el libro de aperturas va en memoria, ADR-009).
 - [x] `AnalysisJobQueue` con `FOR UPDATE SKIP LOCKED` (diseño §6.2).
-- [ ] *Worker*: bucle en hilo virtual que reclama trabajos; concurrencia
-      configurable (1 por defecto).
-- [ ] Recuperación al arrancar: trabajos `RUNNING` antiguos → `QUEUED` o
+- [x] *Worker*: bucle en hilo virtual que reclama trabajos; concurrencia
+      configurable (1 por defecto). (`AnalysisWorker`, `kopi.analysis.*`.)
+- [x] Recuperación al arrancar: trabajos `RUNNING` antiguos → `QUEUED` o
       `FAILED` tras N intentos.
-- [ ] Caso de uso `RunAnalysisJob`: N+1 posiciones, una búsqueda por posición,
-      clasificar, guardar, publicar progreso.
-- [ ] Caso de uso `RequestAnalysis` (idempotente) y encolado automático al
+- [x] Caso de uso `RunAnalysisJob`: N+1 posiciones, una búsqueda por posición,
+      clasificar, guardar. (Publicar el progreso queda para §8.4.)
+- [x] Caso de uso `RequestAnalysis` (idempotente) y encolado automático al
       terminar una partida.
 - [x] **ADR-007** (cola en PostgreSQL).
 

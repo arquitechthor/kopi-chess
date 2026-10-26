@@ -56,6 +56,19 @@ public final class LichessOpeningBook implements OpeningBook {
         return new LichessOpeningBook(byPosition);
     }
 
+    /// The book, read from the bundled dataset the first time a position is
+    /// looked up: the application starts without paying for it (about a
+    /// second), and only the analysis, in the background, ever waits.
+    /// Loaded once, safely across threads (a holder class, initialised by
+    /// the JVM on first use).
+    public static OpeningBook loadedOnFirstUse() {
+        return position -> Loaded.BOOK.lookup(position);
+    }
+
+    private static final class Loaded {
+        static final LichessOpeningBook BOOK = load();
+    }
+
     /// How many distinct positions have a name.
     public int size() {
         return byPosition.size();
