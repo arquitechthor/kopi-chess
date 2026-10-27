@@ -49,7 +49,7 @@ jobs:
       # First the platform this runner can run, loaded locally, to try it
       # before anything is published.
       - name: Build for amd64
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           platforms: linux/amd64
@@ -74,7 +74,7 @@ jobs:
 
       # Both platforms; amd64 comes from the cache of the step above.
       - name: Build for amd64 and arm64, and publish
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           platforms: linux/amd64,linux/arm64
