@@ -1,0 +1,63 @@
+# Dependabot: a weekly look at every dependency, so a security fix is never
+# found late and versions move a little at a time.
+#
+# Minor and patch updates come together, one pull request per ecosystem; a
+# major version comes on its own, as it is the one that may break things.
+# Nothing is merged without review.
+version: 2
+
+updates:
+  # Libraries and Maven plugins (backend/pom.xml and the modules').
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      maven:
+        update-types: [minor, patch]
+
+  # The actions in .github/workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  # The base images of backend/Dockerfile (Temurin). Stockfish is pinned by
+  # release and checksum in the Dockerfile and ci.yml: updated by hand.
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      docker:
+        update-types: [minor, patch]
+
+  # PostgreSQL in compose.yaml. The same image is in the tests
+  # (TestcontainersConfiguration, JdbcGameRepositoryIT): update them in the
+  # same pull request.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      compose:
+        update-types: [minor, patch]
