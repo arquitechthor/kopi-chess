@@ -843,7 +843,7 @@ ayuda.
 
 ### Tareas
 
-- [ ] **Fichas de bots, una por línea**: en la pantalla de nueva partida, cada
+- [x] **Fichas de bots, una por línea**: en la pantalla de nueva partida, cada
       bot ocupa una fila a todo el ancho (avatar, nombre y nivel, descripción y
       récord uno al lado del otro) en vez de apilar todo el texto dentro de una
       ficha estrecha; aprovechar el ancho del contenedor, que hoy se
@@ -853,6 +853,14 @@ ayuda.
       glifo de su categoría (★ ✓ ?! ? ?? # ◆) y los mismos colores que la
       lista de jugadas, sin porcentaje de precisión. Basta con añadir la
       categoría a los pasos del tablero de `ReviewPage`.
+- [ ] **Borrar una partida**: al entrar en una partida (la de juego y la de
+      revisión, también las importadas), un botón «Borrar partida» que pide
+      confirmación en la propia página, sin diálogos del navegador, y vuelve al
+      historial. Se borra todo lo suyo: jugadas, análisis y trabajo en cola (el
+      esquema ya lo hace con `on delete cascade`); el balance contra el bot se
+      actualiza solo. También `DELETE /api/games/{id}` en la API. Cuidar los
+      casos en vuelo: el bot pensando su jugada o el *worker* analizándola
+      cuando la partida desaparece no deben dejar errores ni filas huérfanas.
 - [ ] **Pruebas E2E** con Playwright (opcional): crear partida → jugar →
       rendirse → ver análisis.
 - [ ] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
