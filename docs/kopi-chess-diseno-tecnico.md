@@ -1277,7 +1277,13 @@ Al ejecutarse en local no hay amenazas entre usuarios, pero el código es
 público y la gente lo copiará: los hábitos importan igual.
 
 - Puertos de Postgres **no expuestos** al host salvo en un perfil de
-  desarrollo; la app escucha en `localhost` por defecto.
+  desarrollo; la app escucha en `localhost` por defecto (`server.address`;
+  la imagen Docker escucha en su contenedor y Compose publica el puerto solo
+  en `127.0.0.1`).
+- Solo responde a esta máquina (ADR-016): `Host` local, contra el *DNS
+  rebinding*, y los cambios (`POST`, `DELETE`…) solo desde sus propias
+  páginas (`Origin`, `Sec-Fetch-Site`), contra los formularios de otros
+  sitios.
 - Ningún secreto en el repo: `.env` ignorado, `.env.example` con valores de
   ejemplo.
 - Validación estricta de UCI (`^[a-h][1-8][a-h][1-8][qrbn]?$`) antes de
@@ -1373,6 +1379,8 @@ El plan detallado por fases está en
 14. **ADR-014** Sin transacción alrededor de los casos de uso (bloqueo
     optimista + guardado atómico en el repositorio).
 15. **ADR-015** Partidas importadas: final declarado y sin tablas automáticas.
+16. **ADR-016** Solo responde a esta máquina: `Host` local y cambios de
+    páginas locales.
 
 ---
 

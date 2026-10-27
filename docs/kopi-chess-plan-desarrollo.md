@@ -867,9 +867,13 @@ ayuda.
 - [ ] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
       Prometheus; *dashboard* Grafana opcional en un perfil de Compose.
 - [ ] **Logs estructurados** con `gameId` propagado.
-- [ ] **Higiene de seguridad**: revisión de la lista del diseño (§15):
+- [x] **Higiene de seguridad**: revisión de la lista del diseño (§15):
       puertos solo en `127.0.0.1`, Postgres sin exponer, ningún secreto en el
-      repo (activar *secret scanning* de GitHub).
+      repo (activar *secret scanning* de GitHub). **Hecho:** *secret
+      scanning* y *push protection* ya estaban activos; el resto de §15 se
+      cumplía. Dos hallazgos corregidos (ADR-016): cualquier página podía
+      enviar formularios a la app y, con *DNS rebinding*, leer la API; y
+      desde el jar escuchaba en todas las interfaces.
 - [ ] **Arranque rápido**: generar la caché AOT de Java 25 en la imagen y
       medir el tiempo de arranque antes y después.
 - [ ] **Rendimiento**: medir tiempo de análisis de una partida de 40 jugadas
