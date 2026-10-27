@@ -83,6 +83,29 @@ class JdbcGameRepositoryIT {
     }
 
     @Test
+    void aDeletedGameIsGone() {
+        var game = newGame(Color.WHITE);
+        repository.insert(game);
+
+        assertThat(repository.delete(game.id())).isTrue();
+
+        assertThat(repository.findById(game.id())).isEmpty();
+        assertThat(repository.delete(game.id())).as("already gone").isFalse();
+    }
+
+    @Test
+    void anUpdateOfADeletedGameIsRefusedAndStoresNothing() {
+        var game = newGame(Color.WHITE);
+        repository.insert(game);
+        // Deleted while the bot was thinking its reply.
+        repository.delete(game.id());
+
+        assertThatThrownBy(() -> repository.update(play(game, "e2e4 e7e5"), 0))
+                .isInstanceOf(ConcurrentGameUpdateException.class);
+        assertThat(jdbc.sql("select count(*) from game_move").query(Integer.class).single()).isZero();
+    }
+
+    @Test
     void anUpdateAppendsTheNewMoves() {
         var game = newGame(Color.WHITE);
         repository.insert(game);

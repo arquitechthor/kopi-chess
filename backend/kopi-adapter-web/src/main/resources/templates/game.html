@@ -72,6 +72,7 @@
                    th:text="#{game.downloadPgn}">Download PGN</a>
                 <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
             </div>
+            <details th:replace="~{fragments/delete-game :: control(${game.id})}"></details>
         </div>
         <!--/* Discreet on purpose: office mode is for not being noticed (design §11.5). */-->
         <a class="muted text-view" th:href="@{/games/{id}(id=${game.id}, view='office')}"

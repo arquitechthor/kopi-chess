@@ -43,8 +43,12 @@ import java.util.Optional;
 /// fails never fails the analysis.
 ///
 /// If the engine cannot answer, the job goes back to the queue until it has
-/// been tried `maxAttempts` times, then `FAILED`. Anything else (the game
-/// is gone, a bug) fails it at once: trying again would fail the same way.
+/// been tried `maxAttempts` times, then `FAILED`. Anything else (a bug)
+/// fails it at once: trying again would fail the same way.
+///
+/// A game deleted while it is analysed takes its job with it: whatever then
+/// fails (saving the analysis, finishing the job) is dropped without a word,
+/// as there is nothing left to record it on.
 public final class RunAnalysisJob implements RunAnalysisJobUseCase {
 
     private final AnalysisJobQueue queue;
@@ -87,14 +91,15 @@ public final class RunAnalysisJob implements RunAnalysisJobUseCase {
             analyses.save(analyse(job));
             queue.complete(job.id());
             publish(() -> events.completed(job.gameId()));
-        } catch (EngineUnavailableException e) {
-            if (job.attempts() < maxAttempts) {
+        } catch (RuntimeException e) {
+            if (games.findById(job.gameId()).isEmpty()) {
+                return true;
+            }
+            if (e instanceof EngineUnavailableException && job.attempts() < maxAttempts) {
                 queue.retry(job.id(), describe(e));
             } else {
                 fail(job, describe(e));
             }
-        } catch (RuntimeException e) {
-            fail(job, describe(e));
         }
         return true;
     }

@@ -27,6 +27,12 @@ public interface GameRepository {
     ///                                       at `loadedVersion`
     void update(Game game, long loadedVersion);
 
+    /// Deletes the game and everything that is its: moves, analysis and
+    /// analysis job.
+    ///
+    /// @return whether there was such a game
+    boolean delete(GameId id);
+
     /// The games that pass `filter`, from the newest to the oldest, skipping
     /// `offset` and returning at most `limit`.
     List<Game> findRecent(GameFilter filter, int offset, int limit);

@@ -43,6 +43,7 @@
         <div class="panel-actions">
             <a class="btn btn-secondary" th:href="@{/games/{id}(id=${r.id})}" th:text="#{review.backToGame}">Back to the game</a>
         </div>
+        <details th:replace="~{fragments/delete-game :: control(${r.id})}"></details>
     </section>
 
     <!--/* ── Done ─────────────────────────────────────────────── */-->
@@ -146,6 +147,7 @@
                    th:text="#{game.downloadPgn}">Download PGN</a>
                 <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
             </div>
+            <details th:replace="~{fragments/delete-game :: control(${r.id})}"></details>
         </aside>
     </div>
 </main>

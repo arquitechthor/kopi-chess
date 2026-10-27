@@ -64,6 +64,11 @@ public final class InMemoryAnalysisJobQueue implements AnalysisJobQueue {
                 Optional.ofNullable(error), job.createdAt()));
     }
 
+    /// What `on delete cascade` does to the job of a deleted game.
+    synchronized void forget(GameId gameId) {
+        jobs.remove(gameId);
+    }
+
     @Override
     public synchronized int recoverStale(Instant lockedBefore, int maxAttempts) {
         throw new UnsupportedOperationException("Tested against PostgreSQL (JdbcAnalysisJobQueueIT)");

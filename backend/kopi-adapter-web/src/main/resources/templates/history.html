@@ -8,6 +8,7 @@
        A GET form, no JavaScript: the filters live in the address. */-->
 <main class="container history" th:with="h=${history}">
     <h1 th:text="#{history.title}">History</h1>
+    <p class="notice" role="status" th:if="${deleted}" th:text="#{history.deleted}">Game deleted.</p>
 
     <form class="history-filters" method="get" th:action="@{/games}">
         <label>

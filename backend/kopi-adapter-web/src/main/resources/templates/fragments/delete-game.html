@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Deleting a game (plan §10), on its pages. A <details> asks for the
+       confirmation in the page itself: no JavaScript, no browser dialog. */-->
+<details class="delete-game" th:fragment="control(id)">
+    <summary class="btn btn-danger-quiet" th:text="#{game.delete}">Delete game</summary>
+    <div class="delete-game-confirm">
+        <p th:text="#{game.deleteConfirm}">The game and its analysis will be deleted. This cannot be undone.</p>
+        <form method="post" th:action="@{/games/{id}/delete(id=${id})}">
+            <button class="btn btn-danger" type="submit" th:text="#{game.deleteYes}">Yes, delete it</button>
+        </form>
+    </div>
+</details>
+</body>
+</html>
