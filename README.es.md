@@ -4,63 +4,87 @@
 
 [Read in English](README.md)
 
-Kopi Chess es una aplicación web local para **jugar al ajedrez contra cinco
-bots** y **revisar cada partida al terminar**. Cada jugada recibe una
-evaluación, una clasificación (inexactitud / error / error grave) y la mejor
-alternativa del motor, y la revisión señala los mates que se escaparon. También
-puedes **importar un PGN** de Lichess, Chess.com o de una partida en tablero
-físico y analizarlo igual.
+Juega al ajedrez contra cinco bots en el navegador y después **revisa cada
+partida**: cada jugada recibe un veredicto y la mejor alternativa del motor, y
+la revisión señala los mates que se escaparon. Funciona en tu máquina; nada
+sale de ella.
 
-Y, para la oficina, un **modo oficina**: la partida parece la web de una
-empresa cualquiera, el tablero es una tabla con letras (`T`, `A`, `C`…) y las
-jugadas se escriben en notación algebraica (`e4`, `Cf3`, `O-O`). Pasa
-desapercibido y entrena la notación.
+![La revisión de la Partida de la Ópera de Morphy (1858): el tablero en 16.Db8+, la gráfica de evaluación, la precisión de cada bando y cada jugada con su veredicto](docs/img/review.png)
 
-También es un código del que aprender. El proyecto es un ejemplo de referencia
-de:
+## Inicio rápido
+
+Necesitas **Docker** con Compose (Docker Desktop en Windows y macOS), en una
+máquina x86-64 o ARM64, y alrededor de 1 GB de disco.
+
+```shell
+git clone https://github.com/arquitechthor/kopi-chess.git
+cd kopi-chess
+docker compose up --build
+```
+
+Abre <http://localhost:8080>, elige un bot y juega. El primer arranque tarda
+unos minutos (compila la aplicación); los siguientes, segundos.
+
+## Qué hace
+
+- **Cinco bots**, de `PAWN` (juega como un niño que acaba de aprender) a
+  Stockfish a plena fuerza. Tu balance contra cada uno aparece a su lado.
+- **Una revisión de cada partida terminada**, en segundo plano: veredicto de
+  cada jugada (teoría, la mejor, buena, imprecisión, error, error grave, mate
+  perdido), la apertura, la precisión de cada bando y una gráfica de las posibilidades
+  de ganar.
+- **Importar y exportar PGN**: analiza igual una partida de Lichess, de
+  Chess.com o de un tablero físico, y llévate las tuyas a donde quieras.
+- **Historial** de todas tus partidas, filtrado por origen y resultado.
+- **Modo oficina**: la partida parece la web de una empresa cualquiera, el
+  tablero es una tabla con letras (`T`, `A`, `C`…) y las jugadas se escriben
+  en notación algebraica (`e4`, `Cf3`, `O-O`). Pasa desapercibido y entrena
+  la notación.
+- **Una API REST** para todo ello, y la interfaz en **inglés y español**.
+
+## Aprender del código
+
+Kopi Chess también está hecho para leerse. Es un ejemplo de referencia de:
 
 - **Java moderno (25)**: records, *sealed interfaces*, *pattern matching*,
   hilos virtuales, *stream gatherers*, *scoped values*…
 - **Spring Boot 4**
 - **Arquitectura Hexagonal**: un dominio de ajedrez en Java puro (reglas
   verificadas con *perft*), casos de uso sin dependencias de *frameworks* y
-  adaptadores para la interfaz web, la API REST, PostgreSQL y Stockfish.
+  adaptadores para la interfaz web, la API REST, PostgreSQL y Stockfish. Los
+  límites los comprueba ArchUnit.
 
-La interfaz está disponible en **inglés y español**.
-
-## Estado
-
-🚧 **En desarrollo: fase 7 de 7 (estabilización y 1.0).** Ya se puede jugar
-contra cinco bots, de `PAWN` a Stockfish a plena fuerza, en el navegador, en el
-**modo oficina** o por la API REST; importar cualquier partida terminada en PGN
-(Lichess, Chess.com, sobre el tablero) y exportar las tuyas; consultar el
-historial y tu balance contra cada bot; y cada partida terminada se analiza en
-segundo plano: veredicto de cada jugada, precisión, mates perdidos y gráfica de
-evaluación ([`v0.6.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.6.0)).
-Esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo: la
-versión 1.0.
+Stack: Java 25 · Spring Boot 4 · Maven · PostgreSQL · Flyway · Stockfish
+(UCI) · Thymeleaf · Chessground · Docker Compose · JUnit 5 · ArchUnit ·
+Testcontainers.
 
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
 - Registros de decisiones de arquitectura (ADR): [`docs/adr/`](docs/adr/)
 
-## Stack previsto
+## Estado
 
-Java 25 · Spring Boot 4 · Maven · PostgreSQL · Flyway · Stockfish (UCI) ·
-Thymeleaf + htmx · Chessground · Docker Compose · JUnit 5 · ArchUnit ·
-Testcontainers
+🚧 **Fase 7 de 7: estabilización y 1.0.** Todo lo anterior funciona
+([`v0.6.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.6.0));
+esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo.
 
-## Ejecución en local
+## Ejecución
 
-Requiere **Docker**.
+**¿El puerto 8080 está ocupado?** Usa otro: `KOPI_PORT=8090 docker compose up --build`
+(PowerShell: `$env:KOPI_PORT=8090; docker compose up --build`).
+
+**Para parar**: `docker compose down`. Las partidas se conservan;
+`docker compose down -v` también las borra.
+
+**Sin compilar**: a partir de `v0.7.0`, cada versión publica la imagen en
+GitHub Container Registry, para x86-64 y ARM64. En el repositorio clonado:
 
 ```shell
-docker compose up --build
+KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:0.7 docker compose up --no-build
 ```
 
-Después comprueba `http://localhost:8080/actuator/health`. Para jugar por la
-API (la versión de la partida va en `If-Match`; la respuesta incluye la jugada
-del bot):
+**Por la API** (la versión de la partida va en `If-Match`; la respuesta
+incluye la jugada del bot):
 
 ```shell
 curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json" \
@@ -69,19 +93,10 @@ curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"' \
      -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
 ```
 
-Si el puerto 8080 está ocupado, usa otro: `KOPI_PORT=8090 docker compose up --build` (PowerShell:
-`$env:KOPI_PORT=8090; docker compose up --build`).
-
-Para parar: `docker compose down`; con `-v` también se borran las partidas
-guardadas.
-
-**Durante el desarrollo**, ejecuta en su lugar `TestKopiApplication` (en
-`backend/kopi-bootstrap/src/test`) desde el IDE: levanta la app con un
-PostgreSQL desechable mediante Testcontainers. Solo necesita Docker.
-
 ## Compilar desde el código fuente
 
 Requiere **JDK 25**. No hace falta Maven: el repositorio incluye el *wrapper*.
+Las pruebas de integración necesitan Docker (Testcontainers).
 
 ```shell
 cd backend
@@ -90,6 +105,10 @@ cd backend
 
 Las pruebas lentas (los *perft* profundos, unos 15 s) no se ejecutan en local
 pero sí en la CI. Para incluirlas: `./mvnw verify -Pslow-tests`.
+
+**Durante el desarrollo**, ejecuta `TestKopiApplication` (en
+`backend/kopi-bootstrap/src/test`) desde el IDE: levanta la app con un
+PostgreSQL desechable mediante Testcontainers.
 
 Si tu `JAVA_HOME` apunta a otro JDK, cámbialo solo para la terminal actual;
 por ejemplo, en PowerShell: `$env:JAVA_HOME = "C:\ruta\al\jdk-25"`.
@@ -107,4 +126,5 @@ contribución se añadirán antes de la v1.0.
 
 ## Licencia
 
-[GPL-3.0](LICENSE). Kopi Chess usa Stockfish y Chessground, ambos GPL-3.0.
+[GPL-3.0](LICENSE). Kopi Chess usa Stockfish y Chessground, ambos GPL-3.0;
+consulta [`NOTICE`](NOTICE).
