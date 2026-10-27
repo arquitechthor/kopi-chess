@@ -13,6 +13,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-007](007-cola-de-analisis-en-postgresql.md) — Cola de análisis en PostgreSQL
 - [ADR-008](008-repeticion-y-50-jugadas-automaticas.md) — Repetición y 50 jugadas automáticas
 - [ADR-009](009-libro-de-aperturas-local.md) — Libro de aperturas local (CC0), en memoria
+- [ADR-010](010-interfaz-web-thymeleaf-sin-spa.md) — Interfaz web con Thymeleaf, sin SPA y sin htmx
 - [ADR-011](011-i18n-dominio-emite-codigos.md) — i18n: el dominio emite códigos, los adaptadores traducen
 - [ADR-012](012-politica-features-preview.md) — Política de *features preview* (solo en `kopi-labs`)
 - [ADR-013](013-modo-oficina-notacion-localizada.md) — Modo oficina: notación localizada solo en el adaptador web
