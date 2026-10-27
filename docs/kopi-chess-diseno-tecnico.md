@@ -211,9 +211,10 @@ con pruebas que demuestran su corrección.
 - **Cuestionamiento:** el objetivo de aprendizaje es Java, Spring y
   hexagonal; un SPA añade otro lenguaje, otro *toolchain* (Node) y otro
   contenedor sin aportar a ese objetivo.
-- **Decisión:** **Thymeleaf + htmx** renderizado por Spring Boot, como
-  segundo adaptador de entrada (`kopi-adapter-web`) junto al REST. Solo JS
-  mínimo para el tablero (Chessground).
+- **Decisión:** **Thymeleaf** renderizado por Spring Boot, como segundo
+  adaptador de entrada (`kopi-adapter-web`) junto al REST. Solo JS mínimo
+  para el tablero (Chessground). Se pensó en htmx para las partes que cambian
+  sin recargar; al final no hizo falta (ADR-010).
 
 ### 2.14 Idiomas
 
@@ -257,9 +258,9 @@ De la propuesta original se conserva, porque es acertado:
   hash del binario en el `Dockerfile`.
 - **Aperturas — lichess-org/chess-openings (CC0).** Los TSV van como
   recursos y se cargan en memoria (ADR-009).
-- **Interfaz web — Thymeleaf + htmx (servidas por Spring Boot).** HTML
-  generado en el servidor; htmx para interacciones parciales sin escribir un
-  SPA. Sin Node en el flujo principal.
+- **Interfaz web — Thymeleaf (servida por Spring Boot).** HTML generado en
+  el servidor; las pocas interacciones parciales, con `fetch` y `EventSource`
+  propios, sin SPA ni htmx (ADR-010). Sin Node en el flujo principal.
 - **Tablero — Chessground (GPL-3.0, sin dependencias).** Es el tablero de
   Lichess. Se incluye como módulo ES ya compilado (fijado por versión) y se
   controla con un script propio pequeño.
@@ -284,7 +285,7 @@ De la propuesta original se conserva, porque es acertado:
 
 ```text
                    ┌─────────────────────────── Adaptadores de entrada ───┐
-                   │  Web (Thymeleaf+htmx)  REST  SSE  Worker de análisis │
+                   │  Web (Thymeleaf)       REST  SSE  Worker de análisis │
                    └───────────────┬──────────────────────────────────────┘
                                    │ llama a puertos de entrada (use cases)
                    ┌───────────────▼──────────────────────────────────────┐
@@ -325,7 +326,7 @@ kopi-chess/
 │   ├── kopi-domain/                  Java puro. Cero dependencias (solo JUnit en test).
 │   ├── kopi-application/             Casos de uso + puertos. Depende de domain.
 │   ├── kopi-adapter-rest/            API JSON pública: controladores, DTO, ProblemDetail, SSE.
-│   ├── kopi-adapter-web/             Interfaz web: controladores Thymeleaf, plantillas, htmx, JS del tablero.
+│   ├── kopi-adapter-web/             Interfaz web: controladores Thymeleaf, plantillas, JS del tablero.
 │   ├── kopi-adapter-persistence/     Spring Data JDBC / JdbcClient + Flyway.
 │   ├── kopi-adapter-stockfish/       Cliente UCI, pool de procesos.
 │   ├── kopi-adapter-bots/            Bots propios (niveles 1 y 2).
@@ -917,14 +918,18 @@ mismos casos de uso directamente, como cualquier otro adaptador de entrada.
 
 ---
 
-## 11. Interfaz web (Thymeleaf + htmx)
+## 11. Interfaz web (Thymeleaf)
+
+> **Nota (2026-10-27):** esta sección se escribió pensando en htmx. Al
+> construir la interfaz no hizo falta: la jugada usa `fetch` de un fragmento
+> (`…/live-moves`) y el progreso del análisis, `EventSource` sobre el SSE de
+> la API REST (ADR-010). Lo demás sigue como se describe.
 
 ### 11.1 Por qué así
 
 El objetivo del proyecto es aprender Java, Spring y Arquitectura Hexagonal.
 Un SPA (Angular, React…) obligaría a aprender otro lenguaje y otro ecosistema
-y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
-+ htmx:
+y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf:
 
 - Todo vive en Spring Boot: un solo build, un solo contenedor.
 - La interfaz es **otro adaptador de entrada** (`kopi-adapter-web`), al lado
@@ -937,20 +942,21 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf
 
 - **Páginas Thymeleaf:** Inicio (elegir bot y color) · Partida · Revisión ·
   Importar PGN · Historial.
-- **htmx** para actualizar fragmentos sin recargar: lista de jugadas, estado,
-  resultado, panel de análisis. El servidor devuelve fragmentos HTML
-  (`th:fragment`), no JSON.
+- **Fragmentos sin recargar:** tras una jugada, el servidor devuelve el
+  fragmento que cambia (estado, lista de jugadas, posición; `th:fragment`),
+  HTML y no JSON. Lo pide `board.js` con `fetch`; el formulario clásico queda
+  de respaldo.
 - **Tablero:** Chessground cargado como módulo ES fijado por versión (copiado
   en `static/vendor/` o desde un CDN con versión exacta). Un script propio
   `board.js` (~100 líneas) hace tres cosas:
   1. Pinta la posición y los destinos legales que el servidor incluye en el
      HTML (`data-fen`, `data-legal-moves`).
-  2. Al soltar una pieza, envía la jugada (`htmx.ajax` o `fetch`) y aplica la
+  2. Al soltar una pieza, envía la jugada (`fetch`) y aplica la
      respuesta: nueva posición + jugada del bot.
   3. En la revisión, mueve el tablero al navegar por las jugadas.
-- **Progreso del análisis:** extensión SSE de htmx (`hx-ext="sse"`) conectada
-  a un endpoint SSE del adaptador web; cada evento reemplaza la barra de
-  progreso y, al terminar, se carga el fragmento de revisión.
+- **Progreso del análisis:** `EventSource` (`review.js`) conectado al
+  endpoint SSE de la API REST; cada evento avanza la barra de progreso y, al
+  terminar, la página se recarga con la revisión.
 - **Gráfica de evaluación:** SVG generado en el servidor desde la plantilla
   (una polilínea con los Win %); sin librería de gráficos.
 - **Estilos:** un CSS propio sin *framework* (`static/css/kopi.css`), con la
@@ -1359,13 +1365,14 @@ El plan detallado por fases está en
 7. **ADR-007** Cola de análisis en PostgreSQL con `SKIP LOCKED`.
 8. **ADR-008** Repetición y 50 jugadas automáticas (simplificación sobre FIDE).
 9. **ADR-009** Libro de aperturas local (CC0) en lugar de API externa.
-10. **ADR-010** Interfaz web con Thymeleaf + htmx en lugar de SPA.
+10. **ADR-010** Interfaz web con Thymeleaf, sin SPA y sin htmx.
 11. **ADR-011** i18n: el dominio emite códigos, los adaptadores traducen.
 12. **ADR-012** Política de *features preview* (solo en `kopi-labs`).
 13. **ADR-013** Modo oficina: notación localizada solo en el adaptador web y
     entrada resuelta contra las jugadas legales.
 14. **ADR-014** Sin transacción alrededor de los casos de uso (bloqueo
     optimista + guardado atómico en el repositorio).
+15. **ADR-015** Partidas importadas: final declarado y sin tablas automáticas.
 
 ---
 
@@ -1387,10 +1394,10 @@ El plan detallado por fases está en
 
 #### La interfaz consume el tiempo que querías dedicar al backend
 
-- **Mitigación:** Thymeleaf + htmx, sin SPA; Chessground resuelve lo difícil
-  del tablero.
+- **Mitigación:** Thymeleaf, sin SPA; Chessground resuelve lo difícil del
+  tablero.
 
-#### htmx se queda corto si la interfaz crece mucho
+#### Renderizar en el servidor se queda corto si la interfaz crece mucho
 
 - **Ejemplo:** análisis interactivo de variantes.
 - **Mitigación:** la API REST ya existe: un SPA podría añadirse después como
@@ -1439,7 +1446,6 @@ web vive en el mismo Spring Boot como un adaptador más.
   <https://github.com/lichess-org/lila/blob/master/modules/tree/src/main/Advice.scala>
 - Dataset de aperturas (CC0): <https://github.com/lichess-org/chess-openings>
 - Chessground (GPL-3.0): <https://github.com/lichess-org/chessground>
-- htmx (extensión SSE): <https://htmx.org/extensions/sse/>
 - Opciones UCI de Stockfish (código): <https://github.com/official-stockfish/Stockfish/blob/master/src/engine.cpp>
 - Descargas de Stockfish: <https://stockfishchess.org/download/>
 - Spring Boot 4 / compatibilidad con Java: <https://www.baeldung.com/java-weekly-622>,
