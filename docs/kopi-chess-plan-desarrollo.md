@@ -853,7 +853,7 @@ ayuda.
       glifo de su categoría (★ ✓ ?! ? ?? # ◆) y los mismos colores que la
       lista de jugadas, sin porcentaje de precisión. Basta con añadir la
       categoría a los pasos del tablero de `ReviewPage`.
-- [ ] **Borrar una partida**: al entrar en una partida (la de juego y la de
+- [x] **Borrar una partida**: al entrar en una partida (la de juego y la de
       revisión, también las importadas), un botón «Borrar partida» que pide
       confirmación en la propia página, sin diálogos del navegador, y vuelve al
       historial. Se borra todo lo suyo: jugadas, análisis y trabajo en cola (el

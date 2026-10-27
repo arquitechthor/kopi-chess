@@ -9,6 +9,7 @@ import com.arquitechthor.kopi.adapter.rest.ApiModel.ImportPgnRequest;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.PlayMoveRequest;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
@@ -29,6 +30,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,17 +58,19 @@ class GamesController {
     private final ListGamesUseCase listGames;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
+    private final DeleteGameUseCase deleteGame;
     private final ExportPgnUseCase exportPgn;
     private final ImportPgnUseCase importPgn;
 
     GamesController(CreateGameUseCase createGame, GetGameUseCase getGame, ListGamesUseCase listGames,
-            PlayMoveUseCase playMove, ResignUseCase resign, ExportPgnUseCase exportPgn,
-            ImportPgnUseCase importPgn) {
+            PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
+            ExportPgnUseCase exportPgn, ImportPgnUseCase importPgn) {
         this.createGame = createGame;
         this.getGame = getGame;
         this.listGames = listGames;
         this.playMove = playMove;
         this.resign = resign;
+        this.deleteGame = deleteGame;
         this.exportPgn = exportPgn;
         this.importPgn = importPgn;
     }
@@ -117,6 +121,14 @@ class GamesController {
             @RequestHeader(name = HttpHeaders.IF_MATCH, required = false) String ifMatch) {
         var version = Versions.fromIfMatch(ifMatch);
         return ok(resign.resign(new ResignCommand(new GameId(id), version)));
+    }
+
+    /// `204 No Content`: the game is gone, with its moves and its analysis.
+    /// No `If-Match`: a game is deleted whatever its version.
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> delete(@PathVariable UUID id) {
+        deleteGame.delete(new GameId(id));
+        return ResponseEntity.noContent().build();
     }
 
     /// Imports a finished game from PGN (plan §9): `201 Created` with the

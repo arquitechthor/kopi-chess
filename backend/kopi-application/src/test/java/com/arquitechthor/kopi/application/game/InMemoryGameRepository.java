@@ -45,6 +45,12 @@ public final class InMemoryGameRepository implements GameRepository {
     }
 
     @Override
+    public boolean delete(GameId id) {
+        writes++;
+        return games.remove(id) != null;
+    }
+
+    @Override
     public List<Game> findRecent(GameFilter filter, int offset, int limit) {
         var newestFirst = new ArrayList<>(games.values().stream().filter(filter::matches).toList());
         newestFirst.sort(Comparator.comparing(Game::createdAt).reversed());

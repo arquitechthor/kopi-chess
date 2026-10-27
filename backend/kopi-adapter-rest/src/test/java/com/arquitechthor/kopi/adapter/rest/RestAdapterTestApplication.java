@@ -6,6 +6,8 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.DeleteGame;
+import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
@@ -145,6 +147,11 @@ class RestAdapterTestApplication {
         return new Resign(games, analyses, clock);
     }
 
+    @Bean
+    DeleteGameUseCase deleteGame(InMemoryGames games) {
+        return new DeleteGame(games);
+    }
+
     /// A [GameRepository] in a map, honouring the optimistic locking contract.
     static final class InMemoryGames implements GameRepository {
 
@@ -162,10 +169,16 @@ class RestAdapterTestApplication {
 
         @Override
         public synchronized void update(Game game, long loadedVersion) {
-            if (games.get(game.id()).version() != loadedVersion) {
+            var stored = games.get(game.id());
+            if (stored == null || stored.version() != loadedVersion) {
                 throw new ConcurrentGameUpdateException(game.id(), loadedVersion);
             }
             games.put(game.id(), game);
+        }
+
+        @Override
+        public synchronized boolean delete(GameId id) {
+            return games.remove(id) != null;
         }
 
         @Override

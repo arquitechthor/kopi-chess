@@ -2,6 +2,8 @@ package com.arquitechthor.kopi.adapter.web;
 
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
+import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
 import com.arquitechthor.kopi.application.game.PlayMoveCommand;
@@ -45,18 +47,23 @@ class GameController {
     /// Flash attribute with the code of the last refused action.
     static final String ERROR = "error";
 
+    /// Flash attribute for the history: a game was just deleted.
+    static final String DELETED = "deleted";
+
     private final CreateGameUseCase createGame;
     private final GetGameUseCase getGame;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
+    private final DeleteGameUseCase deleteGame;
     private final MessageSource messages;
 
     GameController(CreateGameUseCase createGame, GetGameUseCase getGame, PlayMoveUseCase playMove,
-            ResignUseCase resign, MessageSource messages) {
+            ResignUseCase resign, DeleteGameUseCase deleteGame, MessageSource messages) {
         this.createGame = createGame;
         this.getGame = getGame;
         this.playMove = playMove;
         this.resign = resign;
+        this.deleteGame = deleteGame;
         this.messages = messages;
     }
 
@@ -134,6 +141,20 @@ class GameController {
             redirect.addFlashAttribute(ERROR, refusal(e));
         }
         return "redirect:/games/" + id;
+    }
+
+    /// From the confirmation on the game's pages; then the history says so.
+    /// A game already gone (the form sent twice, another tab) ends the same
+    /// way: what was asked for is done.
+    @PostMapping("/games/{id}/delete")
+    String delete(@PathVariable UUID id, RedirectAttributes redirect) {
+        try {
+            deleteGame.delete(new GameId(id));
+        } catch (GameNotFoundException _) {
+            // already deleted
+        }
+        redirect.addFlashAttribute(DELETED, true);
+        return "redirect:/games";
     }
 
     /// The code of a refused action, or the exception again if it is not a

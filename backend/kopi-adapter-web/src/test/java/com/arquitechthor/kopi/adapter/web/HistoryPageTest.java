@@ -11,12 +11,15 @@ import com.arquitechthor.kopi.domain.game.GameId;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 /// The history page (plan §9): every game, filtered, a page at a time.
@@ -64,6 +67,48 @@ class HistoryPageTest {
                 Pgn.parse("[White \"Morphy, Paul\"]\n[Black \"Duke Karl\"]\n\n1. e4 e5 1-0"), NOW);
         games.insert(game);
         return game;
+    }
+
+    @Nested
+    class Delete {
+
+        @Test
+        void theGameAndTheReviewOfferIt() {
+            var game = played(true);
+
+            for (var uri : List.of("/games/" + game.id() + "?lang=es", "/games/" + game.id() + "/analysis?lang=es")) {
+                assertThat(page(uri)).as(uri)
+                        .contains("<summary class=\"btn btn-danger-quiet\">Borrar partida</summary>",
+                                "action=\"/games/" + game.id() + "/delete\"",
+                                "Sí, borrarla");
+            }
+        }
+
+        @Test
+        void deletingTakesYouToTheHistoryWithoutIt() {
+            var deleted = played(true);
+            played(false);
+
+            assertThat(mvc.post().uri("/games/{id}/delete", deleted.id().value()))
+                    .hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/games")
+                    .flash().containsEntry(GameController.DELETED, true);
+
+            assertThat(games.findById(deleted.id())).isEmpty();
+            var history = mvc.get().uri("/games?lang=es").flashAttr(GameController.DELETED, true).exchange();
+            assertThat(history).bodyText().contains("Partida borrada.", "1 partida")
+                    .doesNotContain(deleted.id().toString());
+        }
+
+        @Test
+        void aGameAlreadyGoneEndsTheSameWay() {
+            assertThat(mvc.post().uri("/games/{id}/delete", UUID.randomUUID()))
+                    .hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/games");
+        }
+
+        @Test
+        void theHistorySaysNothingOtherwise() {
+            assertThat(page("/games?lang=es")).doesNotContain("Partida borrada.");
+        }
     }
 
     @Test

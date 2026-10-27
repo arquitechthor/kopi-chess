@@ -270,6 +270,36 @@ class GameUseCasesTest {
     }
 
     @Nested
+    class Delete {
+
+        @Test
+        void theGameIsGoneWhateverItsVersion() {
+            var game = play(create(Color.WHITE), "e2e4");
+
+            new DeleteGame(repository).delete(game.id());
+
+            assertThat(repository.findById(game.id())).isEmpty();
+            assertThat(repository.count()).isZero();
+        }
+
+        @Test
+        void anUnknownGameIsNotFound() {
+            assertThatThrownBy(() -> new DeleteGame(repository).delete(newId()))
+                    .isInstanceOf(GameNotFoundException.class);
+        }
+
+        @Test
+        void deletedWhileTheBotThinksTheMoveIsNotSaved() {
+            var game = create(Color.WHITE);
+            bot.playing("e7e5").whileThinking(() -> new DeleteGame(repository).delete(game.id()));
+
+            // As if someone else had changed it: the page reloads and finds it gone.
+            assertThatThrownBy(() -> play(game, "e2e4")).isInstanceOf(ConcurrentGameUpdateException.class);
+            assertThat(repository.findById(game.id())).isEmpty();
+        }
+    }
+
+    @Nested
     class Import {
 
         private static final String OPERA = """

@@ -845,6 +845,8 @@ Prefijo `/api/v1`. Errores en formato **`ProblemDetail`** (RFC 9457).
 - **`POST /games/{id}/moves`** — jugada humana. Header
   `If-Match: <version>`.
 - **`POST /games/{id}/resign`** — rendirse.
+- **`DELETE /games/{id}`** — borrar la partida con sus jugadas y su análisis.
+  `204 No Content`; sin `If-Match`.
 - **`GET /games/{id}/pgn`** — exportar PGN.
 - **`POST /games/{id}/analysis`** — encolar análisis. `202 Accepted`;
   idempotente.

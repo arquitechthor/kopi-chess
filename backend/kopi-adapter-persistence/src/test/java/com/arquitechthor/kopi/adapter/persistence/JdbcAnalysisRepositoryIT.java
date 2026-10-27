@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.analysis.AnalysisSettings;
@@ -42,6 +43,9 @@ class JdbcAnalysisRepositoryIT {
 
     @Autowired
     GameRepository games;
+
+    @Autowired
+    AnalysisJobQueue queue;
 
     @Autowired
     JdbcClient jdbc;
@@ -121,14 +125,16 @@ class JdbcAnalysisRepositoryIT {
     }
 
     @Test
-    void anAnalysisGoesWithItsGame() {
+    void deletingAGameTakesItsMovesItsAnalysisAndItsJob() {
         var game = storedGame("e2e4 e7e5 d1h5");
         analyses.save(analysisOf(game));
+        queue.enqueue(game.id(), START);
 
-        jdbc.sql("delete from game where id = :id").param("id", game.id().value()).update();
+        assertThat(games.delete(game.id())).isTrue();
 
-        assertThat(jdbc.sql("select count(*) from analysis").query(Integer.class).single()).isZero();
-        assertThat(jdbc.sql("select count(*) from move_analysis").query(Integer.class).single()).isZero();
+        for (var table : List.of("game_move", "analysis", "move_analysis", "analysis_job")) {
+            assertThat(jdbc.sql("select count(*) from " + table).query(Integer.class).single()).as(table).isZero();
+        }
     }
 
     @Test

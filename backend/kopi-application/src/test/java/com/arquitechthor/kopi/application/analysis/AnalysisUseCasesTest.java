@@ -59,6 +59,10 @@ class AnalysisUseCasesTest {
 
         @Override
         public void save(GameAnalysis analysis) {
+            // Like the foreign key: no analysis without its game.
+            if (games.findById(analysis.gameId()).isEmpty()) {
+                throw new IllegalStateException("The game no longer exists");
+            }
             saved.put(analysis.gameId(), analysis);
         }
     };
@@ -128,6 +132,7 @@ class AnalysisUseCasesTest {
         private final List<Evaluation> evaluations = new ArrayList<>();
         private final List<List<String>> lines = new ArrayList<>();
         private boolean down;
+        private Runnable whileAnalysing = () -> {};
         int calls;
 
         /// The next position: its evaluation and the engine's line in UCI
@@ -140,6 +145,7 @@ class AnalysisUseCasesTest {
 
         @Override
         public EngineAnalysis analyse(Position position, SearchLimits limits, int multiPv) {
+            whileAnalysing.run();
             if (down) {
                 throw new EngineUnavailableException("Stockfish is not installed", null);
             }
@@ -302,15 +308,37 @@ class AnalysisUseCasesTest {
         }
 
         @Test
-        void aGameThatIsGoneFailsAtOnce() {
-            queue.enqueue(new GameId(new UUID(9, 9)), NOW);
+        void aGameDeletedWhileAnalysedLeavesNothingBehind() {
+            var game = resigned("e2e4");
+            queue.enqueue(game.id(), NOW);
+            engine.then(new Evaluation.Centipawns(30), "e2e4").then(new Evaluation.Centipawns(30), "e7e5");
+            engine.whileAnalysing = () -> {
+                games.delete(game.id());
+                queue.forget(game.id());
+            };
 
-            runner(book, 3).runNext();
+            assertThat(runner(book, 3).runNext()).isTrue();
 
-            assertThat(queue.findByGameId(new GameId(new UUID(9, 9)))).hasValueSatisfying(job -> {
-                assertThat(job.state()).isEqualTo(State.FAILED);
-                assertThat(job.lastError()).hasValueSatisfying(error -> assertThat(error).contains("no longer exists"));
-            });
+            assertThat(saved).isEmpty();
+            assertThat(queue.findByGameId(game.id())).isEmpty();
+            // Nobody to tell: the review page went with the game.
+            assertThat(events.published).noneMatch(event -> event.startsWith("failed"));
+        }
+
+        @Test
+        void deletedWhileTheEngineIsDownIsNotRetried() {
+            var game = resigned("e2e4");
+            queue.enqueue(game.id(), NOW);
+            engine.down = true;
+            engine.whileAnalysing = () -> {
+                games.delete(game.id());
+                queue.forget(game.id());
+            };
+
+            assertThat(runner(book, 3).runNext()).isTrue();
+
+            assertThat(queue.findByGameId(game.id())).isEmpty();
+            assertThat(events.published).isEmpty();
         }
     }
 

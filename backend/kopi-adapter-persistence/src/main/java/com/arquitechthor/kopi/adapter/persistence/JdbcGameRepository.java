@@ -113,6 +113,13 @@ public final class JdbcGameRepository implements GameRepository {
         });
     }
 
+    /// The moves, the analysis and its job go with the game (`on delete
+    /// cascade`, V2 and V3).
+    @Override
+    public boolean delete(GameId id) {
+        return jdbc.sql("delete from game where id = :id").param("id", id.value()).update() > 0;
+    }
+
     @Override
     public List<Game> findRecent(GameFilter filter, int offset, int limit) {
         var where = Where.of(filter);

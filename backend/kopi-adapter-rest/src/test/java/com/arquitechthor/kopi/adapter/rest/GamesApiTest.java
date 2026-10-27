@@ -248,6 +248,27 @@ class GamesApiTest {
     }
 
     @Nested
+    class Delete {
+
+        @Test
+        void theGameIsGoneWithoutIfMatch() {
+            var id = newGame();
+            move(id, "\"0\"", "e2e4");
+
+            assertThat(mvc.delete().uri("/api/v1/games/{id}", id)).hasStatus(HttpStatus.NO_CONTENT);
+
+            assertThat(mvc.get().uri("/api/v1/games/{id}", id)).hasStatus(HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        void anUnknownGameIsA404() {
+            assertThat(mvc.delete().uri("/api/v1/games/{id}", "11111111-1111-1111-1111-111111111111"))
+                    .hasStatus(HttpStatus.NOT_FOUND)
+                    .bodyJson().extractingPath("$.code").isEqualTo("GAME_NOT_FOUND");
+        }
+    }
+
+    @Nested
     class Languages {
 
         @Test
