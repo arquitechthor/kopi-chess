@@ -882,7 +882,8 @@ ayuda.
   - `CONTRIBUTING.md` con el flujo de la sección 2 de este plan.
   - `docs/arquitectura.md`: guía de lectura del código por anillos (para
     quien llega a aprender).
-  - `NOTICE` con Stockfish, Chessground, htmx y el dataset de aperturas.
+  - `NOTICE` con Stockfish, Chessground y el dataset de aperturas (htmx al
+    final no se usa).
 - [ ] **Changelog** generado desde los commits convencionales.
 - [ ] Marcar 5–10 *issues* como `good first issue` para posibles
       contribuciones.

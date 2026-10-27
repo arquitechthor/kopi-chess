@@ -397,7 +397,11 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 .review-detail p { margin: 0 0 4px; color: var(--text-muted); }
 .review-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--text); }
 
+/* Each move carries its verdict, so a full move needs more room than in the
+   game's list: no SAN broken in two ("O-O-O") and no sideways scrolling. */
+.review-moves { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); overflow-x: hidden; }
 .review-moves li { grid-template-columns: 2.6em 1fr 1fr; align-items: center; }
+.review-move { white-space: nowrap; }
 .review-move {
   display: inline-flex; align-items: center; gap: 6px; justify-self: start;
   font: inherit; color: var(--text); background: none; border: 1px solid transparent;
