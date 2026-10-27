@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage: compile with the JDK and package the Spring Boot jar ---
-FROM eclipse-temurin:25.0.4_7-jdk-noble AS build
+# On the builder's own platform: the jar is the same for every architecture,
+# so a multi-arch build (release.yml) does not compile under emulation.
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25.0.4_7-jdk-noble AS build
 # mvnw needs unzip: without it, it falls back to the .tar.gz distribution and
 # the pinned SHA-256 (of the .zip, also used by mvnw.cmd on Windows) fails.
 RUN apt-get update \
@@ -43,6 +45,15 @@ RUN set -eu; \
 
 # --- Runtime stage: JRE only, non-root user ---
 FROM eclipse-temurin:25.0.4_7-jre-noble
+# OCI labels; the release workflow sets version, revision and creation date
+# (without this "version", a local build would show the Ubuntu base's).
+# "source" also links the package on GHCR to the repository.
+LABEL org.opencontainers.image.title="Kopi Chess" \
+      org.opencontainers.image.version="dev" \
+      org.opencontainers.image.description="Play chess against five bots and review every game with Stockfish. Local only." \
+      org.opencontainers.image.source="https://github.com/arquitechthor/kopi-chess" \
+      org.opencontainers.image.url="https://github.com/arquitechthor/kopi-chess" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later"
 RUN groupadd --system kopi && useradd --system --gid kopi --no-create-home kopi
 COPY --from=stockfish /usr/local/bin/stockfish /usr/local/bin/stockfish
 # Smoke test: the engine starts in this image too (libraries, architecture).

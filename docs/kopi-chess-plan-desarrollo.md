@@ -861,7 +861,7 @@ ayuda.
       actualiza solo. También `DELETE /api/games/{id}` en la API. Cuidar los
       casos en vuelo: el bot pensando su jugada o el *worker* analizándola
       cuando la partida desaparece no deben dejar errores ni filas huérfanas.
-- [ ] **Pruebas E2E** con Playwright (opcional): crear partida → jugar →
+- [ ] **Pruebas E2E** con Playwright (incluidas en la 1.0): crear partida → jugar →
       rendirse → ver análisis.
 - [ ] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
       Prometheus; *dashboard* Grafana opcional en un perfil de Compose.
@@ -873,7 +873,7 @@ ayuda.
       medir el tiempo de arranque antes y después.
 - [ ] **Rendimiento**: medir tiempo de análisis de una partida de 40 jugadas
       en una máquina modesta; ajustar `depth`/`nodes` por defecto.
-- [ ] **Imagen Docker final**: tamaño razonable, usuario no root, etiquetas
+- [x] **Imagen Docker final**: tamaño razonable, usuario no root, etiquetas
       OCI, publicada en GitHub Container Registry desde CI al etiquetar (así
       quien quiera usarlo en local no necesita compilar).
 - [ ] **Documentación**:

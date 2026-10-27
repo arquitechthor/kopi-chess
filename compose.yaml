@@ -1,5 +1,7 @@
 # Kopi Chess, local only: `docker compose up --build`, then open http://localhost:8080
 # Port 8080 taken? Use another one: KOPI_PORT=8090 docker compose up --build
+# No build, the published image instead (from v0.7.0; "1" once 1.0 is out):
+#   KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:0.7 docker compose up --no-build
 name: kopi-chess
 
 services:
@@ -24,7 +26,7 @@ services:
 
   app:
     build: ./backend
-    image: kopi-chess:local
+    image: ${KOPI_IMAGE:-kopi-chess:local}
     ports:
       # Bound to localhost only: the app is not exposed to the network.
       - "127.0.0.1:${KOPI_PORT:-8080}:8080"
