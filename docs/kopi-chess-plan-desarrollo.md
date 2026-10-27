@@ -843,6 +843,16 @@ ayuda.
 
 ### Tareas
 
+- [ ] **Fichas de bots, una por línea**: en la pantalla de nueva partida, cada
+      bot ocupa una fila a todo el ancho (avatar, nombre y nivel, descripción y
+      récord uno al lado del otro) en vez de apilar todo el texto dentro de una
+      ficha estrecha; aprovechar el ancho del contenedor, que hoy se
+      desperdicia. En móvil la fila vuelve a apilarse.
+- [ ] **Veredicto sobre el tablero de revisión**: una insignia en la esquina
+      superior derecha de la casilla de destino de cada jugada, solo con el
+      glifo de su categoría (★ ✓ ?! ? ?? # ◆) y los mismos colores que la
+      lista de jugadas, sin porcentaje de precisión. Basta con añadir la
+      categoría a los pasos del tablero de `ReviewPage`.
 - [ ] **Pruebas E2E** con Playwright (opcional): crear partida → jugar →
       rendirse → ver análisis.
 - [ ] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
