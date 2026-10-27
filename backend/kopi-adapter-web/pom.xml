@@ -12,7 +12,7 @@
 
     <artifactId>kopi-adapter-web</artifactId>
     <name>Kopi Chess :: Adapter :: Web</name>
-    <description>Web UI (Thymeleaf + htmx) inbound adapter.</description>
+    <description>Web UI (Thymeleaf) inbound adapter.</description>
 
     <dependencies>
         <dependency>

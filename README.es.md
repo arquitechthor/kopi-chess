@@ -58,6 +58,7 @@ Stack: Java 25 · Spring Boot 4 · Maven · PostgreSQL · Flyway · Stockfish
 (UCI) · Thymeleaf · Chessground · Docker Compose · JUnit 5 · ArchUnit ·
 Testcontainers.
 
+- Por dónde empezar a leer: [`docs/arquitectura.md`](docs/arquitectura.md)
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
 - Registros de decisiones de arquitectura (ADR): [`docs/adr/`](docs/adr/)
@@ -121,8 +122,9 @@ compila con un archivo de *settings* vacío:
 ## Contribuir
 
 El código, los *commits*, los *issues* y las *pull requests* van en
-**inglés**. Los documentos de diseño, en **español**. Las pautas de
-contribución se añadirán antes de la v1.0.
+**inglés**. Los documentos de diseño, en **español**. Cómo preparar el
+entorno, el flujo de trabajo y la definición de terminado están en
+[`CONTRIBUTING.md`](CONTRIBUTING.md) (en inglés).
 
 ## Licencia
 
