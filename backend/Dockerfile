@@ -3,7 +3,7 @@
 # --- Build stage: compile with the JDK and package the Spring Boot jar ---
 # On the builder's own platform: the jar is the same for every architecture,
 # so a multi-arch build (release.yml) does not compile under emulation.
-FROM --platform=$BUILDPLATFORM eclipse-temurin:25.0.4_7-jdk-noble AS build
+FROM --platform=$BUILDPLATFORM eclipse-temurin:26.0.2_10-jdk-noble AS build
 # mvnw needs unzip: without it, it falls back to the .tar.gz distribution and
 # the pinned SHA-256 (of the .zip, also used by mvnw.cmd on Windows) fails.
 RUN apt-get update \
@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/root/.m2 \
 # --- Stockfish stage: the official release, pinned and checksum-verified ---
 # The "universal" builds run on any CPU of their family (no avx2/bmi2 surprises).
 # Same release as CI (.github/workflows/ci.yml); digests from the GitHub release.
-FROM eclipse-temurin:25.0.4_7-jdk-noble AS stockfish
+FROM eclipse-temurin:26.0.2_10-jdk-noble AS stockfish
 ARG TARGETARCH
 ARG STOCKFISH_RELEASE=sf_19
 ARG STOCKFISH_SHA256_AMD64=9defc0d4e55d49c65a6d042f3e571a39fcea499ade6dbe741b53b8c65e03611f
@@ -44,7 +44,7 @@ RUN set -eu; \
     echo quit | /usr/local/bin/stockfish > /dev/null
 
 # --- Runtime stage: JRE only, non-root user ---
-FROM eclipse-temurin:25.0.4_7-jre-noble
+FROM eclipse-temurin:26.0.2_10-jre-noble
 # OCI labels; the release workflow sets version, revision and creation date
 # (without this "version", a local build would show the Ubuntu base's).
 # "source" also links the package on GHCR to the repository.
