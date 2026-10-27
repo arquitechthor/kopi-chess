@@ -43,6 +43,30 @@ class KopiApplicationIT {
     }
 
     @Test
+    void onlyThisMachineIsAnswered() {
+        // ADR-016: the filter is in front of the pages, the API and Actuator alike.
+        assertThat(mvc.get().uri("/api/v1/games").header("Host", "evil.example:8080"))
+                .hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(mvc.get().uri("/actuator/health").header("Host", "evil.example:8080"))
+                .hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(mvc.get().uri("/api/v1/games").header("Host", "127.0.0.1:8080")).hasStatusOk();
+    }
+
+    @Test
+    void aFormFromAnotherSiteChangesNothing() {
+        var before = jdbc.sql("select count(*) from game").query(Long.class).single();
+
+        assertThat(mvc.post().uri("/games").header("Origin", "https://evil.example")
+                .param("bot", "PAWN").param("color", "WHITE"))
+                .hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(jdbc.sql("select count(*) from game").query(Long.class).single()).isEqualTo(before);
+
+        assertThat(mvc.post().uri("/games").header("Origin", "http://localhost:8080")
+                .param("bot", "PAWN").param("color", "WHITE"))
+                .hasStatus(HttpStatus.FOUND);
+    }
+
+    @Test
     void flywayAppliedEveryMigration() {
         var versions = jdbc.sql("select version from flyway_schema_history where success order by installed_rank")
                 .query(String.class)

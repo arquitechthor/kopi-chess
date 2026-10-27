@@ -59,6 +59,9 @@ COPY --from=stockfish /usr/local/bin/stockfish /usr/local/bin/stockfish
 # Smoke test: the engine starts in this image too (libraries, architecture).
 RUN echo quit | /usr/local/bin/stockfish > /dev/null
 ENV KOPI_STOCKFISH=/usr/local/bin/stockfish
+# Inside a container, every interface: what reaches it is decided by the
+# published port (compose.yaml: 127.0.0.1 only).
+ENV KOPI_ADDRESS=0.0.0.0
 WORKDIR /app
 COPY --from=build /build/kopi-bootstrap/target/kopi-chess.jar app.jar
 USER kopi

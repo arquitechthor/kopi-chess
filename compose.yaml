@@ -34,6 +34,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kopi
       SPRING_DATASOURCE_USERNAME: kopi
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-kopi}
+      # Host names it answers to (ADR-016). Reached by another name? Add it here.
+      KOPI_ALLOWED_HOSTS: ${KOPI_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
     depends_on:
       postgres:
         condition: service_healthy

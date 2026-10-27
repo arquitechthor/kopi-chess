@@ -50,9 +50,18 @@ kopi:
     missed-mate-limit: 5
     max-attempts: 3
     workers: 1
+  # Requests are answered only for these host names, and changes only from their pages
+  # (ADR-016: DNS rebinding, cross-site forms). Reached by another name (a LAN address, a
+  # reverse proxy)? Add it to KOPI_ALLOWED_HOSTS, comma-separated.
+  local-access:
+    allowed-hosts: "${KOPI_ALLOWED_HOSTS:localhost,127.0.0.1,[::1]}"
 
 server:
   port: 8080
+  # Only this machine by default (design §15): run from the jar or the IDE, Kopi Chess is not
+  # reachable from the network. The Docker image listens on every interface of its container
+  # (KOPI_ADDRESS=0.0.0.0 in the Dockerfile); Compose publishes it on 127.0.0.1 only.
+  address: ${KOPI_ADDRESS:127.0.0.1}
 
 management:
   endpoints:
