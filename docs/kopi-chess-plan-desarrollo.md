@@ -59,7 +59,8 @@ donde un error cuesta más caro después.
 - Una rama por *issue*: `feat/12-fen-parser`, `fix/31-castling-rights`,
   `docs/adr-004`.
 - *Pull request* aunque trabajes solo: obliga a releer el *diff* y deja
-  historia. Fusionar con *squash*.
+  historia. Fusionar con *merge commit*: los *commits* de la rama se
+  conservan tal cual (por eso cada uno debe tener sentido por sí solo).
 - Mensajes con **Conventional Commits** (`feat:`, `fix:`, `test:`,
   `refactor:`, `docs:`, `build:`, `ci:`). Permite generar el *changelog*
   automáticamente más adelante.
@@ -876,7 +877,7 @@ ayuda.
 - [x] **Imagen Docker final**: tamaño razonable, usuario no root, etiquetas
       OCI, publicada en GitHub Container Registry desde CI al etiquetar (así
       quien quiera usarlo en local no necesita compilar).
-- [ ] **Documentación**:
+- [x] **Documentación**:
   - README en inglés (público general) con enlace a una versión en español:
     captura, `docker compose up` en tres líneas, requisitos.
   - `CONTRIBUTING.md` con el flujo de la sección 2 de este plan.

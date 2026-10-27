@@ -57,6 +57,7 @@ Stack: Java 25 · Spring Boot 4 · Maven · PostgreSQL · Flyway · Stockfish
 (UCI) · Thymeleaf · Chessground · Docker Compose · JUnit 5 · ArchUnit ·
 Testcontainers.
 
+- Where to start reading (Spanish): [`docs/arquitectura.md`](docs/arquitectura.md)
 - Technical design (Spanish): [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Development plan (Spanish): [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
 - Architecture Decision Records (Spanish): [`docs/adr/`](docs/adr/)
@@ -120,8 +121,8 @@ is not reachable, build with an empty settings file:
 ## Contributing
 
 The code, commits, issues and pull requests are in **English**. Design
-documents are in **Spanish**. Contribution guidelines will be added before
-v1.0.
+documents are in **Spanish**. How to set up, the workflow and the definition
+of done are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
