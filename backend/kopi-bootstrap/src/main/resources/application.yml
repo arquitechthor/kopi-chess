@@ -43,7 +43,8 @@ kopi:
         movetime: 1s    # no handicap
   # Post-game analysis (design §8, ADR-007). A fixed number of nodes per position, not a
   # depth: nodes bound the time, depth 18 once took 93 s on one position
-  # (docs/notas/presupuesto-analisis.md). About 1 s per position, 1.5 min for 40 moves.
+  # (docs/notas/presupuesto-analisis.md). About 1 s per position, 1.5 min for 40 moves
+  # (3 min on half a core).
   analysis:
     nodes: 1000000
     multi-pv: 2
