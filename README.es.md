@@ -66,7 +66,7 @@ Testcontainers.
 ## Estado
 
 🚧 **Fase 7 de 7: estabilización y 1.0.** Todo lo anterior funciona
-([`v0.6.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.6.0));
+([`v0.7.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.7.0));
 esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo.
 
 ## Ejecución
