@@ -37,7 +37,7 @@ jobs:
       # Also the OCI labels for version, revision and creation date.
       - name: Tags and labels
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
           tags: |
