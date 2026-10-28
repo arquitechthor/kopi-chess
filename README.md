@@ -65,7 +65,7 @@ Testcontainers.
 ## Status
 
 🚧 **Phase 7 of 7: stabilisation and 1.0.** Everything above works
-([`v0.6.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.6.0));
+([`v0.7.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.7.0));
 this phase polishes it so that anyone can clone, run and use it.
 
 ## Running it
