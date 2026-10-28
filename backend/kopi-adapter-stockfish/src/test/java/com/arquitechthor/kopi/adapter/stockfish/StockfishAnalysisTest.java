@@ -87,6 +87,21 @@ class StockfishAnalysisTest {
         }
 
         @Test
+        void aPositionIsJudgedTheSameWhateverWasSearchedBefore() {
+            // A busy middlegame ("Kiwipete"). The hash of one search used to
+            // carry over to the next one and change its result.
+            var position = Fen.parse("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+            var nodes = new SearchLimits.Nodes(200_000);
+            var engine = analysis(StockfishBotsTest.binary());
+
+            var first = engine.analyse(position, nodes, 2);
+            engine.analyse(Position.initial(), nodes, 2);
+            var again = engine.analyse(position, nodes, 2);
+
+            assertThat(again).isEqualTo(first);
+        }
+
+        @Test
         void aCheckmateNeedsNoSearch() {
             // After Rc8#: Stockfish would say "mate 0", without a winner.
             var result = analysis(StockfishBotsTest.binary())
@@ -144,6 +159,26 @@ class StockfishAnalysisTest {
             assertThat(result.lines()).extracting(EngineAnalysis.Line::evaluation)
                     .containsExactly(new Evaluation.Centipawns(30), new Evaluation.Centipawns(25));
             assertThat(uci(result.lines().get(1))).containsExactly("d2d4", "d7d5");
+        }
+
+        @Test
+        void startsEveryPositionFromACleanEngine() {
+            var connection = ScriptedConnection.answeringGo(List.of(
+                    "info depth 10 multipv 1 score cp 30 pv e2e4", "bestmove e2e4"));
+            var pool = new EnginePool<>(1, () -> UciEngine.start(connection, Duration.ofSeconds(1)),
+                    UciEngine::isAlive, Duration.ofSeconds(1));
+            var analysis = new StockfishAnalysis(pool, Duration.ofSeconds(1));
+
+            analysis.analyse(Position.initial(), DEPTH_12, 1);
+            analysis.analyse(Position.initial(), DEPTH_12, 1);
+
+            // Each search: ucinewgame first, and isready before go (the hash is cleared by then).
+            var searches = connection.sent.stream()
+                    .filter(command -> command.equals("ucinewgame") || command.equals("isready")
+                            || command.startsWith("go"))
+                    .toList();
+            assertThat(searches).endsWith("ucinewgame", "isready", "go depth 12", "ucinewgame", "isready",
+                    "go depth 12");
         }
 
         @Test

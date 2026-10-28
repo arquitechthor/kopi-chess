@@ -20,9 +20,13 @@ import java.util.Objects;
 /// wait behind it.
 ///
 /// Engines are configured on every loan (full strength, `MultiPV`), a few
-/// lines of UCI next to a deep search. A position where the game is
-/// already over is not sent to the engine at all: Stockfish would answer
-/// `mate 0` with no move, and the rules already know the answer.
+/// lines of UCI next to a deep search. Every position starts from a clean
+/// engine (`ucinewgame`): nothing searched before, in this game or another,
+/// on this engine or another of the pool, changes its result.
+///
+/// A position where the game is already over is not sent to the engine at
+/// all: Stockfish would answer `mate 0` with no move, and the rules
+/// already know the answer.
 public final class StockfishAnalysis implements ChessEngine, AutoCloseable {
 
     private final EnginePool<UciEngine> pool;
@@ -75,6 +79,7 @@ public final class StockfishAnalysis implements ChessEngine, AutoCloseable {
         if (position.legalMoves().isEmpty()) {
             return new EngineAnalysis(engine.name(), gameOver(position), List.of());
         }
+        engine.newGame();
         engine.setOption("Skill Level", 20);
         engine.setOption("UCI_LimitStrength", false);
         engine.setOption("MultiPV", multiPv);
