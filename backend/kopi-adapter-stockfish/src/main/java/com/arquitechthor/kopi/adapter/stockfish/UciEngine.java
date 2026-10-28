@@ -141,6 +141,13 @@ final class UciEngine implements AutoCloseable {
         return announced;
     }
 
+    /// `ucinewgame`: forget every earlier search (the hash above all), so
+    /// the next one does not depend on them. Clearing the hash takes a
+    /// moment: [#waitUntilReady()] waits for it.
+    void newGame() {
+        connection.send("ucinewgame");
+    }
+
     /// `isready` … `readyok`: the engine has applied every option sent.
     void waitUntilReady() {
         connection.send("isready");

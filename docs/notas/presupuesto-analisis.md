@@ -32,7 +32,8 @@ ajustes que usa `StockfishAnalysis`.
   otra partida no tenga su posición patológica.
 - **Los nodos sí**: el tiempo es casi proporcional al límite (≈ 0,9 M
   nodos/s con un hilo), sin sorpresas, y el resultado es el mismo en
-  cualquier máquina (solo cambia cuánto se tarda).
+  cualquier máquina (solo cambia cuánto se tarda), siempre que el motor
+  empiece limpio cada posición (ver más abajo).
 - Propuesta para el valor por defecto (se decide al conectar el caso de uso,
   §8.3): **`nodes 1000000`**, del orden de un minuto y medio por partida de
   40 jugadas en este portátil, con un máximo de unos 2 s por posición, muy
@@ -80,10 +81,30 @@ caso:
   segundo más en responder, y, como su límite es de tiempo y comparte la CPU
   con el análisis, en ese rato busca menos (juega algo más flojo; no medido).
 - La memoria no depende de la CPU. No se ha probado con `--memory`.
-- **Pendiente: el análisis no es del todo reproducible.** Los motores de
-  análisis no reciben `ucinewgame` entre partidas, así que la tabla hash
-  pasa de un análisis al siguiente. Dos análisis seguidos de la misma partida
-  dieron resultados algo distintos (precisión de las blancas 89,8 frente a
-  88,7, una jugada GOOD en un caso e INACCURACY en el otro). Con un hilo y un
-  límite en nodos, la explicación más probable es esa hash. «El resultado es
-  el mismo en cualquier máquina» solo vale con el motor recién empezado.
+- **El análisis no era del todo reproducible (corregido).** Los motores de
+  análisis no recibían `ucinewgame`, así que la tabla hash pasaba de una
+  búsqueda a la siguiente. Dos análisis seguidos de la misma partida dieron
+  resultados algo distintos (precisión de las blancas 89,8 frente a 88,7,
+  una jugada GOOD en un caso e INACCURACY en el otro).
+
+## Cada posición con el motor limpio (2026-10-28)
+
+Ahora cada posición empieza con `ucinewgame` (`StockfishAnalysis`): su
+veredicto depende solo de la posición y del límite, no de lo que el motor
+buscó antes, en esta partida o en otra. Un test contra el Stockfish real lo
+comprueba (la misma posición antes y después de otra búsqueda), y fallaba
+sin la corrección.
+
+Con la imagen corregida, la misma partida analizada dos veces seguidas en
+Docker sin límite de CPU:
+
+| Pasada | Análisis (40 jugadas) | Precisión de las blancas | Pifias de las blancas |
+|---|---|---|---|
+| 1 | 96 s | 94,3 | 0 |
+| 2 | 93 s | 94,3 | 0 |
+
+- Las dos pasadas dan exactamente lo mismo, jugada por jugada.
+- Vaciar la hash en cada posición cuesta poco: 93–96 s frente a 91 s.
+- Antes había una pifia de las blancas (BLUNDER) que ya no aparece: la
+  arrastraba la hash de búsquedas anteriores. Sin ella, cada posición se
+  busca desde cero con el millón de nodos.
