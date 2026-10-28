@@ -26,7 +26,7 @@ jobs:
       IMAGE: ghcr.io/${{ github.repository }}
       PUSH: ${{ github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: docker/setup-qemu-action@v4
 
