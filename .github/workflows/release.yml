@@ -30,7 +30,7 @@ jobs:
 
       - uses: docker/setup-qemu-action@v3
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       # v1.2.3 → 1.2.3, 1.2, 1 and latest; a pre-release (v1.0.0-rc.1) gets
       # only its own tag. Before 1.0 there is no major tag: 0 is not a promise.
