@@ -43,6 +43,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: build
+    # The project follows the Java LTS releases (25 now); moving to the next
+    # one is a deliberate change, made by hand, not a weekly bump.
+    ignore:
+      - dependency-name: eclipse-temurin
+        update-types: [version-update:semver-major]
     groups:
       docker:
         update-types: [minor, patch]
