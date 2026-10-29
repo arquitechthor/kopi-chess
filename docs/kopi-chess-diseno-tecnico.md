@@ -1271,8 +1271,16 @@ por qué podemos escribir nuestras propias reglas.
 - Prometheus y Grafana, con un *dashboard* aprovisionado
   (`observability/`), en el perfil `metrics` de Compose:
   `docker compose --profile metrics up --build` y `http://localhost:3000`.
-- Logs estructurados (JSON) con `gameId` propagado vía `ScopedValue`/MDC.
-- Trazas UCI completas solo con un *logger* específico en DEBUG.
+- Logs estructurados (JSON, formato ECS de Spring Boot) en la imagen Docker;
+  texto en el jar y con `KOPI_LOG_FORMAT=` vacío. Cada línea sobre una
+  partida lleva su `gameId` en el MDC: lo pone `GameLogFilter` a partir de
+  la ruta de la petición y `LoggedAnalysisJobQueue` al reclamar un análisis
+  (el *worker* lo quita al acabar). MDC y no `ScopedValue`: el `gameId` de
+  un análisis se conoce a mitad de `runNext()`, y un `ScopedValue` solo se
+  fija alrededor de una llamada; su herencia en `StructuredTaskScope` sigue
+  en *preview* (ADR-012).
+- Trazas UCI completas solo con el *logger* `kopi.uci` en DEBUG
+  (`KOPI_UCI_LOG=DEBUG`).
 
 ---
 

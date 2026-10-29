@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.context.SmartLifecycle;
 
 /// The background side of the analysis (ADR-007): a few virtual threads,
@@ -19,6 +20,10 @@ import org.springframework.context.SmartLifecycle;
 /// (design §6.2): this application is the only worker, so whatever was
 /// running before it started has lost its worker. They go back to the
 /// queue, or fail if they have used up their attempts.
+///
+/// While a job runs, its log lines carry its `gameId`: set when the job is
+/// claimed ([LoggedAnalysisJobQueue]), removed here when it ends, so the
+/// next job (or the rest) never logs under the wrong game.
 ///
 /// On stop, the workers are interrupted; a job cut short stays `RUNNING`
 /// and is recovered the next time the application starts.
@@ -58,14 +63,18 @@ final class AnalysisWorker implements SmartLifecycle {
 
     private void work() {
         while (running) {
+            boolean ran;
             try {
-                if (!runner.runNext()) {
-                    rest(properties.pollInterval());
-                }
+                ran = runner.runNext();
             } catch (RuntimeException e) {
                 // The job records an analysis that fails; this is the queue
                 // itself failing (the database is down…). Wait and try again.
                 log.warn("Analysis worker failed; retrying in {}", properties.pollInterval(), e);
+                ran = false;
+            } finally {
+                MDC.remove(GameLogFilter.GAME_ID);
+            }
+            if (!ran) {
                 rest(properties.pollInterval());
             }
         }

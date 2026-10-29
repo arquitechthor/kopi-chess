@@ -39,6 +39,10 @@ services:
       # Host names it answers to (ADR-016). Reached by another name? Add it here.
       # "app" is how Prometheus reaches it inside this network; no browser can use that name.
       KOPI_ALLOWED_HOSTS: ${KOPI_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1],app}
+      # Logs: JSON lines (ecs), or plain text with KOPI_LOG_FORMAT set but empty ("-", not ":-").
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ${KOPI_LOG_FORMAT-ecs}
+      # The whole conversation with Stockfish, every line both ways: KOPI_UCI_LOG=DEBUG.
+      LOGGING_LEVEL_KOPI_UCI: ${KOPI_UCI_LOG:-INFO}
     depends_on:
       postgres:
         condition: service_healthy

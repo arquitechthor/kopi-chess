@@ -145,13 +145,15 @@ class UseCaseConfiguration {
     }
 
     /// `events` is the REST adapter's Server-Sent Events registry. Every
-    /// analysis saved is timed (design §14).
+    /// analysis saved is timed, and every job logged under its game
+    /// (design §14).
     @Bean
     RunAnalysisJobUseCase runAnalysisJob(AnalysisJobQueue queue, GameRepository games, ChessEngine engine,
             OpeningBook book, AnalysisRepository analyses, AnalysisEvents events, AnalysisProperties properties,
             Clock clock, MeterRegistry registry) {
-        return new RunAnalysisJob(queue, games, engine, book, new TimedAnalysisRepository(analyses, registry),
-                events, properties.settings(), properties.maxAttempts(), clock);
+        return new RunAnalysisJob(new LoggedAnalysisJobQueue(queue), games, engine, book,
+                new TimedAnalysisRepository(analyses, registry), events, properties.settings(),
+                properties.maxAttempts(), clock);
     }
 
     /// Starts with the application and stops with it (`SmartLifecycle`).

@@ -57,6 +57,15 @@ kopi:
   local-access:
     allowed-hosts: "${KOPI_ALLOWED_HOSTS:localhost,127.0.0.1,[::1]}"
 
+# Every line about a game carries its id (design §14): "[game <uuid>]" in plain text, a "gameId"
+# field in JSON. The Docker image logs JSON (LOGGING_STRUCTURED_FORMAT_CONSOLE in the Dockerfile).
+# The whole UCI conversation with Stockfish: LOGGING_LEVEL_KOPI_UCI=DEBUG (KOPI_UCI_LOG with Compose).
+logging:
+  pattern:
+    # A block scalar, so YAML leaves the regex's backslashes alone; no game, no brackets.
+    correlation: >-
+      %replace([game %X{gameId}] ){'\[game \] ', ''}
+
 server:
   port: 8080
   # Only this machine by default (design §15): run from the jar or the IDE, Kopi Chess is not

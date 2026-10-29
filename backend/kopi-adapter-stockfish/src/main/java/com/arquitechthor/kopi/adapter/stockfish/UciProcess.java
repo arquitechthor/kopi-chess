@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /// A [UciConnection] to an engine process.
 ///
@@ -17,7 +19,15 @@ import java.util.concurrent.TimeUnit;
 /// queue, so a blocking `readLine` never holds a platform thread and
 /// [#receive] can wait with a timeout. (Virtual threads are final since
 /// Java 21; design §4.4.)
+///
+/// The whole conversation can be logged, every line both ways, with the
+/// `kopi.uci` logger at `DEBUG` (`LOGGING_LEVEL_KOPI_UCI=DEBUG`): off by
+/// default, as a search writes hundreds of `info` lines. A line is logged
+/// by the thread that sends or receives it, so it carries that thread's
+/// `gameId`.
 final class UciProcess implements UciConnection {
+
+    private static final Logger trace = LoggerFactory.getLogger("kopi.uci");
 
     /// Put in the queue when the engine closes its output.
     private static final String END = "\u0000end";
@@ -63,6 +73,7 @@ final class UciProcess implements UciConnection {
         if (!process.isAlive()) {
             throw new UciException("The engine is not running (exit code " + process.exitValue() + ")");
         }
+        trace.debug("{} > {}", process.pid(), command);
         input.println(command);
         if (input.checkError()) {
             throw new UciException("Cannot write to the engine");
@@ -80,6 +91,7 @@ final class UciProcess implements UciConnection {
                 lines.add(END); // keep reporting the end to later calls
                 throw new UciException("The engine closed its output");
             }
+            trace.debug("{} < {}", process.pid(), line);
             return line;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

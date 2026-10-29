@@ -870,7 +870,9 @@ ayuda.
       y en el adaptador de Stockfish, nunca en los casos de uso (ADR-017);
       `/actuator/prometheus`; perfil `metrics` con Prometheus y Grafana
       (`observability/`).
-- [ ] **Logs estructurados** con `gameId` propagado.
+- [x] **Logs estructurados** con `gameId` propagado. **Hecho:** JSON (ECS)
+      en la imagen, `gameId` en el MDC desde la ruta de la petición y desde el
+      trabajo de análisis, traza UCI con el *logger* `kopi.uci` (diseño §14).
 - [x] **Higiene de seguridad**: revisión de la lista del diseño (§15):
       puertos solo en `127.0.0.1`, Postgres sin exponer, ningún secreto en el
       repo (activar *secret scanning* de GitHub). **Hecho:** *secret
