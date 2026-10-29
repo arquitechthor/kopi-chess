@@ -5,7 +5,7 @@ from the commit messages by [git-cliff](https://git-cliff.org) (`cliff.toml`);
 each release's highlights are in its
 [GitHub release](https://github.com/arquitechthor/kopi-chess/releases).
 
-## Unreleased
+## [1.0.0](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.0) - 2026-10-29
 
 ### Features
 
@@ -22,6 +22,8 @@ each release's highlights are in its
 ### Documentation
 
 - Analysis on a modest machine (half a core) ([d6f92bf](https://github.com/arquitechthor/kopi-chess/commit/d6f92bf04fa1af6767ebf9ccb598f7a3dc28863a))
+- CHANGELOG.md, generated from the commits by git-cliff ([d5c9249](https://github.com/arquitechthor/kopi-chess/commit/d5c92495bc39656aea740522517f368b7c280aaa))
+- Ideas for after 1.0, in one place ([4fa3283](https://github.com/arquitechthor/kopi-chess/commit/4fa3283e32a20c2af897c7bed047dde390190a06))
 
 ### Tests
 
@@ -32,6 +34,7 @@ each release's highlights are in its
 
 - Start 1.0.0-SNAPSHOT, the rest of phase 7 ([7417f53](https://github.com/arquitechthor/kopi-chess/commit/7417f53227456006d592695687a6ec4720909d8f))
 - Bump org.jacoco:jacoco-maven-plugin ([54bd9a4](https://github.com/arquitechthor/kopi-chess/commit/54bd9a467e4e2aec6096013f3277c5ba38756d2e))
+- Release 1.0.0 ([f8b6def](https://github.com/arquitechthor/kopi-chess/commit/f8b6def52fcda3e11cae3aa211f5ffb361e2790e))
 
 ### Continuous integration
 
