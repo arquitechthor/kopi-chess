@@ -42,6 +42,14 @@ Las tareas pequeñas y bien acotadas ya están en GitHub como
 
 Ordenadas por relación valor/esfuerzo (antes en el plan, §11).
 
+### Jugador contra jugador
+
+- **Qué:** partidas entre dos personas, en el mismo equipo o en línea con la
+  cuenta Kopi, amistosas y sin límite de tiempo.
+- **Plan detallado:** [`plan-jugador-contra-jugador.md`](plan-jugador-contra-jugador.md),
+  con supuestos, arquitectura (relé sin servidor en AWS, validación local),
+  costes y fases.
+
 ### Puzzles desde tus propios errores
 
 - **Qué:** cada `BLUNDER` o `MISSED_MATE` de tus partidas se convierte en un
