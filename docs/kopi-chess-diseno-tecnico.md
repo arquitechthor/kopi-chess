@@ -1125,9 +1125,10 @@ autor:
   botón ☰ en móvil con `static/js/nav.js`, la misma lógica que en las otras
   webs. Kopi Chess añade al final el selector de idioma (`EN · ES`).
 - **Pie:** © y licencia, enlace al código y, al final, la línea común
-  `.footer-sitios`: **Kopi Tools · Apuntes AWS · Sobre mí**, con los mismos
-  enlaces. Kopi Chess no aparece en esa línea porque se ejecuta en local y no
-  tiene URL pública.
+  `.footer-sitios`: **Kopi Tools · Apuntes AWS · Kopi Chess · Sobre mí**, con
+  los mismos enlaces. Como Kopi Chess se ejecuta en local y no tiene URL
+  pública, su enlace lleva a su sección en la página «Sobre mí»
+  (`https://arquitechthor.github.io/#kopi-chess`).
 - **Logo:** provisional, un caballo (♞) con el degradado de la marca
   (`static/img/logo.svg`, también *favicon*). Cada web de la familia tiene
   su propio logo; el definitivo de Kopi Chess queda pendiente.
