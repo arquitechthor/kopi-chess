@@ -880,8 +880,11 @@ ayuda.
       cumplía. Dos hallazgos corregidos (ADR-016): cualquier página podía
       enviar formularios a la app y, con *DNS rebinding*, leer la API; y
       desde el jar escuchaba en todas las interfaces.
-- [ ] **Arranque rápido**: generar la caché AOT de Java 25 en la imagen y
-      medir el tiempo de arranque antes y después.
+- [x] **Arranque rápido**: generar la caché AOT de Java 25 en la imagen y
+      medir el tiempo de arranque antes y después. **Hecho:** entrenamiento
+      al construir la imagen, de 6,8–8,3 s a 4,2–5,1 s hasta *ready* (de 22 s
+      a 11 s con media CPU); la CI comprueba que la caché se usa
+      (`docs/notas/arranque-aot.md`).
 - [ ] **Rendimiento**: medir tiempo de análisis de una partida de 40 jugadas
       en una máquina modesta; ajustar `depth`/`nodes` por defecto.
 - [x] **Imagen Docker final**: tamaño razonable, usuario no root, etiquetas

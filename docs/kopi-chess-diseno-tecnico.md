@@ -1184,7 +1184,9 @@ volumes:
 del binario oficial de Stockfish con **checksum verificado** (o compilación
 desde fuente con la etiqueta fijada), usuario no root, *healthcheck* sobre
 `/actuator/health/readiness`. La *readiness* incluye un `HealthIndicator`
-que hace `isready`/`readyok` contra el pool UCI.
+que hace `isready`/`readyok` contra el pool UCI. La imagen trae la caché AOT
+de Java 25, generada con un arranque de entrenamiento al construirla: el
+arranque baja a la mitad (`docs/notas/arranque-aot.md`).
 
 ---
 

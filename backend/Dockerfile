@@ -15,6 +15,10 @@ COPY . .
 # Tests run in CI and locally with ./mvnw verify, not inside the image build.
 RUN --mount=type=cache,target=/root/.m2 \
     sh ./mvnw -B -ntp -DskipTests -pl kopi-bootstrap -am package
+# Unpacked into app.jar + lib/: the AOT cache (runtime stage) needs plain jars on
+# the class path, not the jars nested inside a Spring Boot jar.
+RUN java -Djarmode=tools -jar kopi-bootstrap/target/kopi-chess.jar extract --destination /build/app \
+    && mv /build/app/kopi-chess.jar /build/app/app.jar
 
 # --- Stockfish stage: the official release, pinned and checksum-verified ---
 # The "universal" builds run on any CPU of their family (no avx2/bmi2 surprises).
@@ -66,7 +70,20 @@ ENV KOPI_ADDRESS=0.0.0.0
 # Plain text instead: LOGGING_STRUCTURED_FORMAT_CONSOLE= (empty); with Compose, KOPI_LOG_FORMAT=.
 ENV LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
 WORKDIR /app
-COPY --from=build /build/kopi-bootstrap/target/kopi-chess.jar app.jar
+COPY --from=build /build/app /app
+# AOT cache (JEP 483, 514, 515; Java 25): a training run starts the application
+# and exits once its context is ready (spring.context.exit=onRefresh), and the
+# JVM saves the classes it loaded and linked, and the methods' profiles. The
+# next starts read them from app.aot instead of doing that work again.
+# No database here: Flyway and the analysis workers are off for the training,
+# and the connection pool connects only when first used. Same JVM, same jars
+# and same image as the real run, as the cache requires.
+RUN java -XX:AOTCacheOutput=/app/app.aot \
+        -Dspring.context.exit=onRefresh \
+        -Dspring.datasource.url=jdbc:postgresql://localhost/kopi \
+        -Dspring.flyway.enabled=false \
+        -Dkopi.analysis.enabled=false \
+        -jar /app/app.jar
 USER kopi
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:AOTCache=/app/app.aot", "-jar", "/app/app.jar"]
