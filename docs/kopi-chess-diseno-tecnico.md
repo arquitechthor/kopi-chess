@@ -1371,7 +1371,8 @@ Cada entregable tiene un **objetivo de aprendizaje** además del funcional.
 **Futuro (v2+):** reloj y controles de tiempo · `BRILLIANT`/`GREAT` con ADR ·
 *bitboards* · estadísticas por apertura y por bot · puzzles generados a partir
 de los propios errores (¡muy útil y reutiliza todo el análisis!) · modo
-«entrenador» con pista opcional.
+«entrenador» con pista opcional. Todas, con más detalle, en
+[`ideas-futuro.md`](ideas-futuro.md).
 
 El plan detallado por fases está en
 [`kopi-chess-plan-desarrollo.md`](kopi-chess-plan-desarrollo.md).
