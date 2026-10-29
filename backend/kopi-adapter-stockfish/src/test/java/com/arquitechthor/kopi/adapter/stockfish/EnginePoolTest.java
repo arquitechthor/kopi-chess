@@ -49,6 +49,7 @@ class EnginePoolTest {
 
         assertThat(started).hasSize(1);
         assertThat(pool.idleCount()).isEqualTo(1);
+        assertThat(pool.discarded()).isZero();
     }
 
     @Test
@@ -62,6 +63,7 @@ class EnginePoolTest {
 
         assertThat(started.getFirst().closed).isTrue();
         assertThat(next).isEqualTo(2);
+        assertThat(pool.discarded()).isOne();
     }
 
     @Test
@@ -73,6 +75,7 @@ class EnginePoolTest {
         int replacement = pool.withEngine(engine -> engine.number);
 
         assertThat(replacement).isEqualTo(2);
+        assertThat(pool.discarded()).isOne();
     }
 
     @Test
@@ -109,6 +112,7 @@ class EnginePoolTest {
         pool.close();
 
         assertThat(started.getFirst().closed).isTrue();
+        assertThat(pool.discarded()).isZero(); // a shutdown is not a restart
         assertThatThrownBy(() -> pool.withEngine(engine -> engine.number)).isInstanceOf(UciException.class);
     }
 

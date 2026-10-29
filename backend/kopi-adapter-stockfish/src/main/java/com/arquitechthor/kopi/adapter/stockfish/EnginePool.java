@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -16,6 +17,7 @@ import java.util.function.Supplier;
 ///   Stockfish.
 /// - **Self-healing:** an engine that fails while lent, or is found dead
 ///   when lent again, is closed and replaced by a new one on the next loan.
+///   [#discarded] counts them: the `kopi.engine.restarts` metric.
 /// - **Bounded wait:** a caller waits at most `waitTimeout` for a free
 ///   engine.
 ///
@@ -27,6 +29,7 @@ final class EnginePool<E extends AutoCloseable> implements AutoCloseable {
     private final Duration waitTimeout;
     private final Semaphore permits;
     private final ConcurrentLinkedQueue<E> idle = new ConcurrentLinkedQueue<>();
+    private final LongAdder discarded = new LongAdder();
     private volatile boolean closed;
 
     /// @param size        how many engines may exist at once
@@ -61,7 +64,7 @@ final class EnginePool<E extends AutoCloseable> implements AutoCloseable {
             try {
                 result = work.apply(engine);
             } catch (RuntimeException e) {
-                closeQuietly(engine);
+                discard(engine);
                 throw e;
             }
             if (closed) {
@@ -93,9 +96,22 @@ final class EnginePool<E extends AutoCloseable> implements AutoCloseable {
             if (alive.test(engine)) {
                 return engine;
             }
-            closeQuietly(engine); // died while idle
+            discard(engine); // died while idle
         }
         return factory.get();
+    }
+
+    /// An engine that is no longer trusted: closed, and counted.
+    private void discard(E engine) {
+        discarded.increment();
+        closeQuietly(engine);
+    }
+
+    /// How many engines have been thrown away, because they failed or died,
+    /// since the pool was created. Each one is replaced by a new engine on
+    /// the next loan; closing the pool discards nothing.
+    long discarded() {
+        return discarded.sum();
     }
 
     /// How many engines are waiting, started, to be lent.

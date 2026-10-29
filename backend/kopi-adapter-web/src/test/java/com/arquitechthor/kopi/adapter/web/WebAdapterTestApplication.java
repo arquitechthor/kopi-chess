@@ -237,6 +237,11 @@ class WebAdapterTestApplication {
         }
 
         @Override
+        public int countQueued() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void complete(long jobId) {
             throw new UnsupportedOperationException();
         }

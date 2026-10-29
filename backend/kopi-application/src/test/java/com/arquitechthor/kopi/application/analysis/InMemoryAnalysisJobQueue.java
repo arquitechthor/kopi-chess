@@ -43,6 +43,11 @@ public final class InMemoryAnalysisJobQueue implements AnalysisJobQueue {
     }
 
     @Override
+    public synchronized int countQueued() {
+        return (int) jobs.values().stream().filter(job -> job.state() == State.QUEUED).count();
+    }
+
+    @Override
     public void complete(long jobId) {
         finish(jobId, State.DONE, null);
     }

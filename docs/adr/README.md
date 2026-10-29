@@ -20,6 +20,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-014](014-sin-transaccion-en-los-casos-de-uso.md) — Sin transacción alrededor de los casos de uso
 - [ADR-015](015-partidas-importadas.md) — Partidas importadas: final declarado y sin tablas automáticas
 - [ADR-016](016-solo-esta-maquina.md) — Solo responde a esta máquina: `Host` local y cambios de páginas locales
+- [ADR-017](017-metricas-fuera-de-los-casos-de-uso.md) — Métricas fuera de los casos de uso: decoradores de puertos y adaptadores
 
 ## Plantilla
 

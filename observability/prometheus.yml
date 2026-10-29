@@ -1,0 +1,11 @@
+# Prometheus for the "metrics" Compose profile: docker compose --profile metrics up --build
+# It scrapes Kopi Chess inside the Compose network, so the requests say "Host: app",
+# one of the names the app answers to (KOPI_ALLOWED_HOSTS in compose.yaml, ADR-016).
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: kopi-chess
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["app:8080"]

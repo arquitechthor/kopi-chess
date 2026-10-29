@@ -46,6 +46,12 @@ public final class StockfishAnalysis implements ChessEngine, AutoCloseable {
         pool.close();
     }
 
+    /// How many analysis engines have been discarded and replaced
+    /// ([EnginePool#discarded]).
+    long engineRestarts() {
+        return pool.discarded();
+    }
+
     @Override
     public EngineAnalysis analyse(Position position, SearchLimits limits, int multiPv) {
         Objects.requireNonNull(position, "position");
