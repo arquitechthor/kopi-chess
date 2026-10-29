@@ -66,9 +66,12 @@ Testcontainers.
 
 ## Estado
 
-🚧 **Fase 7 de 7: estabilización y 1.0.** Todo lo anterior funciona
-([`v0.7.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v0.7.0));
-esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo.
+✅ **1.0** ([`v1.0.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.0)):
+las siete fases del plan están hechas, y cualquiera puede clonarlo, levantarlo
+y usarlo. Lo que puede venir después está en
+[`docs/ideas-futuro.md`](docs/ideas-futuro.md), y las tareas pequeñas para
+empezar a contribuir son las
+[*good first issues*](https://github.com/arquitechthor/kopi-chess/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ## Ejecución
 
@@ -82,7 +85,7 @@ esta fase lo pule para que cualquiera pueda clonarlo, levantarlo y usarlo.
 GitHub Container Registry, para x86-64 y ARM64. En el repositorio clonado:
 
 ```shell
-KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:0.7 docker compose up --no-build
+KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:1 docker compose up --no-build
 ```
 
 **Con métricas**: el perfil `metrics` añade Prometheus y Grafana, con un

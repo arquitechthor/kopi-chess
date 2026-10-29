@@ -912,7 +912,8 @@ ayuda.
 ### Criterio de aceptación
 
 - Una persona ajena al proyecto clona el repo y, con solo el README, juega y
-  analiza una partida en menos de 10 minutos.
+  analiza una partida en menos de 10 minutos. **Comprobado** el 2026-10-29,
+  antes de etiquetar.
 - CI publica la imagen al crear la etiqueta `v1.0.0`.
 
 ---
