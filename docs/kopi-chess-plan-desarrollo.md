@@ -862,8 +862,11 @@ ayuda.
       actualiza solo. También `DELETE /api/games/{id}` en la API. Cuidar los
       casos en vuelo: el bot pensando su jugada o el *worker* analizándola
       cuando la partida desaparece no deben dejar errores ni filas huérfanas.
-- [ ] **Pruebas E2E** con Playwright (incluidas en la 1.0): crear partida → jugar →
-      rendirse → ver análisis.
+- [x] **Pruebas E2E** con Playwright (incluidas en la 1.0): crear partida → jugar →
+      rendirse → ver análisis. **Hecho:** `PlayAndReviewE2EIT` (Playwright
+      para Java, Chromium), también borra la partida. Encontró un fallo: la
+      redirección tras borrar llevaba `;jsessionid=…` en la URL; la sesión va
+      ahora solo en una *cookie*.
 - [x] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
       Prometheus; *dashboard* Grafana opcional en un perfil de Compose.
       **Hecho:** las cuatro métricas, medidas con decoradores de los puertos

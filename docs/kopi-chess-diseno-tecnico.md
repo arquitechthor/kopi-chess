@@ -1246,8 +1246,11 @@ La pirámide refleja los anillos hexagonales:
 
 #### Extremo a extremo
 
-- **Qué:** crear partida → jugar → terminar → analizar → revisar.
-- **Herramientas:** Playwright (opcional).
+- **Qué:** crear partida → jugar → terminar → analizar → revisar → borrar.
+- **Herramientas:** Playwright para Java (sin Node en el proyecto), con
+  Chromium, contra la aplicación entera en un puerto real (PostgreSQL de
+  Testcontainers y Stockfish de verdad): `PlayAndReviewE2EIT`, etiqueta
+  `e2e`. La CI la ejecuta siempre; en local, `-Pslow-tests` o `-Pe2e`.
 
 ### Valores *perft* de referencia mínimos
 
