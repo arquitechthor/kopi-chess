@@ -61,7 +61,7 @@ class HomePageTest {
     @Test
     void sharesTheMenuAndFooterOfTheFamilysSites() {
         // Design §11.6: "Home" first and "About me" last in the menu, and
-        // the closing line Kopi Tools · Apuntes AWS · Kopi Chess · About me in the footer.
+        // the closing line Kopi Tools · Apuntes AWS · Kopi Chess · Prompt Quest · About me in the footer.
         assertThat(mvc.get().uri("/?lang=es"))
                 .hasStatusOk()
                 .bodyText()
@@ -71,6 +71,7 @@ class HomePageTest {
                         + "<a href=\"https://kopitools.link\">Kopi Tools</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/aws-cert-study/\">Apuntes AWS</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/#kopi-chess\">Kopi Chess</a>\\s*"
+                        + "<a href=\"https://arquitechthor.github.io/#prompt-quest\">Prompt Quest</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/\">Sobre mí</a>")
                 .contains("/css/kopi.css", "/js/nav.js", "/img/logo.svg");
     }
