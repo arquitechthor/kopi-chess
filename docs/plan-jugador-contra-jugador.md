@@ -8,6 +8,8 @@
   - **Local:** dos personas en la misma máquina, cada una con su nombre.
   - **En línea:** dos personas, cada una con su Kopi Chess en *localhost*,
     con una cuenta Kopi.
+- **Extensión posterior y opcional (§11):** una app Android sencilla para
+  jugar contra los bots de **tu** PC a través del mismo relé.
 
 ---
 
@@ -21,9 +23,13 @@ Son las reglas de partida; si alguno cambia, el plan cambia con él.
 - **Coste mínimo.** Nada encendido todo el mes: cada jugador pone su CPU
   (reglas, Stockfish, análisis) y AWS solo guarda y reparte jugadas, sin
   servidor propio.
-- **Tiempo ilimitado.** Sin reloj. Una partida puede quedarse a medias y
-  retomarse cuando sea, tanto si el rival está conectado como si no; mientras
-  tanto aparece **en curso**, como hoy una partida contra un bot.
+- **Tiempo ilimitado por jugada.** Sin reloj. Una partida puede quedarse a
+  medias y retomarse cuando sea, tanto si el rival está conectado como si no;
+  mientras tanto aparece **en curso**, como hoy una partida contra un bot.
+- **Pero no para siempre: 30 días sin jugadas terminan la partida**, y gana
+  quien hizo la última jugada (el otro la dejó enfriar). Se borra del relé.
+- **El relé no guarda partidas terminadas:** cada una se borra en cuanto los
+  dos jugadores tienen el final (§4). El historial vive solo en cada PC.
 - **Cuenta Kopi obligatoria para el modo en línea**, la misma de las otras
   apps Kopi (Cognito). Además, cada persona crea un **id de Kopi**, público,
   para invitar y ser invitada **sin mostrar nunca su correo**.
@@ -94,8 +100,16 @@ Lambdas pequeñas en el API Gateway compartido (`api.kopitools.link`), con el
   - Jugadores (`sub` de cada color), estado (`INVITED`, `ACTIVE`,
     `FINISHED`, `DECLINED`), posición inicial, número de la última jugada,
     resultado y forma de terminar.
-  - TTL: las terminadas se borran a los **30 días** (cada PC guarda la suya);
-    las invitaciones no respondidas, también a los 30 días.
+  - Hora de la última jugada aceptada (la del relé, no la de cada PC).
+  - **Se borra** (con sus jugadas) en tres casos:
+    - **Terminada:** en cuanto la app del rival confirma que ha recibido el
+      final. No en el instante en que termina: si el rival está desconectado,
+      se quedaría sin saber que la partida acabó (un abandono, unas tablas).
+    - **Inconclusa:** a los **30 días sin jugadas** (TTL de DynamoDB, que se
+      renueva con cada jugada aceptada).
+    - **Invitación sin respuesta:** a los 30 días.
+  - Una terminada que nadie confirma también cae a los 30 días por el mismo
+    TTL, así que nada se queda en el relé indefinidamente.
 - **`PvpMoves`:** las jugadas, por partida y número (`ply`), con la jugada en
   UCI y el hash Zobrist de la posición resultante (§6).
 
@@ -138,8 +152,10 @@ Lambdas pequeñas en el API Gateway compartido (`api.kopitools.link`), con el
 
   Las partidas contra un bot siguen igual (`Local` contra `Bot`); las
   importadas, como hoy.
-- **Tablas de mutuo acuerdo** como forma de terminar (hoy no existe: solo
-  mate, ahogado, material insuficiente, repetición, 50 jugadas y abandono).
+- **Dos formas de terminar nuevas** (hoy solo hay mate, ahogado, material
+  insuficiente, repetición, 50 jugadas y abandono):
+  - **Tablas de mutuo acuerdo.**
+  - **Inactividad:** 30 días sin jugadas; gana quien hizo la última.
 - **Quién puede mover:** en el modo local, cualquiera de las dos personas en
   su turno; en línea, solo `Local` en su turno, y `Remote` llega por el relé.
 - *Perft*, SAN y las reglas no cambian.
@@ -190,11 +206,23 @@ Lambdas pequeñas en el API Gateway compartido (`api.kopitools.link`), con el
 - **Comprobación cruzada:** cada jugada viaja con el hash Zobrist de la
   posición resultante (el dominio ya lo calcula). Si al aplicarla el hash no
   coincide, o la jugada es ilegal, la partida se marca **desincronizada**: se
-  muestra un aviso y se puede abandonar o archivar. No debería ocurrir entre
+  muestra un aviso y se puede abandonar. No debería ocurrir entre
   dos versiones honestas de la app; si ocurre, es un fallo o una versión
   incompatible.
 - **Versión del protocolo** en cada mensaje desde el principio: una app no
   acepta mensajes de una versión que no entiende y lo dice.
+- **La regla de los 30 días se aplica en cada PC**, sin que el relé tenga que
+  avisar: cada app guarda la hora (del relé) de la última jugada aceptada y,
+  al abrir una partida en línea en curso que no está en el relé o lleva 30
+  días sin jugadas, la termina por **inactividad** dando la victoria a quien
+  movió el último. Las dos apps llegan al mismo resultado porque parten de la
+  misma jugada y la misma hora.
+- **Un caso límite aceptado:** si alguien abandona u ofrece tablas que se
+  aceptan y el rival no abre su app en 30 días, el relé borra la partida sin
+  que el rival reciba el final; su app aplicará la regla de inactividad, que
+  puede no coincidir (por ejemplo, si quien abandonó fue también quien movió
+  el último). Es raro y, en partidas amistosas, aceptable; evitarlo exigiría
+  guardar finales en el relé sin límite.
 
 ---
 
@@ -210,9 +238,11 @@ Lambdas pequeñas en el API Gateway compartido (`api.kopitools.link`), con el
 - **Retomar:** al abrir una partida en línea, la app trae del relé las
   jugadas que le falten.
 - **Terminar:** mate o ahogado (lo ven las dos apps), abandono, o tablas
-  ofrecidas y aceptadas. Al terminar, cada uno puede analizarla en su PC.
-- **Una partida que se enfría:** cada jugador puede **archivarla** en su
-  lista; no se borra para el otro. (Abandonar sí la termina para los dos.)
+  ofrecidas y aceptadas. En cuanto el rival recibe el final, la partida se
+  borra del relé. Cada uno puede analizarla en su PC.
+- **Una partida que se enfría:** si pasan 30 días sin jugadas, termina por
+  inactividad y gana quien movió el último; el relé la borra y cada app lo
+  anota al abrirla.
 - **Modo local:** «Dos personas en este equipo» → dos nombres → se juega en
   el mismo tablero, girándolo en cada turno → historial, PGN y análisis como
   cualquier otra partida.
@@ -253,9 +283,11 @@ fase deja algo que funciona y se prueba.
 
 ### Fase A: el dominio con personas, y el modo local
 
-- [ ] ADR-018: jugadores por color (`Player`) y tablas de mutuo acuerdo.
+- [ ] ADR-018: jugadores por color (`Player`), tablas de mutuo acuerdo e
+      inactividad como formas de terminar.
 - [ ] `Player` en el dominio; `Game` con un jugador por color; tablas por
-      acuerdo como terminación. Pruebas unitarias; *perft* intacto.
+      acuerdo e inactividad como terminaciones. Pruebas unitarias; *perft*
+      intacto.
 - [ ] Migración de Flyway; las partidas existentes, `Local` contra `Bot`.
 - [ ] Caso de uso y páginas de «Dos personas en este equipo» (nombres,
       tablero que gira, historial, PGN con los nombres).
@@ -281,7 +313,8 @@ un id que nadie más puede tener.
 
 - [ ] ADR-020: relé de partidas en AWS sin reglas, validación local, y su
       relación con ADR-016.
-- [ ] Tablas `PvpGames` y `PvpMoves` con TTL.
+- [ ] Tablas `PvpGames` y `PvpMoves`: TTL de 30 días que se renueva con
+      cada jugada, y borrado al confirmar el final el rival.
 - [ ] Lambdas: invitar, invitaciones, aceptar, rechazar, listar, traer,
       mover (escritura condicional por número), abandonar, tablas.
 - [ ] WebSocket para avisar a quien esté conectado.
@@ -294,7 +327,8 @@ principio a fin; una jugada con número repetido o fuera de turno se rechaza.
 
 - [ ] `kopi-adapter-relay` (`PvpRelay`), con la versión del protocolo.
 - [ ] Casos de uso: invitar, aceptar, recibir y validar, sincronizar al
-      abrir, tablas, abandonar, archivar; marca de partida desincronizada.
+      abrir, tablas, abandonar, confirmar el final al relé, terminar por
+      inactividad a los 30 días; marca de partida desincronizada.
 - [ ] Páginas: «Contra un amigo», bandeja de invitaciones, jugada del rival
       por SSE.
 - [ ] API REST equivalente.
@@ -303,7 +337,9 @@ principio a fin; una jugada con número repetido o fuera de turno se rechaza.
 
 **Aceptación:** dos personas en dos PCs juegan una partida con los dos
 conectados y otra por correspondencia (cerrando la app entre jugadas), y
-cada una la analiza en su PC.
+cada una la analiza en su PC; al terminar, la partida ya no está en el relé.
+Una partida sin jugadas en 30 días (simulado con el reloj de las pruebas)
+termina igual en los dos PCs.
 
 ### Fase E: publicación
 
@@ -314,7 +350,115 @@ cada una la analiza en su PC.
 
 ---
 
-## 11. Riesgos
+## 11. Extensión: jugar desde el móvil contra los bots del PC
+
+Una vez hecho el modo en línea, el relé y la conexión saliente del PC ya
+existen. Esta extensión los usa **entre los dispositivos de una misma
+persona**: una app Android sencilla se conecta, a través del relé, al Kopi
+Chess abierto en el PC en «modo servidor», y juega contra sus bots.
+
+### Supuestos
+
+- **Los dos dispositivos son de la misma cuenta Kopi.** El relé solo une
+  conexiones con el mismo `sub` de Cognito.
+- **La app es tonta:** ni guarda partidas ni las analiza. Dibuja lo que el
+  PC le dice (posición, jugadas legales, estado) y envía la jugada elegida,
+  como hoy `board.js` en el navegador. No sabe de ajedrez.
+- **Todo ocurre en el PC:** bots, reglas, Stockfish, guardado e historial.
+  Las partidas jugadas desde el móvil aparecen en el historial del PC y se
+  analizan allí, como cualquier otra.
+
+### Cómo encaja
+
+```
+ Móvil (app tonta)          AWS (relé Kopi)                PC (Kopi Chess, «modo servidor»)
+┌───────────────┐  wss    ┌──────────────────────┐  wss   ┌──────────────────────────────┐
+│ tablero       │ ──────► │ reenvía mensajes     │ ─────► │ adaptador «remoto»           │
+│ + cuenta Kopi │ ◄────── │ entre dispositivos   │ ◄───── │ → casos de uso → bot, BD     │
+└───────────────┘         │ de la MISMA cuenta   │        └──────────────────────────────┘
+                          └──────────────────────┘
+```
+
+En términos hexagonales, el móvil es un cliente más de los mismos casos de
+uso, como las páginas web y la API REST. `PlayMove` ya devuelve la jugada del
+bot en la misma respuesta, así que basta un ida y vuelta por jugada.
+
+### Qué hace falta, sobre lo construido en las fases A–E
+
+- **Relé: un canal entre dispositivos.**
+  - Cada conexión se registra con su papel: «PC servidor» o «móvil».
+  - El relé reenvía mensajes solo entre conexiones del mismo `sub`, sin
+    guardar nada.
+  - Le dice al móvil si el PC está conectado.
+- **PC: un adaptador de entrada nuevo** (por ejemplo `kopi-adapter-remote`).
+  - Traduce los mensajes a los casos de uso existentes: listar bots, crear
+    partida, jugar, abandonar, ver una partida y listar las que están en
+    curso para retomarlas. Reutiliza los objetos de respuesta de la API REST.
+  - **«Modo servidor» apagado por defecto**, con un interruptor y un aviso
+    visible mientras está activo.
+  - **Lista blanca de operaciones:** jugar contra los bots sí; borrar
+    partidas o cambiar la configuración, no.
+  - ADR-016 sigue en pie: la interfaz web sigue siendo solo local y la
+    conexión es saliente.
+- **App Android:** Capacitor + Chessground + Amplify, lo mismo que ya usa
+  `kopi-tools-app`.
+  - Pantallas: entrar con Kopi → «tu PC está conectado» → elegir bot y
+    color, o retomar una partida → tablero → resultado.
+  - Publicación en Google Play: ficha, iconos y política de privacidad.
+
+### Lo que sale casi gratis
+
+- **Desde cualquier red** (4G, otra wifi), sin tocar el router. Conectar el
+  móvil directamente al PC por la red de casa obligaría a abrir Kopi Chess a
+  la red local y a añadir autenticación, justo lo que ADR-016 evita.
+- **Retomar en otro dispositivo:** una partida empezada en el PC se sigue en
+  el móvil y al revés.
+- **Mover a la vez en el PC y en el móvil** no rompe nada: el bloqueo
+  optimista que ya existe (versión de la partida, `412`) deja pasar la
+  primera jugada y la otra pantalla se actualiza.
+- **Más adelante,** el móvil podría *ver* el análisis que hizo el PC, sin
+  calcular nada.
+
+### Coste
+
+Prácticamente **0 $**. Lo único continuo es la conexión del PC en modo
+servidor: un WebSocket abierto todo el mes son unos 43.000 minutos de
+conexión, del orden de un céntimo. Cada jugada son unos pocos mensajes.
+
+### Limitaciones
+
+- **El PC tiene que estar encendido**, sin suspensión, con Docker y Kopi
+  Chess arrancados y el modo servidor activo. Si no, el móvil solo puede
+  decir «tu PC no está conectado». Encenderlo a distancia queda fuera de
+  alcance.
+- **Los dos dispositivos necesitan Internet**, porque todo pasa por el relé.
+- **Retardo:** unos cientos de milisegundos por el viaje móvil → AWS → PC y
+  vuelta, más lo que piense el bot (hasta 1 s con QUEEN). En ajedrez sin
+  reloj no se nota.
+
+### Fase F (opcional, después de E)
+
+- [ ] ADR-021: el móvil como cliente remoto del PC, el «modo servidor» y su
+      lista blanca de operaciones.
+- [ ] Relé: canal entre dispositivos de la misma cuenta y presencia del PC.
+- [ ] `kopi-adapter-remote` con el interruptor de «modo servidor», el aviso
+      visible y la lista blanca. Pruebas con un relé falso.
+- [ ] App Android (Capacitor + Chessground + Amplify): entrar, ver si el PC
+      está conectado, elegir bot y color o retomar, jugar, abandonar.
+- [ ] Publicación en Google Play.
+
+**Aceptación:** con el PC en modo servidor, desde el móvil por 4G se juega
+una partida completa contra un bot; la partida aparece en el historial del
+PC y se analiza allí. Con el modo servidor apagado, el móvil no puede hacer
+nada.
+
+**Esfuerzo orientativo:** unas 3–5 semanas a tiempo parcial sobre las fases
+A–E (relé, unos días; adaptador del PC, unos días; la app y su ficha en la
+tienda, el resto).
+
+---
+
+## 12. Riesgos
 
 - **El backend es compartido con otras apps Kopi.**
   - **Señal:** un cambio del relé o de las rutas del id afecta a otra app.
@@ -327,14 +471,20 @@ cada una la analiza en su PC.
 - **Coste por abuso.**
   - **Señal:** picos en API Gateway o DynamoDB.
   - **Acción:** límites por usuario y alarma de facturación.
-- **Partidas abandonadas para siempre.**
-  - **Señal:** partidas en curso que nadie mueve en meses.
-  - **Acción:** archivar en local; si hace falta, un TTL largo también para
-    las activas sin movimiento.
+- **El «modo servidor» deja el PC abierto a órdenes remotas** (§11).
+  - **Señal:** alguien con acceso a la cuenta Kopi juega desde fuera.
+  - **Acción:** apagado por defecto, aviso visible mientras está activo,
+    solo conexiones de la misma cuenta y lista blanca de operaciones (nada
+    de borrar ni configurar).
+- **Finales que no llegan** (el caso límite de §6).
+  - **Señal:** alguien ve una victoria por inactividad donde esperaba un
+    abandono o unas tablas.
+  - **Acción:** aceptado en partidas amistosas; si molesta, guardar en el
+    relé solo el resultado (unos bytes) más tiempo que las jugadas.
 
 ---
 
-## 12. Fuera de alcance
+## 13. Fuera de alcance
 
 - Reloj y controles de tiempo (ver [`ideas-futuro.md`](ideas-futuro.md)).
 - Elo, clasificaciones y emparejamiento con desconocidos.
@@ -342,3 +492,5 @@ cada una la analiza en su PC.
 - Correos o notificaciones *push* de jugadas e invitaciones.
 - Chat, espectadores y partidas públicas.
 - Cambiar el id de Kopi.
+- En la app Android (§11): guardar partidas, analizar en el móvil y jugar sin
+  el PC encendido.
