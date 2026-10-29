@@ -2,6 +2,8 @@
 # Port 8080 taken? Use another one: KOPI_PORT=8090 docker compose up --build
 # No build, the published image instead (from v0.7.0; "1" once 1.0 is out):
 #   KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:0.7 docker compose up --no-build
+# With metrics, Prometheus and a Grafana dashboard at http://localhost:3000 (design §14):
+#   docker compose --profile metrics up --build
 name: kopi-chess
 
 services:
@@ -35,10 +37,49 @@ services:
       SPRING_DATASOURCE_USERNAME: kopi
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-kopi}
       # Host names it answers to (ADR-016). Reached by another name? Add it here.
-      KOPI_ALLOWED_HOSTS: ${KOPI_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
+      # "app" is how Prometheus reaches it inside this network; no browser can use that name.
+      KOPI_ALLOWED_HOSTS: ${KOPI_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1],app}
     depends_on:
       postgres:
         condition: service_healthy
 
+  # The "metrics" profile: only with --profile metrics.
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    profiles: [metrics]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # No "ports": Grafana reads it inside this network.
+    depends_on:
+      - app
+
+  grafana:
+    image: grafana/grafana:13.2.5
+    profiles: [metrics]
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    environment:
+      # Anyone on this machine sees the dashboard without logging in, as with Kopi Chess
+      # itself; changing Grafana needs the admin (password below, see .env.example).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-kopi}
+      # Answers only as localhost: another name (DNS rebinding) is redirected there (ADR-016).
+      GF_SERVER_DOMAIN: localhost
+      GF_SERVER_ENFORCE_DOMAIN: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/kopi-chess.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
 volumes:
   pgdata:
+  prometheus-data:

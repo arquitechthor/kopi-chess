@@ -36,6 +36,7 @@ import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.application.port.IdGenerator;
 import com.arquitechthor.kopi.application.port.OpeningBook;
 import com.arquitechthor.kopi.domain.game.GameId;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.UUID;
@@ -67,16 +68,18 @@ class UseCaseConfiguration {
     }
 
     /// One port, two adapters (ADR-006): Kopi's own bots for `PAWN` and
-    /// `KNIGHT`, Stockfish for the rest. `@Primary` because `StockfishBots`
-    /// is a `BotPlayer` bean too; the use cases must get this one.
+    /// `KNIGHT`, Stockfish for the rest, every move timed (design §14).
+    /// `@Primary` because `StockfishBots` is a `BotPlayer` bean too; the use
+    /// cases must get this one.
     @Bean
     @Primary
-    BotPlayer botPlayer(StockfishBots stockfish) {
+    BotPlayer botPlayer(StockfishBots stockfish, MeterRegistry registry) {
         var own = new KopiBots();
-        return (position, profile) -> switch (profile) {
+        BotPlayer bots = (position, profile) -> switch (profile) {
             case PAWN, KNIGHT -> own.chooseMove(position, profile);
             case BISHOP, ROOK, QUEEN -> stockfish.chooseMove(position, profile);
         };
+        return new TimedBotPlayer(bots, registry);
     }
 
     @Bean
@@ -141,13 +144,14 @@ class UseCaseConfiguration {
         return new GetAnalysis(games, queue, analyses);
     }
 
-    /// `events` is the REST adapter's Server-Sent Events registry.
+    /// `events` is the REST adapter's Server-Sent Events registry. Every
+    /// analysis saved is timed (design §14).
     @Bean
     RunAnalysisJobUseCase runAnalysisJob(AnalysisJobQueue queue, GameRepository games, ChessEngine engine,
             OpeningBook book, AnalysisRepository analyses, AnalysisEvents events, AnalysisProperties properties,
-            Clock clock) {
-        return new RunAnalysisJob(queue, games, engine, book, analyses, events, properties.settings(),
-                properties.maxAttempts(), clock);
+            Clock clock, MeterRegistry registry) {
+        return new RunAnalysisJob(queue, games, engine, book, new TimedAnalysisRepository(analyses, registry),
+                events, properties.settings(), properties.maxAttempts(), clock);
     }
 
     /// Starts with the application and stops with it (`SmartLifecycle`).

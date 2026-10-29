@@ -37,6 +37,19 @@ class KopiApplicationIT {
     }
 
     @Test
+    void prometheusScrapesKopisOwnMetrics() {
+        // Design §14. The bot timer and the analysis timer appear with their first move or analysis.
+        assertThat(mvc.get().uri("/actuator/prometheus"))
+                .hasStatusOk()
+                .bodyText()
+                .contains("kopi_analysis_queue_size ")
+                .contains("kopi_engine_restarts_total{pool=\"bots\"}")
+                .contains("kopi_engine_restarts_total{pool=\"analysis\"}")
+                .contains("kopi_analysis_duration_seconds_count ")
+                .contains("jvm_memory_used_bytes");
+    }
+
+    @Test
     void servesTheHomePageInBothLanguages() {
         assertThat(mvc.get().uri("/?lang=en")).hasStatusOk().bodyText().contains("Play chess.");
         assertThat(mvc.get().uri("/?lang=es")).hasStatusOk().bodyText().contains("Juega al ajedrez.");

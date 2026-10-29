@@ -1263,9 +1263,13 @@ por qué podemos escribir nuestras propias reglas.
 
 - Actuator: `health` (con *liveness*/*readiness*), `info` (versión de la app,
   de Stockfish y del clasificador), `metrics`, `prometheus`.
-- Métricas Micrometer: `kopi.bot.move.duration{profile}`,
+- Métricas Micrometer: `kopi.bot.move.duration{profile, outcome}`,
   `kopi.analysis.duration`, `kopi.analysis.queue.size`,
-  `kopi.engine.restarts`.
+  `kopi.engine.restarts{pool}`. Se miden fuera de los casos de uso, con
+  decoradores de los puertos y en el adaptador de Stockfish (ADR-017).
+- Prometheus y Grafana, con un *dashboard* aprovisionado
+  (`observability/`), en el perfil `metrics` de Compose:
+  `docker compose --profile metrics up --build` y `http://localhost:3000`.
 - Logs estructurados (JSON) con `gameId` propagado vía `ScopedValue`/MDC.
 - Trazas UCI completas solo con un *logger* específico en DEBUG.
 

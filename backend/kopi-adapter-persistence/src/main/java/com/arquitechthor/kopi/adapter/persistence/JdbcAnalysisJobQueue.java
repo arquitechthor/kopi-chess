@@ -102,6 +102,13 @@ public final class JdbcAnalysisJobQueue implements AnalysisJobQueue {
     }
 
     @Override
+    public int countQueued() {
+        return jdbc.sql("select count(*) from analysis_job where state = 'QUEUED'")
+                .query(Integer.class)
+                .single();
+    }
+
+    @Override
     public int recoverStale(Instant lockedBefore, int maxAttempts) {
         return jdbc.sql("""
                 update analysis_job

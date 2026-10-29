@@ -52,7 +52,8 @@ updates:
       docker:
         update-types: [minor, patch]
 
-  # PostgreSQL in compose.yaml. The same image is in the tests
+  # The images in compose.yaml: PostgreSQL, and Prometheus and Grafana of the
+  # metrics profile. The PostgreSQL image is in the tests too
   # (TestcontainersConfiguration, JdbcGameRepositoryIT): update them in the
   # same pull request.
   - package-ecosystem: docker-compose

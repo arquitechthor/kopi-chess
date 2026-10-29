@@ -68,7 +68,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # metrics: to browse them by hand; prometheus: what Prometheus scrapes (design §14).
+        include: health, info, metrics, prometheus
   endpoint:
     health:
       # Local app: listing which components are up (db, disk…) is useful and harmless.

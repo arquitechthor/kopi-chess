@@ -1,5 +1,7 @@
 package com.arquitechthor.kopi.adapter.stockfish;
 
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import java.nio.file.Path;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -56,5 +58,22 @@ public class StockfishAdapterConfiguration {
             }
         }, UciEngine::isAlive, analysis.waitTimeout());
         return new StockfishAnalysis(pool, analysis.positionTimeout());
+    }
+
+    /// `kopi.engine.restarts{pool}` (design §14): engines that crashed, hung
+    /// or died and were replaced, for the bots' pool and the analysis one.
+    /// Read from the pools when the metrics are scraped.
+    @Bean
+    MeterBinder stockfishMetrics(EnginePool<UciEngine> stockfishPool, StockfishAnalysis stockfishAnalysis) {
+        return registry -> {
+            FunctionCounter.builder("kopi.engine.restarts", stockfishPool, EnginePool::discarded)
+                    .description("Stockfish engines discarded after failing or dying, each replaced by a new one")
+                    .tag("pool", "bots")
+                    .register(registry);
+            FunctionCounter.builder("kopi.engine.restarts", stockfishAnalysis, StockfishAnalysis::engineRestarts)
+                    .description("Stockfish engines discarded after failing or dying, each replaced by a new one")
+                    .tag("pool", "analysis")
+                    .register(registry);
+        };
     }
 }

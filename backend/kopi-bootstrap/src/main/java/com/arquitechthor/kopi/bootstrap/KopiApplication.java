@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Import;
         PersistenceAdapterConfiguration.class,
         StockfishAdapterConfiguration.class,
         UseCaseConfiguration.class,
+        MetricsConfiguration.class,
 })
 public class KopiApplication {
 

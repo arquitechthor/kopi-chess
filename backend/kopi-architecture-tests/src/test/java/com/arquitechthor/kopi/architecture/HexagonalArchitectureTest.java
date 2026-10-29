@@ -32,7 +32,7 @@ class HexagonalArchitectureTest {
             .that().resideInAPackage(DOMAIN)
             .should().dependOnClassesThat().resideInAnyPackage(
                     APPLICATION, ADAPTERS, BOOTSTRAP,
-                    "org.springframework..", "jakarta..", "java.sql..", "javax.sql..")
+                    "org.springframework..", "jakarta..", "io.micrometer..", "java.sql..", "javax.sql..")
             .because("the domain is the innermost ring and must stay plain Java");
 
     @ArchTest
@@ -40,7 +40,7 @@ class HexagonalArchitectureTest {
             .that().resideInAPackage(APPLICATION)
             .should().dependOnClassesThat().resideInAnyPackage(
                     ADAPTERS, BOOTSTRAP,
-                    "org.springframework..", "jakarta..", "java.sql..", "javax.sql..")
+                    "org.springframework..", "jakarta..", "io.micrometer..", "java.sql..", "javax.sql..")
             .because("use cases must not depend on adapters or on Spring (ADR-002)");
 
     @ArchTest

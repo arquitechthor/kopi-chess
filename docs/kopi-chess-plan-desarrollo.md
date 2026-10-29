@@ -864,8 +864,12 @@ ayuda.
       cuando la partida desaparece no deben dejar errores ni filas huérfanas.
 - [ ] **Pruebas E2E** con Playwright (incluidas en la 1.0): crear partida → jugar →
       rendirse → ver análisis.
-- [ ] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
+- [x] **Observabilidad**: métricas Micrometer del diseño (§14), endpoint
       Prometheus; *dashboard* Grafana opcional en un perfil de Compose.
+      **Hecho:** las cuatro métricas, medidas con decoradores de los puertos
+      y en el adaptador de Stockfish, nunca en los casos de uso (ADR-017);
+      `/actuator/prometheus`; perfil `metrics` con Prometheus y Grafana
+      (`observability/`).
 - [ ] **Logs estructurados** con `gameId` propagado.
 - [x] **Higiene de seguridad**: revisión de la lista del diseño (§15):
       puertos solo en `127.0.0.1`, Postgres sin exponer, ningún secreto en el

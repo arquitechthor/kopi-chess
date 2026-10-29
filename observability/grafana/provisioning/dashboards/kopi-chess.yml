@@ -1,0 +1,10 @@
+# Loads every dashboard in /etc/grafana/dashboards (observability/grafana/dashboards).
+# Changes made in Grafana are not kept: edit the JSON file instead.
+apiVersion: 1
+
+providers:
+  - name: kopi-chess
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards

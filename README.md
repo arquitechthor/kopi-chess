@@ -83,6 +83,16 @@ GitHub Container Registry, for x86-64 and ARM64. In the cloned repository:
 KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:0.7 docker compose up --no-build
 ```
 
+**With metrics**: the `metrics` profile adds Prometheus and Grafana, with a
+dashboard of the bots' move times, the analyses and the JVM, at
+<http://localhost:3000>:
+
+```shell
+docker compose --profile metrics up --build
+```
+
+The raw metrics are at <http://localhost:8080/actuator/prometheus>.
+
 **Through the API** (the game's version goes in `If-Match`; the answer
 includes the bot's reply):
 

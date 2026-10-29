@@ -28,6 +28,10 @@ public interface AnalysisJobQueue {
     /// The game's job, if it has one.
     Optional<AnalysisJob> findByGameId(GameId gameId);
 
+    /// How many jobs are `QUEUED`, waiting for a worker (the running ones
+    /// are not counted).
+    int countQueued();
+
     /// The job's analysis is saved: `DONE`.
     void complete(long jobId);
 

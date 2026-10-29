@@ -117,6 +117,23 @@ class JdbcAnalysisJobQueueIT {
     }
 
     @Test
+    void onlyTheJobsWaitingForAWorkerAreCounted() {
+        var running = storedGame();
+        var done = storedGame();
+        var failed = storedGame();
+        queue.enqueue(running, T0);
+        queue.enqueue(done, T0.plusSeconds(1));
+        queue.enqueue(failed, T0.plusSeconds(2));
+        queue.enqueue(storedGame(), T0.plusSeconds(3));
+        queue.enqueue(storedGame(), T0.plusSeconds(4));
+        queue.claimNext(T0.plusSeconds(5));
+        queue.complete(queue.claimNext(T0.plusSeconds(5)).orElseThrow().id());
+        queue.fail(queue.claimNext(T0.plusSeconds(5)).orElseThrow().id(), "engine missing");
+
+        assertThat(queue.countQueued()).isEqualTo(2);
+    }
+
+    @Test
     void aJobHeldByAnotherWorkerIsSkippedNotWaitedFor() throws Exception {
         var first = storedGame();
         var second = storedGame();

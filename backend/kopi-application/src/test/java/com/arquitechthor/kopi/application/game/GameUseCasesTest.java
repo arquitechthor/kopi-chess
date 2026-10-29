@@ -481,6 +481,11 @@ class GameUseCasesTest {
         }
 
         @Override
+        public int countQueued() {
+            throw new IllegalStateException("database down");
+        }
+
+        @Override
         public void complete(long jobId) {
             throw new IllegalStateException("database down");
         }
