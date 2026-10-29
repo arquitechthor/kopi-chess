@@ -901,7 +901,10 @@ ayuda.
     quien llega a aprender).
   - `NOTICE` con Stockfish, Chessground y el dataset de aperturas (htmx al
     final no se usa).
-- [ ] **Changelog** generado desde los commits convencionales.
+- [x] **Changelog** generado desde los commits convencionales. **Hecho:**
+      `CHANGELOG.md` con git-cliff (`cliff.toml`, por Docker), de `v0.0.1` a
+      hoy; se regenera en el PR de cada versión y `release.yml` no publica un
+      *tag* que no esté en él (`CONTRIBUTING.md`, «Releases»).
 - [ ] Marcar 5–10 *issues* como `good first issue` para posibles
       contribuciones.
 

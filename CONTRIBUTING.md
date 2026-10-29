@@ -55,7 +55,8 @@ cd backend
 2. **Commits** follow [Conventional Commits](https://www.conventionalcommits.org):
    `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `build:`, `ci:`, with an
    optional scope (`feat(web): …`). The subject says what changes for the
-   person using it; the body, why. The changelog is generated from them.
+   person using it; the body, why. [`CHANGELOG.md`](CHANGELOG.md) is
+   generated from these subjects, so write them for its readers.
 3. **A pull request** to `main`, filling in the template. CI must be green:
    build, all tests, the ArchUnit rules and the Docker image.
 4. The maintainer reviews it and merges it with a **merge commit**, so your
@@ -122,6 +123,21 @@ Qué se gana, qué se pierde, qué queda pendiente.
 
 If you are not comfortable writing Spanish, write it in English in the pull
 request and it will be translated.
+
+## Releases (maintainers)
+
+1. A pull request that sets the release version in the `pom.xml` files and
+   regenerates the changelog with git-cliff (`cliff.toml`; through Docker,
+   nothing to install):
+
+   ```shell
+   docker run --rm -v "$PWD":/app -w /app orhunp/git-cliff:2.14.2 --tag vX.Y.Z -o CHANGELOG.md
+   ```
+
+2. Once merged, the tag `vX.Y.Z` on `main`. `release.yml` checks that
+   `CHANGELOG.md` has that version, then publishes the image to GHCR.
+3. The GitHub release, with the highlights in a few lines; the full list is
+   the changelog.
 
 ## License
 
