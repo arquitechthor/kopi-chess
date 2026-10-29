@@ -49,6 +49,8 @@ Ordenadas por relación valor/esfuerzo (antes en el plan, §11).
 - **Plan detallado:** [`plan-jugador-contra-jugador.md`](plan-jugador-contra-jugador.md),
   con supuestos, arquitectura (relé sin servidor en AWS, validación local),
   costes y fases.
+- **Extensión:** una app Android sencilla para jugar desde el móvil contra
+  los bots de tu propio PC, por el mismo relé (§11 del plan).
 
 ### Puzzles desde tus propios errores
 

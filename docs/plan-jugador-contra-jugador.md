@@ -8,6 +8,8 @@
   - **Local:** dos personas en la misma máquina, cada una con su nombre.
   - **En línea:** dos personas, cada una con su Kopi Chess en *localhost*,
     con una cuenta Kopi.
+- **Extensión posterior y opcional (§11):** una app Android sencilla para
+  jugar contra los bots de **tu** PC a través del mismo relé.
 
 ---
 
@@ -348,7 +350,115 @@ termina igual en los dos PCs.
 
 ---
 
-## 11. Riesgos
+## 11. Extensión: jugar desde el móvil contra los bots del PC
+
+Una vez hecho el modo en línea, el relé y la conexión saliente del PC ya
+existen. Esta extensión los usa **entre los dispositivos de una misma
+persona**: una app Android sencilla se conecta, a través del relé, al Kopi
+Chess abierto en el PC en «modo servidor», y juega contra sus bots.
+
+### Supuestos
+
+- **Los dos dispositivos son de la misma cuenta Kopi.** El relé solo une
+  conexiones con el mismo `sub` de Cognito.
+- **La app es tonta:** ni guarda partidas ni las analiza. Dibuja lo que el
+  PC le dice (posición, jugadas legales, estado) y envía la jugada elegida,
+  como hoy `board.js` en el navegador. No sabe de ajedrez.
+- **Todo ocurre en el PC:** bots, reglas, Stockfish, guardado e historial.
+  Las partidas jugadas desde el móvil aparecen en el historial del PC y se
+  analizan allí, como cualquier otra.
+
+### Cómo encaja
+
+```
+ Móvil (app tonta)          AWS (relé Kopi)                PC (Kopi Chess, «modo servidor»)
+┌───────────────┐  wss    ┌──────────────────────┐  wss   ┌──────────────────────────────┐
+│ tablero       │ ──────► │ reenvía mensajes     │ ─────► │ adaptador «remoto»           │
+│ + cuenta Kopi │ ◄────── │ entre dispositivos   │ ◄───── │ → casos de uso → bot, BD     │
+└───────────────┘         │ de la MISMA cuenta   │        └──────────────────────────────┘
+                          └──────────────────────┘
+```
+
+En términos hexagonales, el móvil es un cliente más de los mismos casos de
+uso, como las páginas web y la API REST. `PlayMove` ya devuelve la jugada del
+bot en la misma respuesta, así que basta un ida y vuelta por jugada.
+
+### Qué hace falta, sobre lo construido en las fases A–E
+
+- **Relé: un canal entre dispositivos.**
+  - Cada conexión se registra con su papel: «PC servidor» o «móvil».
+  - El relé reenvía mensajes solo entre conexiones del mismo `sub`, sin
+    guardar nada.
+  - Le dice al móvil si el PC está conectado.
+- **PC: un adaptador de entrada nuevo** (por ejemplo `kopi-adapter-remote`).
+  - Traduce los mensajes a los casos de uso existentes: listar bots, crear
+    partida, jugar, abandonar, ver una partida y listar las que están en
+    curso para retomarlas. Reutiliza los objetos de respuesta de la API REST.
+  - **«Modo servidor» apagado por defecto**, con un interruptor y un aviso
+    visible mientras está activo.
+  - **Lista blanca de operaciones:** jugar contra los bots sí; borrar
+    partidas o cambiar la configuración, no.
+  - ADR-016 sigue en pie: la interfaz web sigue siendo solo local y la
+    conexión es saliente.
+- **App Android:** Capacitor + Chessground + Amplify, lo mismo que ya usa
+  `kopi-tools-app`.
+  - Pantallas: entrar con Kopi → «tu PC está conectado» → elegir bot y
+    color, o retomar una partida → tablero → resultado.
+  - Publicación en Google Play: ficha, iconos y política de privacidad.
+
+### Lo que sale casi gratis
+
+- **Desde cualquier red** (4G, otra wifi), sin tocar el router. Conectar el
+  móvil directamente al PC por la red de casa obligaría a abrir Kopi Chess a
+  la red local y a añadir autenticación, justo lo que ADR-016 evita.
+- **Retomar en otro dispositivo:** una partida empezada en el PC se sigue en
+  el móvil y al revés.
+- **Mover a la vez en el PC y en el móvil** no rompe nada: el bloqueo
+  optimista que ya existe (versión de la partida, `412`) deja pasar la
+  primera jugada y la otra pantalla se actualiza.
+- **Más adelante,** el móvil podría *ver* el análisis que hizo el PC, sin
+  calcular nada.
+
+### Coste
+
+Prácticamente **0 $**. Lo único continuo es la conexión del PC en modo
+servidor: un WebSocket abierto todo el mes son unos 43.000 minutos de
+conexión, del orden de un céntimo. Cada jugada son unos pocos mensajes.
+
+### Limitaciones
+
+- **El PC tiene que estar encendido**, sin suspensión, con Docker y Kopi
+  Chess arrancados y el modo servidor activo. Si no, el móvil solo puede
+  decir «tu PC no está conectado». Encenderlo a distancia queda fuera de
+  alcance.
+- **Los dos dispositivos necesitan Internet**, porque todo pasa por el relé.
+- **Retardo:** unos cientos de milisegundos por el viaje móvil → AWS → PC y
+  vuelta, más lo que piense el bot (hasta 1 s con QUEEN). En ajedrez sin
+  reloj no se nota.
+
+### Fase F (opcional, después de E)
+
+- [ ] ADR-021: el móvil como cliente remoto del PC, el «modo servidor» y su
+      lista blanca de operaciones.
+- [ ] Relé: canal entre dispositivos de la misma cuenta y presencia del PC.
+- [ ] `kopi-adapter-remote` con el interruptor de «modo servidor», el aviso
+      visible y la lista blanca. Pruebas con un relé falso.
+- [ ] App Android (Capacitor + Chessground + Amplify): entrar, ver si el PC
+      está conectado, elegir bot y color o retomar, jugar, abandonar.
+- [ ] Publicación en Google Play.
+
+**Aceptación:** con el PC en modo servidor, desde el móvil por 4G se juega
+una partida completa contra un bot; la partida aparece en el historial del
+PC y se analiza allí. Con el modo servidor apagado, el móvil no puede hacer
+nada.
+
+**Esfuerzo orientativo:** unas 3–5 semanas a tiempo parcial sobre las fases
+A–E (relé, unos días; adaptador del PC, unos días; la app y su ficha en la
+tienda, el resto).
+
+---
+
+## 12. Riesgos
 
 - **El backend es compartido con otras apps Kopi.**
   - **Señal:** un cambio del relé o de las rutas del id afecta a otra app.
@@ -361,6 +471,11 @@ termina igual en los dos PCs.
 - **Coste por abuso.**
   - **Señal:** picos en API Gateway o DynamoDB.
   - **Acción:** límites por usuario y alarma de facturación.
+- **El «modo servidor» deja el PC abierto a órdenes remotas** (§11).
+  - **Señal:** alguien con acceso a la cuenta Kopi juega desde fuera.
+  - **Acción:** apagado por defecto, aviso visible mientras está activo,
+    solo conexiones de la misma cuenta y lista blanca de operaciones (nada
+    de borrar ni configurar).
 - **Finales que no llegan** (el caso límite de §6).
   - **Señal:** alguien ve una victoria por inactividad donde esperaba un
     abandono o unas tablas.
@@ -369,7 +484,7 @@ termina igual en los dos PCs.
 
 ---
 
-## 12. Fuera de alcance
+## 13. Fuera de alcance
 
 - Reloj y controles de tiempo (ver [`ideas-futuro.md`](ideas-futuro.md)).
 - Elo, clasificaciones y emparejamiento con desconocidos.
@@ -377,3 +492,5 @@ termina igual en los dos PCs.
 - Correos o notificaciones *push* de jugadas e invitaciones.
 - Chat, espectadores y partidas públicas.
 - Cambiar el id de Kopi.
+- En la app Android (§11): guardar partidas, analizar en el móvil y jugar sin
+  el PC encendido.
