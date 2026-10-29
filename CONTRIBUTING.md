@@ -39,7 +39,13 @@ cd backend
   `tools/` is ignored by Git, a handy place for it. Without it, the Stockfish
   adapter's tests are skipped, but the end-to-end tests in `kopi-bootstrap`
   (`GameApiIT`, `AnalysisIT`) fail.
-- The slow tests (deep *perft*) run in CI; locally add `-Pslow-tests`.
+- The slow tests (deep *perft*) and the browser test run in CI; locally add
+  `-Pslow-tests`. The browser test, `PlayAndReviewE2EIT`, plays, resigns,
+  reviews and deletes a game in Chromium through Playwright; on its own:
+  `./mvnw -pl kopi-bootstrap -am verify -Pe2e`. Playwright downloads the
+  browser the first time, and leaves a trace of each run in
+  `kopi-bootstrap/target/playwright/` (open it at
+  <https://trace.playwright.dev>).
 
 ## How a change goes in
 

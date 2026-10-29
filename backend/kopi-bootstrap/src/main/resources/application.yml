@@ -72,6 +72,12 @@ server:
   # reachable from the network. The Docker image listens on every interface of its container
   # (KOPI_ADDRESS=0.0.0.0 in the Dockerfile); Compose publishes it on 127.0.0.1 only.
   address: ${KOPI_ADDRESS:127.0.0.1}
+  servlet:
+    session:
+      # The session (only for the one-off messages after a redirect, such as "game deleted")
+      # goes in a cookie, never in the URL: Tomcat would otherwise add ";jsessionid=…" to the
+      # first redirect, before it knows the browser keeps cookies (found by the E2E test).
+      tracking-modes: cookie
 
 management:
   endpoints:

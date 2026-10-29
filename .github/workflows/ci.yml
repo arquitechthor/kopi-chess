@@ -44,8 +44,29 @@ jobs:
           test -n "$binary" && chmod +x "$binary" && "$binary" quit
           echo "KOPI_STOCKFISH=$binary" >> "$GITHUB_ENV"
 
-      - name: Verify (compile, unit + slow + integration tests, architecture rules)
+      # The end-to-end test (tag "e2e") drives Chromium through Playwright, which
+      # downloads the browser on first use: kept between runs. The system libraries
+      # it needs come from Playwright's own installer (same version as
+      # playwright.version in backend/pom.xml; Node only runs this one command).
+      - name: Cache Playwright's browser
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('backend/pom.xml') }}
+
+      - name: Install the browser's system libraries
+        run: npx --yes playwright@1.64.0 install-deps chromium
+
+      - name: Verify (compile, unit + slow + integration + end-to-end tests, architecture rules)
         run: ./mvnw -B -ntp verify -Pslow-tests
+
+      - name: Upload the end-to-end trace
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-trace
+          path: backend/kopi-bootstrap/target/playwright/
+          if-no-files-found: ignore
 
       - name: Upload coverage reports
         if: always()
