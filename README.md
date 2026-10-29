@@ -61,6 +61,7 @@ Testcontainers.
 - Technical design (Spanish): [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Development plan (Spanish): [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
 - Architecture Decision Records (Spanish): [`docs/adr/`](docs/adr/)
+- Every change, release by release: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Status
 

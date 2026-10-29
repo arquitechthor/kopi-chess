@@ -62,6 +62,7 @@ Testcontainers.
 - Diseño técnico: [`docs/kopi-chess-diseno-tecnico.md`](docs/kopi-chess-diseno-tecnico.md)
 - Plan de desarrollo: [`docs/kopi-chess-plan-desarrollo.md`](docs/kopi-chess-plan-desarrollo.md)
 - Registros de decisiones de arquitectura (ADR): [`docs/adr/`](docs/adr/)
+- Todos los cambios, versión a versión (en inglés): [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Estado
 
