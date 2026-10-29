@@ -905,8 +905,9 @@ ayuda.
       `CHANGELOG.md` con git-cliff (`cliff.toml`, por Docker), de `v0.0.1` a
       hoy; se regenera en el PR de cada versión y `release.yml` no publica un
       *tag* que no esté en él (`CONTRIBUTING.md`, «Releases»).
-- [ ] Marcar 5–10 *issues* como `good first issue` para posibles
-      contribuciones.
+- [x] Marcar 5–10 *issues* como `good first issue` para posibles
+      contribuciones. **Hecho:** siete (#89–#95), cada una con qué hacer,
+      dónde y cómo probarlo; lo demás, en `docs/ideas-futuro.md`.
 
 ### Criterio de aceptación
 
@@ -918,19 +919,10 @@ ayuda.
 
 ## 11. Después de la 1.0
 
-Ideas ordenadas por relación valor/esfuerzo; cada una merece su propio ADR
-antes de empezar:
-
-1. **Puzzles desde tus propios errores:** cada `BLUNDER`/`MISSED_MATE` se
-   convierte en un ejercicio «encuentra la mejor jugada». Reutiliza todo el
-   análisis.
-2. **Reloj y controles de tiempo** como regla del dominio.
-3. **Bitboards** detrás de la interfaz `Board`, con *perft* como red de
-   seguridad (y un *benchmark* antes/después).
-4. **Etiquetas `BRILLIANT` / `GREAT`** con un conjunto de posiciones de prueba
-   previo.
-5. **Estadísticas** por apertura y por bot a partir de las partidas guardadas.
-6. **Traducción de nombres de aperturas** comunes (contribución externa).
+Las ideas para después de la 1.0 (puzzles desde los propios errores, reloj,
+*bitboards*, `BRILLIANT`/`GREAT`, estadísticas…) están en
+[`ideas-futuro.md`](ideas-futuro.md), en un solo sitio. Las tareas pequeñas
+están en GitHub como *good first issues* (#89–#95).
 
 ---
 
