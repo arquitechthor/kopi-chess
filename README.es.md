@@ -94,6 +94,12 @@ docker compose --profile metrics up --build
 
 Las métricas en bruto están en <http://localhost:8080/actuator/prometheus>.
 
+**Los logs** (`docker compose logs app`) son líneas JSON, y cada línea sobre
+una partida lleva su `gameId`. En texto plano: `KOPI_LOG_FORMAT= docker compose up`
+(PowerShell no puede dar a una variable un valor vacío: pon la línea
+`KOPI_LOG_FORMAT=` en un fichero `.env`). Toda la conversación con Stockfish:
+`KOPI_UCI_LOG=DEBUG`.
+
 **Por la API** (la versión de la partida va en `If-Match`; la respuesta
 incluye la jugada del bot):
 

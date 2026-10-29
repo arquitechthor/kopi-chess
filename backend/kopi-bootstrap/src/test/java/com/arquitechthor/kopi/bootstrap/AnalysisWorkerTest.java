@@ -13,7 +13,9 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 
 /// The worker's lifecycle, without Spring or a database: the queue's own
 /// behaviour is tested against PostgreSQL (`JdbcAnalysisJobQueueIT`).
@@ -116,6 +118,44 @@ class AnalysisWorkerTest {
         } finally {
             worker.stop();
         }
+    }
+
+    @Test
+    void aJobsGameIsForgottenWhenTheJobEnds() throws Exception {
+        // The queue tags the thread when a job is claimed (LoggedAnalysisJobQueue);
+        // the next round must start without it, whether the job ended well or not.
+        var seenNextRound = new AtomicReference<String>("not run");
+        var rounds = new AtomicInteger();
+        var done = new CountDownLatch(1);
+        var worker = new AnalysisWorker(() -> {
+            switch (rounds.incrementAndGet()) {
+                case 1 -> {
+                    MDC.put(GameLogFilter.GAME_ID, "a-game");
+                    return true;
+                }
+                case 2 -> {
+                    seenNextRound.set(MDC.get(GameLogFilter.GAME_ID));
+                    MDC.put(GameLogFilter.GAME_ID, "another-game");
+                    throw new IllegalStateException("database down");
+                }
+                default -> {
+                    if (done.getCount() > 0 && MDC.get(GameLogFilter.GAME_ID) != null) {
+                        seenNextRound.set("still tagged after a failure");
+                    }
+                    done.countDown();
+                    return false;
+                }
+            }
+        }, new RecordingQueue(), new AnalysisProperties(1_000, null, 2, 5, 3, 1, Duration.ofMillis(10), true),
+                CLOCK);
+
+        worker.start();
+        try {
+            assertThat(done.await(5, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            worker.stop();
+        }
+        assertThat(seenNextRound.get()).isNull();
     }
 
     @Test

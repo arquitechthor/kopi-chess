@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
-/// The [LocalAccessFilter], in front of everything (ADR-016).
+/// The [LocalAccessFilter], in front of everything (ADR-016), and the
+/// [GameLogFilter] behind it.
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(LocalAccessConfiguration.LocalAccessProperties.class)
 class LocalAccessConfiguration {
@@ -24,6 +25,14 @@ class LocalAccessConfiguration {
     FilterRegistrationBean<LocalAccessFilter> localAccessFilter(LocalAccessProperties properties) {
         var registration = new FilterRegistrationBean<>(new LocalAccessFilter(properties.allowedHosts()));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    /// Right after it: a refused request is not about any game yet.
+    @Bean
+    FilterRegistrationBean<GameLogFilter> gameLogFilter() {
+        var registration = new FilterRegistrationBean<>(new GameLogFilter());
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }
 }

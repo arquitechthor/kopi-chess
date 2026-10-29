@@ -62,6 +62,9 @@ ENV KOPI_STOCKFISH=/usr/local/bin/stockfish
 # Inside a container, every interface: what reaches it is decided by the
 # published port (compose.yaml: 127.0.0.1 only).
 ENV KOPI_ADDRESS=0.0.0.0
+# Logs as JSON lines (Elastic Common Schema), one field per fact, gameId among them (design §14).
+# Plain text instead: LOGGING_STRUCTURED_FORMAT_CONSOLE= (empty); with Compose, KOPI_LOG_FORMAT=.
+ENV LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
 WORKDIR /app
 COPY --from=build /build/kopi-bootstrap/target/kopi-chess.jar app.jar
 USER kopi
