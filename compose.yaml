@@ -62,7 +62,7 @@ services:
       - app
 
   grafana:
-    image: grafana/grafana:13.2.5
+    image: grafana/grafana:13.3.0
     profiles: [metrics]
     ports:
       - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
