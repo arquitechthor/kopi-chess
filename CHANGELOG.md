@@ -5,6 +5,25 @@ from the commit messages by [git-cliff](https://git-cliff.org) (`cliff.toml`);
 each release's highlights are in its
 [GitHub release](https://github.com/arquitechthor/kopi-chess/releases).
 
+## [1.0.1](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.1) - 2026-11-05
+
+### Features
+
+- **web:** Add Prompt Quest to the shared footer line ([1fcbd6a](https://github.com/arquitechthor/kopi-chess/commit/1fcbd6ac03e0fec048f7d4e60ac90969e5922c36))
+- **web:** Add Tech Spider to the shared footer line ([ea271b1](https://github.com/arquitechthor/kopi-chess/commit/ea271b15ae2b5de762672fd53dadc5a35f873f0f))
+
+### Documentation
+
+- Plan for player versus player, local and online ([3950019](https://github.com/arquitechthor/kopi-chess/commit/3950019aaab45b94d5b242ecef12d03be89f56c9))
+- **pvp:** No finished games in the relay, 30 days without moves end a game ([01766e9](https://github.com/arquitechthor/kopi-chess/commit/01766e932aa3a79298e844b97fd1ee5a0ed9f6ba))
+- **pvp:** Play the computer's bots from an Android phone ([30c157e](https://github.com/arquitechthor/kopi-chess/commit/30c157ee2e7f34ea1ffbcee9fc97d78a5f70ef87))
+
+### Build and dependencies
+
+- Bump grafana/grafana from 13.2.5 to 13.3.0 in the compose group ([573d6ea](https://github.com/arquitechthor/kopi-chess/commit/573d6eabd0322d07ad452d81c6afacd660d0c9af))
+- Bump eclipse-temurin in /backend ([ce72b15](https://github.com/arquitechthor/kopi-chess/commit/ce72b159990988dfcf81688a25857d4c00946067))
+- Bump org.apache.maven.plugins:maven-enforcer-plugin ([f621c91](https://github.com/arquitechthor/kopi-chess/commit/f621c914cbaab128d5124ce9925626e201448be8))
+
 ## [1.0.0](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.0) - 2026-10-29
 
 ### Features
