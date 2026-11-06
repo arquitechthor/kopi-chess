@@ -221,22 +221,29 @@ class JdbcGameRepositoryIT {
     }
 
     @Test
-    void filtersByOriginAndResultInSqlAsTheFilterDefinesThem() {
+    void filtersByOriginResultAndBotInSqlAsTheFilterDefinesThem() {
         var inProgress = play(newGameWithId(Color.WHITE), "e2e4");
         var resigned = newGameWithId(Color.WHITE).resign(Color.WHITE, START);
+        var againstRook = Game.start(new GameId(UUID.randomUUID()), Color.BLACK, BotProfile.ROOK, Position.initial(),
+                START);
         var importedWin = imported("1. e4 e5 2. Nf3 Nc6 1-0");
         var importedDraw = imported("1. e4 e5 1/2-1/2");
-        var all = List.of(inProgress, resigned, importedWin, importedDraw);
+        var all = List.of(inProgress, resigned, againstRook, importedWin, importedDraw);
         all.forEach(repository::insert);
 
         var filters = new ArrayList<GameFilter>();
         filters.add(GameFilter.ALL);
         for (var origin : GameOrigin.values()) {
-            filters.add(new GameFilter(Optional.of(origin), Optional.empty()));
+            filters.add(new GameFilter(Optional.of(origin), Optional.empty(), Optional.empty()));
         }
         for (var result : GameFilter.ResultFilter.values()) {
-            filters.add(new GameFilter(Optional.empty(), Optional.of(result)));
-            filters.add(new GameFilter(Optional.of(GameOrigin.IMPORTED), Optional.of(result)));
+            filters.add(new GameFilter(Optional.empty(), Optional.of(result), Optional.empty()));
+            filters.add(new GameFilter(Optional.of(GameOrigin.IMPORTED), Optional.of(result), Optional.empty()));
+        }
+        for (var bot : BotProfile.values()) {
+            filters.add(new GameFilter(Optional.empty(), Optional.empty(), Optional.of(bot)));
+            filters.add(new GameFilter(Optional.empty(), Optional.of(GameFilter.ResultFilter.IN_PROGRESS),
+                    Optional.of(bot)));
         }
         for (var filter : filters) {
             var expected = all.stream().filter(filter::matches).map(Game::id).toList();
@@ -245,7 +252,11 @@ class JdbcGameRepositoryIT {
             assertThat(repository.count(filter)).as(filter.toString()).isEqualTo(expected.size());
         }
         assertThat(repository.count(new GameFilter(Optional.of(GameOrigin.PLAYED),
-                Optional.of(GameFilter.ResultFilter.BLACK_WIN)))).isOne();
+                Optional.of(GameFilter.ResultFilter.BLACK_WIN), Optional.empty()))).isOne();
+        assertThat(repository.count(new GameFilter(Optional.empty(), Optional.empty(), Optional.of(BotProfile.PAWN))))
+                .isEqualTo(2);
+        assertThat(repository.findRecent(new GameFilter(Optional.empty(), Optional.empty(),
+                Optional.of(BotProfile.ROOK)), 0, 10)).extracting(Game::id).containsExactly(againstRook.id());
     }
 
     private static Game newGameWithId(Color humanColor) {

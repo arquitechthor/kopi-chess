@@ -35,7 +35,7 @@ unos minutos (compila la aplicación); los siguientes, segundos.
   de ganar.
 - **Importar y exportar PGN**: analiza igual una partida de Lichess, de
   Chess.com o de un tablero físico, y llévate las tuyas a donde quieras.
-- **Historial** de todas tus partidas, filtrado por origen y resultado.
+- **Historial** de todas tus partidas, filtrado por origen, resultado y bot.
 - **Modo oficina**: la partida parece la web de una empresa cualquiera, el
   tablero es una tabla con letras (`T`, `A`, `C`…) y las jugadas se escriben
   en notación algebraica (`e4`, `Cf3`, `O-O`). Pasa desapercibido y entrena

@@ -187,6 +187,11 @@ public final class JdbcGameRepository implements GameRepository {
                     params.put("result", result.name());
                 }
             });
+            // Imported games have no bot (null never equals), as in matches.
+            filter.bot().ifPresent(bot -> {
+                conditions.add("bot_profile = :bot");
+                params.put("bot", bot.name());
+            });
             return new Where(conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions), params);
         }
 

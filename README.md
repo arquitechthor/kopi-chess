@@ -34,7 +34,7 @@ few minutes (it builds the application); later ones, seconds.
   accuracy for both sides and a graph of the winning chances.
 - **PGN import and export**: analyse a game from Lichess, Chess.com or over
   the board the same way, and take yours anywhere.
-- **History** of all your games, filtered by origin and result.
+- **History** of all your games, filtered by origin, result and bot.
 - **Office mode**: the game looks like any company's website, the board is a
   table of letters (`R`, `B`, `N`…) and you type your moves in algebraic
   notation (`e4`, `Nf3`, `O-O`). It keeps a low profile and trains your

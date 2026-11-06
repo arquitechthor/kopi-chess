@@ -21,6 +21,7 @@ import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.ResignCommand;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
 import com.arquitechthor.kopi.application.port.GameFilter;
+import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import java.net.URI;
@@ -94,13 +95,14 @@ class GamesController {
     }
 
     /// A page of games, newest first, optionally only those of an `origin`
-    /// (`PLAYED`, `IMPORTED`) or a `result` (`WHITE_WIN`, `BLACK_WIN`,
-    /// `DRAW`, `IN_PROGRESS`).
+    /// (`PLAYED`, `IMPORTED`), a `result` (`WHITE_WIN`, `BLACK_WIN`,
+    /// `DRAW`, `IN_PROGRESS`) or a `bot` (`PAWN`…`QUEEN`).
     @GetMapping
     GamePageResponse list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) GameOrigin origin,
-            @RequestParam(required = false) GameFilter.ResultFilter result) {
-        var filter = new GameFilter(Optional.ofNullable(origin), Optional.ofNullable(result));
+            @RequestParam(required = false) GameFilter.ResultFilter result,
+            @RequestParam(required = false) BotProfile bot) {
+        var filter = new GameFilter(Optional.ofNullable(origin), Optional.ofNullable(result), Optional.ofNullable(bot));
         return GamePageResponse.of(listGames.list(new ListGamesQuery(page, size, filter)));
     }
 
