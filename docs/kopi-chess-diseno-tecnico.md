@@ -992,9 +992,11 @@ y a mantener un segundo proyecto, sin aportar a ese objetivo. Con Thymeleaf:
 - **Notación:** la SAN estándar usa letras inglesas (`N`, `B`, `R`, `Q`,
   `K`). En la interfaz se muestra en **notación de figuras** (`♘f3`), que no
   depende del idioma. Opcional: notación española (`Cf3`) como preferencia.
-- **Nombres de aperturas:** el dataset de Lichess solo está en inglés; se
-  muestran en inglés en ambos idiomas, junto al código ECO. Traducir las más
-  comunes puede ser una contribución externa posterior.
+- **Nombres de aperturas:** el dataset de Lichess solo está en inglés, y el
+  dominio los guarda así (ADR-011). La interfaz en español traduce las más
+  comunes con `i18n/web/openings_es.tsv` del adaptador web (`OpeningNames`):
+  cada parte del nombre (familia, variante, línea) se busca por separado y la
+  que no está se queda en inglés. El código ECO no cambia.
 - **Fechas y números:** con `#temporals` / `#numbers` de Thymeleaf según el
   `Locale` (`21/10/2026` vs `10/21/2026`, `87,5 %` vs `87.5%`).
 

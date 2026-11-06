@@ -85,9 +85,13 @@ class ReviewPageTest {
     /// 1.e4 a5: e4 from the book, then a5, which (in this made-up verdict)
     /// let a mate in two slip.
     private void analysed(String id) {
+        analysed(id, new Opening("B00", "Ware Defense"));
+    }
+
+    private void analysed(String id, Opening opening) {
         analyses.save(new GameAnalysis(gameId(id), "Stockfish 19",
                 new AnalysisSettings(new SearchLimits.Nodes(1_000_000), 2, 5), Color.WHITE,
-                Optional.of(new Opening("B00", "Ware Defense")),
+                Optional.of(opening),
                 List.of(new MoveAnalysis(1, new Evaluation.Centipawns(30), new Evaluation.MateIn(-2), "e2e4",
                                 List.of("e4", "e5", "Nf3"), new Classification(MoveCategory.BOOK, 0.0, OptionalInt.empty())),
                         new MoveAnalysis(2, new Evaluation.MateIn(-2), new Evaluation.Centipawns(120), "d8h4",
@@ -162,6 +166,15 @@ class ReviewPageTest {
 
         assertThat(page("/games/{id}/analysis?lang=en", id)).contains("Waiting for its turn…");
         assertThat(jobs.findByGameId(gameId(id))).isPresent();
+    }
+
+    @Test
+    void theOpeningIsNamedInTheVisitorsLanguageWhenThereIsATranslation() {
+        var id = finishedGame();
+        analysed(id, new Opening("B90", "Sicilian Defense: Najdorf Variation"));
+
+        assertThat(page("/games/{id}/analysis?lang=es", id)).contains("B90 · Defensa siciliana: Variante Najdorf");
+        assertThat(page("/games/{id}/analysis?lang=en", id)).contains("B90 · Sicilian Defense: Najdorf Variation");
     }
 
     @Test

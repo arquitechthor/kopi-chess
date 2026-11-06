@@ -84,7 +84,7 @@
 
             <p class="review-opening">
                 <strong th:text="#{review.opening}">Opening</strong>:
-                <span th:if="${r.opening}" th:text="${r.opening.eco + ' · ' + r.opening.name}">C60 · Ruy Lopez</span>
+                <span th:if="${r.opening}" th:text="${r.opening}">C60 · Ruy Lopez</span>
                 <span th:unless="${r.opening}" th:text="#{review.noOpening}">No named opening</span>
             </p>
 
