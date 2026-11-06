@@ -1,0 +1,50 @@
+# The style the files already follow, so editors keep it from the first
+# keystroke (https://editorconfig.org). Nothing here asks for a reformat.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Java and the Maven poms: 4 spaces; the code keeps to about 120 columns.
+[*.java]
+max_line_length = 120
+
+# Thymeleaf templates, the Dockerfile and the SQL migrations also use 4 (the
+# default above). The rest of the web side, the configuration files and the
+# Markdown lists use 2.
+[*.{js,css,svg,json,yml,yaml,md}]
+indent_size = 2
+
+# Windows scripts are checked out with CRLF (.gitattributes) and stored with
+# LF; the Maven wrapper scripts are generated with 2 spaces.
+[*.{cmd,bat,ps1}]
+end_of_line = crlf
+
+[backend/{mvnw,mvnw.cmd}]
+indent_size = 2
+
+# Tab-separated data: the tabs are the format.
+[*.tsv]
+indent_style = unset
+indent_size = unset
+
+# Third-party files, kept exactly as published.
+[**/vendor/**]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
+
+# Binary files.
+[*.{png,jpg,jpeg,ico,jar,zip}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
