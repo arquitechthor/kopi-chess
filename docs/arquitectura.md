@@ -142,6 +142,6 @@ revisión, que dibuja la barra.
 
 ## Para seguir
 
-- Cómo trabajar en el proyecto: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+- Cómo trabajar en el proyecto: [`CONTRIBUTING.es.md`](../CONTRIBUTING.es.md).
 - El diseño completo: [`kopi-chess-diseno-tecnico.md`](kopi-chess-diseno-tecnico.md).
 - Las decisiones, una por archivo: [`adr/`](adr/).
