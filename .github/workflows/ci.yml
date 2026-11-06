@@ -76,6 +76,33 @@ jobs:
           path: backend/**/target/site/jacoco/
           if-no-files-found: ignore
 
+  secrets:
+    name: No secrets in the history
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history, not only the last commit: a secret removed in a
+      # later commit is still public.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Official release, pinned and checksum-verified (digest from the GitHub
+      # release), like Stockfish above: updated by hand, Dependabot does not see it.
+      - name: Install gitleaks
+        env:
+          GITLEAKS_URL: https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL --retry 3 --max-time 60 -o gitleaks.tar.gz "$GITLEAKS_URL"
+          echo "$GITLEAKS_SHA256  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          echo "$PWD" >> "$GITHUB_PATH"
+
+      # Fails on any finding. Values are redacted in the log, which is public too.
+      - name: Scan every commit
+        run: gitleaks git --redact --no-banner --exit-code 1 .
+
   image:
     name: Docker image
     runs-on: ubuntu-latest
