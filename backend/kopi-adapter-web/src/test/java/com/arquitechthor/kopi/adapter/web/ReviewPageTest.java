@@ -169,6 +169,15 @@ class ReviewPageTest {
     }
 
     @Test
+    void theOpeningIsNamedInTheVisitorsLanguageWhenThereIsATranslation() {
+        var id = finishedGame();
+        analysed(id, new Opening("B90", "Sicilian Defense: Najdorf Variation"));
+
+        assertThat(page("/games/{id}/analysis?lang=es", id)).contains("B90 · Defensa siciliana: Variante Najdorf");
+        assertThat(page("/games/{id}/analysis?lang=en", id)).contains("B90 · Sicilian Defense: Najdorf Variation");
+    }
+
+    @Test
     void onceDoneItShowsTheWholeReview() {
         var id = finishedGame();
         analysed(id);
@@ -192,14 +201,5 @@ class ReviewPageTest {
         assertThat(html).contains("class=\"eval-graph-line\"", "eval-graph-marker cat-MISSED_MATE");
         // Moves to click, and the engine that judged them.
         assertThat(html).contains("class=\"review-move\"", "data-ply=\"2\"", "Analizada con Stockfish 19.");
-    }
-
-    @Test
-    void theOpeningIsNamedInTheVisitorsLanguageWhenThereIsATranslation() {
-        var id = finishedGame();
-        analysed(id, new Opening("B90", "Sicilian Defense: Najdorf Variation"));
-
-        assertThat(page("/games/{id}/analysis?lang=es", id)).contains("B90 · Defensa siciliana: Variante Najdorf");
-        assertThat(page("/games/{id}/analysis?lang=en", id)).contains("B90 · Sicilian Defense: Najdorf Variation");
     }
 }
