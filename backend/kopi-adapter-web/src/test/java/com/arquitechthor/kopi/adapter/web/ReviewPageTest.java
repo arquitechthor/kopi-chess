@@ -189,4 +189,19 @@ class ReviewPageTest {
         // Moves to click, and the engine that judged them.
         assertThat(html).contains("class=\"review-move\"", "data-ply=\"2\"", "Analizada con Stockfish 19.");
     }
+
+    @Test
+    void theBoardsPositionCanBeCopiedAsFen() {
+        var id = finishedGame();
+        analysed(id);
+
+        // The button only carries its texts; review.js copies the shown step's
+        // FEN, which the steps above already hold.
+        assertThat(page("/games/{id}/analysis?lang=en", id))
+                .contains("id=\"copy-fen\"", "aria-live=\"polite\"", ">Copy FEN</button>")
+                .contains("title=\"Copy the position on the board as FEN, to paste it into another tool\"")
+                .contains("data-copied=\"Copied\"", "data-failed=\"Could not copy\"");
+        assertThat(page("/games/{id}/analysis?lang=es", id))
+                .contains(">Copiar FEN</button>", "data-copied=\"Copiado\"", "data-failed=\"No se pudo copiar\"");
+    }
 }

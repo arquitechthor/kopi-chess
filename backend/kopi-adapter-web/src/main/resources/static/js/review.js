@@ -106,6 +106,23 @@ if (element) {
   for (const button of document.querySelectorAll('[data-go]')) {
     button.addEventListener('click', () => go[button.dataset.go]());
   }
+  // The FEN of the position being shown, to paste into another tool. The
+  // clipboard needs a secure context, which localhost is; elsewhere (or if
+  // the browser refuses) the button says so instead.
+  const copyFen = document.getElementById('copy-fen');
+  if (copyFen) {
+    const label = copyFen.textContent;
+    let restore;
+    const say = (text) => {
+      copyFen.textContent = text;
+      clearTimeout(restore);
+      restore = setTimeout(() => { copyFen.textContent = label; }, 1500);
+    };
+    copyFen.addEventListener('click', () => {
+      const write = navigator.clipboard?.writeText(steps[current].fen) ?? Promise.reject();
+      write.then(() => say(copyFen.dataset.copied), () => say(copyFen.dataset.failed));
+    });
+  }
   for (const target of [...moves, ...markers]) {
     target.addEventListener('click', () => show(Number(target.dataset.ply)));
   }
