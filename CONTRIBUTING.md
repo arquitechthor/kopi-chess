@@ -1,5 +1,7 @@
 # Contributing to Kopi Chess
 
+[Leer en español](CONTRIBUTING.es.md)
+
 Thank you for wanting to help. Kopi Chess is a small project that is meant to
 be read and learnt from, so a clear change with good tests is worth more than
 a big one.

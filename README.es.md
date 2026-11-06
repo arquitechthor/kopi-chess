@@ -144,7 +144,7 @@ compila con un archivo de *settings* vacío:
 El código, los *commits*, los *issues* y las *pull requests* van en
 **inglés**. Los documentos de diseño, en **español**. Cómo preparar el
 entorno, el flujo de trabajo y la definición de terminado están en
-[`CONTRIBUTING.md`](CONTRIBUTING.md) (en inglés).
+[`CONTRIBUTING.es.md`](CONTRIBUTING.es.md).
 
 ## Licencia
 
