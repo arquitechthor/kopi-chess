@@ -1,0 +1,104 @@
+# Spanish names for the most common openings of the Lichess dataset
+# (kopi-adapter-openings, CC0), for the review page in Spanish (design §11).
+#
+# English name<TAB>Spanish name. A dataset name is "Family: Variation, Line";
+# each part before and after the colon, between commas, is looked up on its
+# own, and a part not listed here stays in English. A whole name can be
+# listed too, and then wins over its parts. Lines starting with # are notes.
+#
+# Contributions welcome: keep the English exactly as in the dataset.
+
+# Families
+Alekhine Defense	Defensa Alekhine
+Benko Gambit	Gambito Benko
+Benko Gambit Accepted	Gambito Benko aceptado
+Benoni Defense	Defensa Benoni
+Bird Opening	Apertura Bird
+Bishop's Opening	Apertura de alfil
+Blackmar-Diemer Gambit	Gambito Blackmar-Diemer
+Bogo-Indian Defense	Defensa bogoindia
+Caro-Kann Defense	Defensa Caro-Kann
+Catalan Opening	Apertura catalana
+Center Game	Apertura del centro
+Dutch Defense	Defensa holandesa
+English Opening	Apertura inglesa
+Englund Gambit	Gambito Englund
+Four Knights Game	Apertura de los cuatro caballos
+French Defense	Defensa francesa
+Grünfeld Defense	Defensa Grünfeld
+Hungarian Opening	Apertura húngara
+Indian Defense	Defensa india
+Italian Game	Apertura italiana
+King's Gambit	Gambito de rey
+King's Gambit Accepted	Gambito de rey aceptado
+King's Gambit Declined	Gambito de rey rehusado
+King's Indian Attack	Ataque indio de rey
+King's Indian Defense	Defensa india de rey
+King's Pawn Game	Apertura de peón de rey
+Latvian Gambit	Gambito letón
+Modern Defense	Defensa moderna
+Nimzo-Indian Defense	Defensa nimzoindia
+Nimzowitsch Defense	Defensa Nimzowitsch
+Old Indian Defense	Defensa india antigua
+Petrov's Defense	Defensa Petrov
+Philidor Defense	Defensa Philidor
+Pirc Defense	Defensa Pirc
+Polish Opening	Apertura polaca
+Ponziani Opening	Apertura Ponziani
+Queen's Gambit	Gambito de dama
+Queen's Gambit Accepted	Gambito de dama aceptado
+Queen's Gambit Declined	Gambito de dama rehusado
+Queen's Indian Defense	Defensa india de dama
+Queen's Pawn Game	Apertura de peón de dama
+Réti Opening	Apertura Réti
+Ruy Lopez	Apertura española
+Scandinavian Defense	Defensa escandinava
+Scotch Game	Apertura escocesa
+Semi-Slav Defense	Defensa semieslava
+Sicilian Defense	Defensa siciliana
+Slav Defense	Defensa eslava
+Tarrasch Defense	Defensa Tarrasch
+Three Knights Opening	Apertura de los tres caballos
+Torre Attack	Ataque Torre
+Trompowsky Attack	Ataque Trompowsky
+Vienna Game	Apertura vienesa
+Zukertort Opening	Apertura Zukertort
+
+# Variations and lines
+Accelerated Dragon	Dragón acelerado
+Advance Variation	Variante del avance
+Alapin Variation	Variante Alapin
+Berlin Defense	Defensa berlinesa
+Classical Defense	Defensa clásica
+Classical Variation	Variante clásica
+Closed	Cerrada
+Closed Variation	Variante cerrada
+Dragon Variation	Variante del dragón
+Evans Gambit	Gambito Evans
+Exchange Variation	Variante del cambio
+Falkbeer Countergambit	Contragambito Falkbeer
+Fianchetto Variation	Variante del fianchetto
+Four Knights Variation	Variante de los cuatro caballos
+Kan Variation	Variante Kan
+Main Line	Línea principal
+Meran Variation	Variante de Merano
+Modern Variation	Variante moderna
+Morphy Defense	Defensa Morphy
+Najdorf Variation	Variante Najdorf
+Normal Variation	Variante normal
+Open	Abierta
+Orthodox Defense	Defensa ortodoxa
+Panov Attack	Ataque Panov
+Richter-Rauzer Variation	Variante Richter-Rauzer
+Rubinstein Variation	Variante Rubinstein
+Scheveningen Variation	Variante Scheveningen
+Scotch Gambit	Gambito escocés
+Smith-Morra Gambit	Gambito Smith-Morra
+Smith-Morra Gambit Accepted	Gambito Smith-Morra aceptado
+Steinitz Variation	Variante Steinitz
+Symmetrical Variation	Variante simétrica
+Taimanov Variation	Variante Taimanov
+Tarrasch Variation	Variante Tarrasch
+Two Knights Defense	Defensa de los dos caballos
+Winawer Variation	Variante Winawer
+Yugoslav Attack	Ataque yugoslavo

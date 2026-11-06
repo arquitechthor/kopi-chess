@@ -8,12 +8,12 @@ import com.arquitechthor.kopi.domain.analysis.Evaluation;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.analysis.MoveCategory;
 import com.arquitechthor.kopi.domain.chess.Color;
-import com.arquitechthor.kopi.domain.chess.Opening;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /// What the review page shows (plan §8.5), prepared for the template.
@@ -30,7 +30,8 @@ import java.util.stream.Collectors;
 /// @param orientation `white` or `black`: the person's side at the bottom
 /// @param state       `QUEUED`, `RUNNING`, `DONE` or `FAILED`
 /// @param error       why it failed, if it did
-/// @param opening     the last named opening, if any (and once done)
+/// @param opening     the last named opening, `ECO · name` in the
+///                    visitor's language, if any (and once done)
 /// @param engine      `Stockfish 19`
 /// @param white       White's accuracy and counts
 /// @param black       Black's
@@ -47,7 +48,7 @@ record ReviewPage(
         String orientation,
         AnalysisJob.State state,
         String error,
-        Opening opening,
+        String opening,
         String engine,
         Side white,
         Side black,
@@ -98,7 +99,9 @@ record ReviewPage(
 
     /// The review of a game whose analysis exists (queued, running, failed or
     /// done).
-    static ReviewPage of(GameView game, AnalysisView view) {
+    ///
+    /// @param openingName the opening's name in the visitor's language
+    static ReviewPage of(GameView game, AnalysisView view, UnaryOperator<String> openingName) {
         var orientation = game.humanColor().orElse(Color.WHITE) == Color.WHITE ? "white" : "black";
         var bot = game.botProfile().orElse(null);
         var players = game.origin() == GameOrigin.IMPORTED ? GamePage.players(game) : null;
@@ -110,7 +113,9 @@ record ReviewPage(
         var analysis = view.analysis().get();
         var summary = analysis.summary();
         return new ReviewPage(game.id().toString(), bot, players, orientation, AnalysisJob.State.DONE, null,
-                analysis.opening().orElse(null), analysis.engine(), side(summary.white()), side(summary.black()),
+                analysis.opening().map(opening -> opening.eco() + " · " + openingName.apply(opening.name()))
+                        .orElse(null),
+                analysis.engine(), side(summary.white()), side(summary.black()),
                 graph(analysis), rows(view, analysis), plies(view, analysis), boardJson(view, analysis));
     }
 

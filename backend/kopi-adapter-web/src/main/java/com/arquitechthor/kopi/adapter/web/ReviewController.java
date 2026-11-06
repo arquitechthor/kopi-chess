@@ -6,6 +6,7 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameStatus;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,11 +27,14 @@ class ReviewController {
     private final GetGameUseCase getGame;
     private final GetAnalysisUseCase getAnalysis;
     private final RequestAnalysisUseCase requestAnalysis;
+    private final OpeningNames openingNames;
 
-    ReviewController(GetGameUseCase getGame, GetAnalysisUseCase getAnalysis, RequestAnalysisUseCase requestAnalysis) {
+    ReviewController(GetGameUseCase getGame, GetAnalysisUseCase getAnalysis, RequestAnalysisUseCase requestAnalysis,
+            OpeningNames openingNames) {
         this.getGame = getGame;
         this.getAnalysis = getAnalysis;
         this.requestAnalysis = requestAnalysis;
+        this.openingNames = openingNames;
     }
 
     /// A game still being played goes back to its board. A finished one
@@ -38,7 +42,7 @@ class ReviewController {
     /// existed) gets it asked for now: the review is where people expect
     /// it to start.
     @GetMapping("/games/{id}/analysis")
-    String review(@PathVariable UUID id, Model model) {
+    String review(@PathVariable UUID id, Locale locale, Model model) {
         var gameId = new GameId(id);
         var game = getGame.get(gameId);
         if (game.status() != GameStatus.FINISHED) {
@@ -55,7 +59,7 @@ class ReviewController {
             }
             view = getAnalysis.get(gameId);
         }
-        model.addAttribute("review", ReviewPage.of(game, view));
+        model.addAttribute("review", ReviewPage.of(game, view, name -> openingNames.in(locale, name)));
         return "review";
     }
 
