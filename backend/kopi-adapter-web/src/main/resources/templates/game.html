@@ -70,7 +70,17 @@
                    th:text="#{game.review}">Review the game</a>
                 <a class="btn btn-secondary" th:href="@{/api/v1/games/{id}/pgn(id=${game.id})}" download
                    th:text="#{game.downloadPgn}">Download PGN</a>
-                <a class="btn btn-primary" th:href="@{/}" th:text="#{game.newGame}">New game</a>
+                <!--/* A finished game against a bot: the same bot again with the other colour,
+                       through the home page's own form fields; or back home to pick another bot. */-->
+                <form method="post" th:action="@{/games}" th:if="${game.rematchColor != null}">
+                    <input type="hidden" name="bot" th:value="${game.botProfile}">
+                    <input type="hidden" name="color" th:value="${game.rematchColor}">
+                    <button class="btn btn-primary" type="submit" th:text="#{game.playAgain}">Play again</button>
+                </form>
+                <a class="btn btn-secondary" th:if="${game.rematchColor != null}" th:href="@{/}"
+                   th:text="#{game.otherBot}">Choose another bot</a>
+                <a class="btn btn-primary" th:unless="${game.rematchColor != null}" th:href="@{/}"
+                   th:text="#{game.newGame}">New game</a>
             </div>
             <details th:replace="~{fragments/delete-game :: control(${game.id})}"></details>
         </div>

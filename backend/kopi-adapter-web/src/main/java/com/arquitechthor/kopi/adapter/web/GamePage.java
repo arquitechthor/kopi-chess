@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
 ///                        its PGN (empty if it names neither); `null` for
 ///                        a game played here
 /// @param finished        whether the game is over
+/// @param rematchColor    for *Play again*: the other colour, against the same
+///                        bot (`WHITE` or `BLACK`, as the home page form
+///                        sends it); `null` while the game goes on and for an
+///                        imported game
 /// @param statusKey       message key of the status line (`status.yourTurn`,
 ///                        `outcome.CHECKMATE.BLACK`…)
 record GamePage(
@@ -48,6 +52,7 @@ record GamePage(
         Color humanColor,
         String players,
         boolean finished,
+        Color rematchColor,
         String statusKey) {
 
     /// One line of the move list: `1. e4 e5`. `black` is empty while White's
@@ -55,6 +60,7 @@ record GamePage(
     record MoveRow(int number, String white, String black) {}
 
     static GamePage of(GameView view) {
+        var finished = view.status() == GameStatus.FINISHED;
         var legalMoves = view.legalMoves().stream()
                 .map(move -> "\"" + move.uci() + "\"")
                 .collect(Collectors.joining(",", "[", "]"));
@@ -73,7 +79,8 @@ record GamePage(
                 view.botProfile().orElse(null),
                 view.humanColor().orElse(null),
                 view.origin() == GameOrigin.IMPORTED ? players(view) : null,
-                view.status() == GameStatus.FINISHED,
+                finished,
+                finished ? view.humanColor().map(Color::opposite).orElse(null) : null,
                 statusKey(view));
     }
 

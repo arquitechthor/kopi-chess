@@ -64,7 +64,9 @@ class ImportedGamePagesTest {
         assertThat(html).contains("Partida importada · Morphy, Paul – Duke Karl")
                 .contains("Ganaron las blancas (resultado según el PGN).")
                 .contains("data-orientation=\"white\"", "data-movable=\"false\"")
-                .doesNotContain("Abandonar");
+                // Over, but there is no bot to play again: just the way to a new game.
+                .contains(">Partida nueva</a>")
+                .doesNotContain("Abandonar", "Jugar otra vez");
     }
 
     @Test
