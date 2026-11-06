@@ -57,6 +57,11 @@
                 <button type="button" class="btn btn-secondary" data-go="previous" th:aria-label="#{review.previous}" th:title="#{review.previous}">◀</button>
                 <button type="button" class="btn btn-secondary" data-go="next" th:aria-label="#{review.next}" th:title="#{review.next}">▶</button>
                 <button type="button" class="btn btn-secondary" data-go="last" th:aria-label="#{review.last}" th:title="#{review.last}">⏭</button>
+                <!--/* Copies the FEN of the position on the board; review.js says how it went in
+                       the button itself for a moment (aria-live, so it is announced too). */-->
+                <button type="button" class="btn btn-secondary review-copy-fen" id="copy-fen" aria-live="polite"
+                        th:title="#{review.copyFenTitle}" th:data-copied="#{review.copyFenDone}"
+                        th:data-failed="#{review.copyFenFailed}" th:text="#{review.copyFen}">Copy FEN</button>
             </div>
 
             <figure class="eval-graph">
