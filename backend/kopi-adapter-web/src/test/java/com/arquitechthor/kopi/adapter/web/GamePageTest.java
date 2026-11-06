@@ -160,6 +160,38 @@ class GamePageTest {
     }
 
     @Test
+    void aFinishedGameOffersTheSameBotAgainWithTheOtherColour() {
+        var id = newGame("WHITE");
+        mvc.post().uri("/games/{id}/resign", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", "0").exchange();
+
+        assertThat(gamePage(id))
+                .contains("<form method=\"post\" action=\"/games\">",
+                        "name=\"bot\" value=\"PAWN\"", "name=\"color\" value=\"BLACK\"", ">Play again</button>")
+                .contains("href=\"/\">Choose another bot</a>")
+                .doesNotContain(">New game</a>");
+        assertThat(mvc.get().uri("/games/{id}?lang=es", id)).bodyText()
+                .contains(">Jugar otra vez</button>", "href=\"/\">Elegir otro bot</a>");
+    }
+
+    @Test
+    void playingBlackPlayAgainGivesWhite() {
+        var id = newGame("BLACK");
+        mvc.post().uri("/games/{id}/resign", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", "1").exchange();
+
+        assertThat(gamePage(id)).contains("name=\"color\" value=\"WHITE\"");
+    }
+
+    @Test
+    void aGameInProgressOnlyOffersANewGame() {
+        var id = newGame("WHITE");
+
+        assertThat(gamePage(id)).contains("href=\"/\">New game</a>")
+                .doesNotContain("Play again", "action=\"/games\"", "Choose another bot");
+    }
+
+    @Test
     void anUnavailableBotSendsYouBackHome() {
         assertThat(mvc.post().uri("/games").contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("bot", "QUEEN").param("color", "BLACK"))
