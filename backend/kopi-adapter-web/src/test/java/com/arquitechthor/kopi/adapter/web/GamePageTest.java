@@ -167,32 +167,6 @@ class GamePageTest {
     }
 
     @Test
-    void aCaptureShowsWhoIsAheadInMaterial() {
-        // 1.e4 d5 2.exd5: White is a pawn up. Playing Black, White is at the top.
-        var game = Game.start(new GameId(UUID.randomUUID()), Color.BLACK, BotProfile.PAWN, Position.initial(),
-                        Instant.EPOCH)
-                .play("e2e4", Color.WHITE, Instant.EPOCH).play("d7d5", Color.BLACK, Instant.EPOCH)
-                .play("e4d5", Color.WHITE, Instant.EPOCH);
-        games.insert(game);
-
-        assertThat(gamePage(game.id().toString()))
-                .contains("class=\"material\" role=\"group\" aria-label=\"Material\"")
-                .contains("<span class=\"material-side\">White</span>",
-                        "<span class=\"material-pieces\">♟︎</span>",
-                        "<span class=\"material-points\">+1</span>")
-                .doesNotContain("material-side\">Black");
-        assertThat(mvc.get().uri("/games/{id}?lang=es", game.id().toString())).bodyText()
-                .contains("<span class=\"material-side\">Blancas</span>");
-    }
-
-    @Test
-    void levelMaterialShowsNothing() {
-        var id = newGame("WHITE");
-
-        assertThat(gamePage(id)).doesNotContain("class=\"material\"");
-    }
-
-    @Test
     void anUnavailableBotSendsYouBackHome() {
         assertThat(mvc.post().uri("/games").contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("bot", "QUEEN").param("color", "BLACK"))
@@ -226,5 +200,31 @@ class GamePageTest {
         assertThat(Figurines.of("exd8=Q#")).isEqualTo("exd8=♕#");
         assertThat(Figurines.of("O-O-O")).isEqualTo("O-O-O");
         assertThat(Figurines.of("Kxb2")).isEqualTo("♔xb2");
+    }
+
+    @Test
+    void aCaptureShowsWhoIsAheadInMaterial() {
+        // 1.e4 d5 2.exd5: White is a pawn up. Playing Black, White is at the top.
+        var game = Game.start(new GameId(UUID.randomUUID()), Color.BLACK, BotProfile.PAWN, Position.initial(),
+                        Instant.EPOCH)
+                .play("e2e4", Color.WHITE, Instant.EPOCH).play("d7d5", Color.BLACK, Instant.EPOCH)
+                .play("e4d5", Color.WHITE, Instant.EPOCH);
+        games.insert(game);
+
+        assertThat(gamePage(game.id().toString()))
+                .contains("class=\"material\" role=\"group\" aria-label=\"Material\"")
+                .contains("<span class=\"material-side\">White</span>",
+                        "<span class=\"material-pieces\">♟︎</span>",
+                        "<span class=\"material-points\">+1</span>")
+                .doesNotContain("material-side\">Black");
+        assertThat(mvc.get().uri("/games/{id}?lang=es", game.id().toString())).bodyText()
+                .contains("<span class=\"material-side\">Blancas</span>");
+    }
+
+    @Test
+    void levelMaterialShowsNothing() {
+        var id = newGame("WHITE");
+
+        assertThat(gamePage(id)).doesNotContain("class=\"material\"");
     }
 }
