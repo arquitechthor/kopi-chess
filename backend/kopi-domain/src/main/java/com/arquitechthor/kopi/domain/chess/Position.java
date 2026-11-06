@@ -71,6 +71,11 @@ public record Position(
         return Zobrist.hash(this);
     }
 
+    /// Who is ahead in material, and by which pieces (see [MaterialBalance]).
+    public MaterialBalance materialBalance() {
+        return MaterialBalance.of(board);
+    }
+
     /// Whether the king of the side to move is attacked.
     public boolean isInCheck() {
         return MoveGenerator.isInCheck(board, sideToMove);

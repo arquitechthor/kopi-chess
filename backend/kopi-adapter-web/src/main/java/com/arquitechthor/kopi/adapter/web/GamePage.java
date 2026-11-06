@@ -2,6 +2,7 @@ package com.arquitechthor.kopi.adapter.web;
 
 import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.MaterialBalance;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 /// @param turnColor       `white` or `black`
 /// @param humanToMove     whether the board accepts a move
 /// @param inCheck         highlights the king to move
+/// @param material        who is ahead in material: a row per side that has
+///                        pieces more than the other, the side at the top of
+///                        the board first; empty when the material is level
 /// @param legalMovesJson  the legal moves in UCI as a JSON array, for the board
 /// @param lastMove        the last move in UCI, or empty
 /// @param moveRows        the moves, one row per move number
@@ -41,6 +45,7 @@ record GamePage(
         String turnColor,
         boolean humanToMove,
         boolean inCheck,
+        List<MaterialRow> material,
         String legalMovesJson,
         String lastMove,
         List<MoveRow> moveRows,
@@ -49,6 +54,11 @@ record GamePage(
         String players,
         boolean finished,
         String statusKey) {
+
+    /// One side's lead in material: the opponent's pieces it is ahead by,
+    /// as figurines (`♞♟`: what it has taken, net), and its points ahead,
+    /// 0 unless it is the side ahead.
+    record MaterialRow(Color color, String pieces, int points) {}
 
     /// One line of the move list: `1. e4 e5`. `black` is empty while White's
     /// move is the last one.
@@ -67,6 +77,7 @@ record GamePage(
                 colorName(view.sideToMove()),
                 view.isHumanToMove(),
                 view.inCheck(),
+                material(view.material(), view.humanColor().orElse(Color.WHITE)),
                 legalMoves,
                 view.lastMove().map(GameView.PlayedMoveView::uci).orElse(""),
                 rows(view.moves()),
@@ -75,6 +86,21 @@ record GamePage(
                 view.origin() == GameOrigin.IMPORTED ? players(view) : null,
                 view.status() == GameStatus.FINISHED,
                 statusKey(view));
+    }
+
+    /// The rows of [#material], the side at the bottom of the board
+    /// (`bottom`) last, as on chess sites.
+    private static List<MaterialRow> material(MaterialBalance balance, Color bottom) {
+        var rows = new ArrayList<MaterialRow>();
+        for (var color : List.of(bottom.opposite(), bottom)) {
+            var ahead = balance.ahead(color);
+            if (!ahead.isEmpty()) {
+                var pieces = ahead.stream().map(type -> Figurines.piece(color.opposite(), type))
+                        .collect(Collectors.joining());
+                rows.add(new MaterialRow(color, pieces, balance.pointsAhead(color)));
+            }
+        }
+        return rows;
     }
 
     private static List<MoveRow> rows(List<GameView.PlayedMoveView> moves) {

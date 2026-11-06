@@ -298,6 +298,11 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 .game-live { display: grid; gap: 14px; }
 .game-status { font-size: clamp(22px, 2.6vw, 28px); margin: 0; }
 .panel-title { font-size: 15px; color: var(--text-muted); margin: 6px 0 0; }
+.material { display: grid; gap: 2px; }
+.material-row { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 14px; }
+.material-side { color: var(--text-muted); min-width: 4.5em; }
+.material-pieces { font-size: 18px; letter-spacing: 1px; line-height: 1.2; }
+.material-points { font-weight: 700; color: var(--cyan); }
 .panel-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
 .panel-actions form { margin: 0; }
 .delete-game { margin-top: 4px; }

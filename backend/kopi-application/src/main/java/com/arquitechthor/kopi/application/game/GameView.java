@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.application.game;
 
 import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.MaterialBalance;
 import com.arquitechthor.kopi.domain.chess.Move;
 import com.arquitechthor.kopi.domain.chess.San;
 import com.arquitechthor.kopi.domain.game.BotProfile;
@@ -30,6 +31,7 @@ import java.util.Optional;
 /// @param fen         the current position
 /// @param sideToMove  whose turn it is
 /// @param inCheck     whether the side to move is in check
+/// @param material    who is ahead in material on the board, and by what
 /// @param moves       every move played, in order
 /// @param legalMoves  the legal moves of the current position, sorted by
 ///                    UCI; empty when the game is over
@@ -49,6 +51,7 @@ public record GameView(
         String fen,
         Color sideToMove,
         boolean inCheck,
+        MaterialBalance material,
         List<PlayedMoveView> moves,
         List<LegalMoveView> legalMoves,
         Optional<GameOutcome> outcome,
@@ -100,7 +103,8 @@ public record GameView(
                         .map(move -> new LegalMoveView(move.toUci(), San.format(position, move)))
                         .toList();
         return new GameView(game.id(), game.origin(), game.status(), game.humanColor(), game.botProfile(),
-                position.toFen(), position.sideToMove(), position.isInCheck(), moves, legalMoves, game.outcome(),
-                game.result(), game.version(), game.createdAt(), game.finishedAt(), game.pgnTags());
+                position.toFen(), position.sideToMove(), position.isInCheck(), position.materialBalance(), moves,
+                legalMoves, game.outcome(), game.result(), game.version(), game.createdAt(), game.finishedAt(),
+                game.pgnTags());
     }
 }

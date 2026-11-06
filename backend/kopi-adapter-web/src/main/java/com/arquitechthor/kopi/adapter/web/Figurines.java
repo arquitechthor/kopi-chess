@@ -1,5 +1,8 @@
 package com.arquitechthor.kopi.adapter.web;
 
+import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.PieceType;
+
 /// SAN in figurine notation: `Nf3` → `♘f3`, `e8=Q` → `e8=♕`.
 ///
 /// Figurines do not depend on the language (design §11.4), so the same move
@@ -25,5 +28,20 @@ final class Figurines {
             });
         }
         return figurine.toString();
+    }
+
+    /// One piece as a figurine in its own colour: `♘` for a white knight,
+    /// `♞` for a black one. The black pawn carries U+FE0E (text style), as
+    /// some systems draw U+265F alone as an emoji.
+    static String piece(Color color, PieceType type) {
+        var white = color == Color.WHITE;
+        return switch (type) {
+            case PAWN -> white ? "♙" : "♟︎";
+            case KNIGHT -> white ? "♘" : "♞";
+            case BISHOP -> white ? "♗" : "♝";
+            case ROOK -> white ? "♖" : "♜";
+            case QUEEN -> white ? "♕" : "♛";
+            case KING -> white ? "♔" : "♚";
+        };
     }
 }

@@ -51,6 +51,15 @@
             <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}}">Your move</h1>
             <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
 
+            <!--/* Who is ahead in material, counted in Java (MaterialBalance), not here. */-->
+            <div class="material" role="group" th:aria-label="#{game.material}" th:unless="${#lists.isEmpty(game.material)}">
+                <p class="material-row" th:each="m : ${game.material}">
+                    <span class="material-side" th:text="#{|color.${m.color}|}">White</span>
+                    <span class="material-pieces" th:text="${m.pieces}">♞</span>
+                    <span class="material-points" th:if="${m.points > 0}" th:text="|+${m.points}|">+3</span>
+                </p>
+            </div>
+
             <h2 class="panel-title" th:text="#{game.moves}">Moves</h2>
             <p class="muted" th:if="${#lists.isEmpty(game.moveRows)}" th:text="#{game.noMoves}">No moves yet.</p>
             <ol class="move-list" th:unless="${#lists.isEmpty(game.moveRows)}">
