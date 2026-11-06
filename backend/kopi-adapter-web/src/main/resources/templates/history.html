@@ -4,7 +4,7 @@
 <body>
 <nav th:replace="~{fragments/layout :: header}"></nav>
 
-<!--/* Plan §9: every game, a page at a time, filtered by origin and result.
+<!--/* Plan §9: every game, a page at a time, filtered by origin, result and bot.
        A GET form, no JavaScript: the filters live in the address. */-->
 <main class="container history" th:with="h=${history}">
     <h1 th:text="#{history.title}">History</h1>
@@ -25,6 +25,15 @@
                 <option value="" th:text="#{history.all}">All</option>
                 <option th:each="r : ${h.results()}" th:value="${r}" th:selected="${r == h.result}"
                         th:text="#{|history.result.${r}|}">1–0</option>
+            </select>
+        </label>
+        <!--/* Imported games have no bot: choosing one shows only games played here. */-->
+        <label>
+            <span th:text="#{history.bot}">Bot</span>
+            <select name="bot">
+                <option value="" th:text="#{history.allBots}">All bots</option>
+                <option th:each="b : ${h.bots()}" th:value="${b}" th:selected="${b == h.bot}"
+                        th:text="#{|bot.${b}.name|}">Pawn</option>
             </select>
         </label>
         <button class="btn btn-secondary" type="submit" th:text="#{history.filter}">Filter</button>

@@ -47,6 +47,17 @@ class HistoryApiTest {
     }
 
     @Test
+    void filtersByBot() {
+        assertThat(mvc.get().uri("/api/v1/games?bot=PAWN")).bodyJson()
+                .extractingPath("$.total").isEqualTo(1);
+        assertThat(mvc.get().uri("/api/v1/games?bot=PAWN")).bodyJson()
+                .extractingPath("$.games[0].botProfile").isEqualTo("PAWN");
+        // The imported game has no bot, so no bot's list has it.
+        assertThat(mvc.get().uri("/api/v1/games?bot=ROOK")).bodyJson().extractingPath("$.total").isEqualTo(0);
+        assertThat(mvc.get().uri("/api/v1/games?bot=KING")).hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void theBotsComeWithTheRecordAgainstEach() {
         // The game against Pawn is still going; the imported one is no bot's.
         var bots = mvc.get().uri("/api/v1/bots").exchange();

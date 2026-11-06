@@ -173,6 +173,32 @@ class HistoryPageTest {
     }
 
     @Test
+    void filtersByBot() {
+        played(true);
+        played(false);
+        var rook = Game.start(new GameId(UUID.randomUUID()), Color.BLACK, BotProfile.ROOK, Position.initial(), NOW);
+        games.insert(rook);
+        imported();
+
+        assertThat(rows(page("/games?bot=PAWN"))).isEqualTo(2);
+        // Imported games have no bot: they are never in a bot's list.
+        assertThat(rows(page("/games?bot=ROOK"))).isOne();
+        assertThat(page("/games?bot=ROOK")).contains("/games/" + rook.id());
+        assertThat(rows(page("/games?bot=QUEEN"))).isZero();
+        assertThat(rows(page("/games?bot=PAWN&result=IN_PROGRESS"))).isOne();
+    }
+
+    @Test
+    void theBotSelectIsTranslatedAndKeepsItsValue() {
+        assertThat(page("/games?bot=KNIGHT&lang=en"))
+                .contains("<select name=\"bot\">", "<option value=\"\">All bots</option>")
+                .contains("<option value=\"KNIGHT\" selected=\"selected\">Knight</option>", ">Bot</span>");
+        assertThat(page("/games?lang=es"))
+                .contains("<option value=\"\">Todos los bots</option>", "<option value=\"KNIGHT\">Caballo</option>")
+                .doesNotContain("selected=\"selected\">Caballo");
+    }
+
+    @Test
     void pagesKeepTheFilters() {
         for (int i = 0; i < HistoryController.PAGE_SIZE + 3; i++) {
             played(true);
@@ -187,5 +213,7 @@ class HistoryPageTest {
         assertThat(rows(second)).isEqualTo(3);
         assertThat(second).contains("Page 2 of 2", "href=\"/games?page=0&amp;origin=PLAYED\"")
                 .doesNotContain("Older →");
+        assertThat(page("/games?bot=PAWN&result=BLACK_WIN&lang=en"))
+                .contains("href=\"/games?page=1&amp;result=BLACK_WIN&amp;bot=PAWN\"");
     }
 }

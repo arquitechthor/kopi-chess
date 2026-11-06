@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /// The history (plan §9): every game, newest first, a page at a time,
-/// filtered by origin and by result. A plain `GET` form: the filters are in
+/// filtered by origin, by result and by bot. A plain `GET` form: the filters are in
 /// the address, so a filtered page can be bookmarked or shared.
 @Controller
 class HistoryController {
@@ -73,27 +73,31 @@ class HistoryController {
     ///
     /// @param origin   the origin filter, or `null` for all
     /// @param result   the result filter, or `null` for all
+    /// @param bot      the bot filter, or `null` for all
     /// @param previous the previous page's address, `null` on the first
     /// @param next     the next page's address, `null` on the last
     record HistoryPage(List<Row> rows, int page, int totalPages, long total, GameOrigin origin,
-                       GameFilter.ResultFilter result, String previous, String next) {
+                       GameFilter.ResultFilter result, BotProfile bot, String previous, String next) {
 
-        static HistoryPage of(GamePage games, GameOrigin origin, GameFilter.ResultFilter result) {
+        static HistoryPage of(GamePage games, GameOrigin origin, GameFilter.ResultFilter result, BotProfile bot) {
             var page = games.page();
             return new HistoryPage(games.games().stream().map(Row::of).toList(), page, games.totalPages(),
-                    games.total(), origin, result,
-                    page > 0 ? address(page - 1, origin, result) : null,
-                    page + 1 < games.totalPages() ? address(page + 1, origin, result) : null);
+                    games.total(), origin, result, bot,
+                    page > 0 ? address(page - 1, origin, result, bot) : null,
+                    page + 1 < games.totalPages() ? address(page + 1, origin, result, bot) : null);
         }
 
         /// `/games?page=2&origin=PLAYED`: the filters travel with the page.
-        private static String address(int page, GameOrigin origin, GameFilter.ResultFilter result) {
+        private static String address(int page, GameOrigin origin, GameFilter.ResultFilter result, BotProfile bot) {
             var uri = UriComponentsBuilder.fromPath("/games").queryParam("page", page);
             if (origin != null) {
                 uri.queryParam("origin", origin);
             }
             if (result != null) {
                 uri.queryParam("result", result);
+            }
+            if (bot != null) {
+                uri.queryParam("bot", bot);
             }
             return uri.toUriString();
         }
@@ -106,15 +110,20 @@ class HistoryController {
         public List<GameFilter.ResultFilter> results() {
             return List.of(GameFilter.ResultFilter.values());
         }
+
+        public List<BotProfile> bots() {
+            return List.of(BotProfile.values());
+        }
     }
 
     @GetMapping("/games")
     String history(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) GameOrigin origin,
-            @RequestParam(required = false) GameFilter.ResultFilter result, Model model) {
-        var filter = new GameFilter(Optional.ofNullable(origin), Optional.ofNullable(result));
+            @RequestParam(required = false) GameFilter.ResultFilter result,
+            @RequestParam(required = false) BotProfile bot, Model model) {
+        var filter = new GameFilter(Optional.ofNullable(origin), Optional.ofNullable(result), Optional.ofNullable(bot));
         var games = listGames.list(new ListGamesQuery(Math.max(0, page), PAGE_SIZE, filter));
-        model.addAttribute("history", HistoryPage.of(games, origin, result));
+        model.addAttribute("history", HistoryPage.of(games, origin, result, bot));
         return "history";
     }
 }
