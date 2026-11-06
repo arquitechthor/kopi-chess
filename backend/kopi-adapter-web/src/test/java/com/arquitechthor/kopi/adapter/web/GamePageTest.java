@@ -2,10 +2,17 @@ package com.arquitechthor.kopi.adapter.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Fen;
+import com.arquitechthor.kopi.domain.chess.Position;
+import com.arquitechthor.kopi.domain.game.BotProfile;
+import com.arquitechthor.kopi.domain.game.Game;
+import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,5 +232,31 @@ class GamePageTest {
         assertThat(Figurines.of("exd8=Q#")).isEqualTo("exd8=♕#");
         assertThat(Figurines.of("O-O-O")).isEqualTo("O-O-O");
         assertThat(Figurines.of("Kxb2")).isEqualTo("♔xb2");
+    }
+
+    @Test
+    void aCaptureShowsWhoIsAheadInMaterial() {
+        // 1.e4 d5 2.exd5: White is a pawn up. Playing Black, White is at the top.
+        var game = Game.start(new GameId(UUID.randomUUID()), Color.BLACK, BotProfile.PAWN, Position.initial(),
+                        Instant.EPOCH)
+                .play("e2e4", Color.WHITE, Instant.EPOCH).play("d7d5", Color.BLACK, Instant.EPOCH)
+                .play("e4d5", Color.WHITE, Instant.EPOCH);
+        games.insert(game);
+
+        assertThat(gamePage(game.id().toString()))
+                .contains("class=\"material\" role=\"group\" aria-label=\"Material\"")
+                .contains("<span class=\"material-side\">White</span>",
+                        "<span class=\"material-pieces\">♟︎</span>",
+                        "<span class=\"material-points\">+1</span>")
+                .doesNotContain("material-side\">Black");
+        assertThat(mvc.get().uri("/games/{id}?lang=es", game.id().toString())).bodyText()
+                .contains("<span class=\"material-side\">Blancas</span>");
+    }
+
+    @Test
+    void levelMaterialShowsNothing() {
+        var id = newGame("WHITE");
+
+        assertThat(gamePage(id)).doesNotContain("class=\"material\"");
     }
 }
