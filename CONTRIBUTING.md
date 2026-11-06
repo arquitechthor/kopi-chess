@@ -58,7 +58,11 @@ cd backend
    person using it; the body, why. [`CHANGELOG.md`](CHANGELOG.md) is
    generated from these subjects, so write them for its readers.
 3. **A pull request** to `main`, filling in the template. CI must be green:
-   build, all tests, the ArchUnit rules and the Docker image.
+   build, all tests, the ArchUnit rules, the Docker image and a
+   [gitleaks](https://github.com/gitleaks/gitleaks) scan of every commit. The
+   repository is public, so a secret must never reach it, not even in a commit
+   that a later one undoes. To run the scan before pushing:
+   `docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo`.
 4. The maintainer reviews it and merges it with a **merge commit**, so your
    commits stay as they are: make each one make sense on its own.
 
