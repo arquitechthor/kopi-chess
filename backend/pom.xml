@@ -33,6 +33,7 @@
         <module>kopi-adapter-stockfish</module>
         <module>kopi-adapter-bots</module>
         <module>kopi-adapter-openings</module>
+        <module>kopi-adapter-relay</module>
         <module>kopi-bootstrap</module>
         <module>kopi-architecture-tests</module>
         <!-- Preview-feature examples, outside the hexagon: nothing depends on it (ADR-012). -->
@@ -126,6 +127,11 @@
             <dependency>
                 <groupId>com.arquitechthor.kopi</groupId>
                 <artifactId>kopi-adapter-openings</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.arquitechthor.kopi</groupId>
+                <artifactId>kopi-adapter-relay</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

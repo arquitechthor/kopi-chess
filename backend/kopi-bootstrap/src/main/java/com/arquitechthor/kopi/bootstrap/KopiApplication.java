@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.bootstrap;
 
 import com.arquitechthor.kopi.adapter.persistence.PersistenceAdapterConfiguration;
+import com.arquitechthor.kopi.adapter.relay.RelayAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.rest.RestAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.stockfish.StockfishAdapterConfiguration;
 import com.arquitechthor.kopi.adapter.web.WebAdapterConfiguration;
@@ -21,6 +22,7 @@ import org.springframework.context.annotation.Import;
         RestAdapterConfiguration.class,
         PersistenceAdapterConfiguration.class,
         StockfishAdapterConfiguration.class,
+        RelayAdapterConfiguration.class,
         UseCaseConfiguration.class,
         MetricsConfiguration.class,
 })

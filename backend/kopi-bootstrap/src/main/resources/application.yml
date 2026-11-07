@@ -24,6 +24,18 @@ spring:
 # The Stockfish bots (design §7). Values live here, not in code, and are
 # tuned by the calibration of plan §7.3.
 kopi:
+  # Playing online (ADR-019, ADR-020): the Kopi account and the relay, as created by
+  # bootstrap-chess-relay.ps1 in kopi-media-admin (docs/protocolo-rele.md, §1). Not secrets:
+  # the app client is public and uses PKCE. The callback must be registered in that app
+  # client exactly so, which is why Kopi Chess serves on port 8080 for online play.
+  online:
+    login-domain: ${KOPI_ONLINE_LOGIN_DOMAIN:https://eu-south-2yunp5zgur.auth.eu-south-2.amazoncognito.com}
+    client-id: ${KOPI_ONLINE_CLIENT_ID:6fonqj1j1fnaa4ujgk2nf887nv}
+    api: ${KOPI_ONLINE_API:https://api.kopitools.link}
+    web-socket: ${KOPI_ONLINE_WEB_SOCKET:wss://01q3xfi4m6.execute-api.eu-south-2.amazonaws.com/prod}
+    callback: http://localhost:8080/login/oauth2/code/kopi
+    logout-return: http://localhost:8080/
+    timeout: 10s
   stockfish:
     # The engine binary: KOPI_STOCKFISH, or "stockfish" on the PATH (as in the Docker image).
     path: ${KOPI_STOCKFISH:stockfish}

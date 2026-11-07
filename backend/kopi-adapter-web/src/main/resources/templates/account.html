@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{account.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<main class="container">
+    <section class="card account" aria-labelledby="account-title">
+        <span class="eyebrow" th:text="#{account.eyebrow}">Play online</span>
+        <h1 id="account-title" th:text="#{account.title}">Kopi account</h1>
+        <p class="notice-error" role="alert" th:if="${accountError}"
+           th:text="#{|account.error.${accountError}|}">Something went wrong.</p>
+
+        <!--/* Signed out: what the account is for, and the way in. */-->
+        <th:block th:unless="${account.signedIn}">
+            <p th:text="#{account.intro}">To play online against a friend you need a Kopi account.</p>
+            <p class="muted" th:text="#{account.privacy}">Your password never goes through Kopi Chess.</p>
+            <form method="post" th:action="@{/account/login}">
+                <button class="btn btn-primary" type="submit" th:text="#{account.signIn}">Sign in with Kopi</button>
+            </form>
+            <p class="muted">
+                <span th:text="#{account.noAccount}">No account yet?</span>
+                <a href="https://app.kopitools.link" target="_blank" rel="noopener noreferrer"
+                   th:text="#{account.createAccount}">Create one at Kopi</a>
+            </p>
+        </th:block>
+
+        <th:block th:if="${account.signedIn}">
+            <p th:if="${account.email.isPresent()}" th:text="#{account.signedInAs(${account.email.get()})}">Signed in as ana@example.com</p>
+            <p th:unless="${account.email.isPresent()}" th:text="#{account.signedIn}">Signed in with Kopi</p>
+
+            <p class="notice" th:if="${account.pendingApproval}" th:text="#{account.pending}">Your account is waiting for approval.</p>
+            <p class="notice" th:if="${account.unreachable}" th:text="#{account.unreachable}">Kopi cannot be reached right now.</p>
+
+            <!--/* The Kopi id: shown once reserved, or the form to reserve it. */-->
+            <p class="account-id" th:if="${account.kopiId.isPresent()}">
+                <span th:text="#{account.kopiId}">Your Kopi id</span>:
+                <strong th:text="${account.kopiId.get()}">Ana_92</strong>
+            </p>
+            <form class="account-reserve" method="post" th:action="@{/account/kopi-id}"
+                  th:if="${account.kopiId.isEmpty() and !account.pendingApproval and !account.unreachable}">
+                <h2 th:text="#{account.chooseId}">Choose your Kopi id</h2>
+                <p class="muted" th:text="#{account.chooseIdHelp}">Your friends invite you with it.</p>
+                <label class="field">
+                    <span class="field-label" th:text="#{account.kopiId}">Your Kopi id</span>
+                    <input type="text" name="kopiId" required minlength="3" maxlength="20"
+                           pattern="[A-Za-z0-9_]{3,20}" autocomplete="off" th:value="${kopiId}">
+                </label>
+                <button class="btn btn-primary" type="submit" th:text="#{account.reserve}">Reserve it</button>
+            </form>
+
+            <form method="post" th:action="@{/account/logout}">
+                <button class="btn btn-secondary" type="submit" th:text="#{account.signOut}">Sign out</button>
+            </form>
+        </th:block>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -9,6 +9,8 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJob;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJobUseCase;
+import com.arquitechthor.kopi.application.account.KopiAccountService;
+import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
 import com.arquitechthor.kopi.application.game.AgreeDraw;
 import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
@@ -37,6 +39,7 @@ import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.ChessEngine;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.IdGenerator;
 import com.arquitechthor.kopi.application.port.OpeningBook;
 import com.arquitechthor.kopi.domain.game.GameId;
@@ -89,6 +92,11 @@ class UseCaseConfiguration {
     @Bean
     CreateGameUseCase createGame(GameRepository games, BotPlayer bot, IdGenerator ids, Clock clock) {
         return new CreateGame(games, bot, ids, clock);
+    }
+
+    @Bean
+    KopiAccountUseCase kopiAccountUseCase(KopiAccount account) {
+        return new KopiAccountService(account);
     }
 
     @Bean

@@ -368,6 +368,13 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 }
 .field input[type=text]:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
+/* ── Kopi account (ADR-019) ──────────────────────────────── */
+.account { margin: 40px auto 60px; max-width: 640px; display: grid; gap: 14px; }
+.account h1 { font-size: clamp(24px, 3vw, 32px); margin: 0; }
+.account h2 { font-size: 18px; margin: 8px 0 0; }
+.account-reserve { display: grid; gap: 10px; }
+.account-id strong { font-family: var(--font-mono); }
+
 /* ── Import PGN (plan §9) ─────────────────────────────────── */
 .import-form { margin: 40px auto 60px; display: grid; gap: 12px; }
 .import-form h1 { font-size: clamp(24px, 3vw, 32px); margin: 0; }
