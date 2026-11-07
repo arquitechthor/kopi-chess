@@ -27,8 +27,11 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /// Keeping the games here in step with the relay (ADR-020, plan of player
 /// versus player §6), and playing in them.
@@ -58,6 +61,11 @@ public final class OnlineGames {
     private final AnalysisJobQueue analyses;
     private final OnlineEvents events;
     private final Clock clock;
+    /// The invitations each account had at the last sync (`id:status`
+    /// sorted): an invitation lives only in the relay, so a new one, or an
+    /// answer to one of mine, changes nothing here but this, and the online
+    /// page must be told.
+    private final Map<String, String> invitations = new ConcurrentHashMap<>();
 
     public OnlineGames(PvpRelay relay, OnlineGameStore links, GameRepository games, IdGenerator ids,
             AnalysisJobQueue analyses, OnlineEvents events, Clock clock) {
@@ -86,6 +94,14 @@ public final class OnlineGames {
         for (var game : remote) {
             seen.add(game.id());
             sync(game, accountSub);
+        }
+        var current = remote.stream()
+                .filter(game -> game.status() == PvpRelay.Status.INVITED || game.status() == PvpRelay.Status.DECLINED)
+                .map(game -> game.id() + ":" + game.status())
+                .sorted()
+                .collect(Collectors.joining(","));
+        if (!current.equals(invitations.put(accountSub, current))) {
+            events.lobbyChanged();
         }
         // Games in progress here that the relay no longer has, or that have
         // gone cold: over by inactivity.
