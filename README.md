@@ -73,8 +73,9 @@ Testcontainers.
 
 ## Status
 
-✅ **1.0** ([`v1.0.1`](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.1)):
-the seven phases of the plan are done, and anyone can clone, run and use it.
+✅ **1.1** ([`v1.1.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.1.0)):
+the seven phases of the plan are done, plus playing another person at this
+computer or online with a Kopi account; anyone can clone, run and use it.
 What may come next is in [`docs/ideas-futuro.md`](docs/ideas-futuro.md)
 (Spanish), and small tasks to start contributing are the
 [good first issues](https://github.com/arquitechthor/kopi-chess/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).

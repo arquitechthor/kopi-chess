@@ -76,8 +76,9 @@ Testcontainers.
 
 ## Estado
 
-✅ **1.0** ([`v1.0.1`](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.1)):
-las siete fases del plan están hechas, y cualquiera puede clonarlo, levantarlo
+✅ **1.1** ([`v1.1.0`](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.1.0)):
+las siete fases del plan están hechas, más jugar contra otra persona en este
+equipo o en línea con la cuenta Kopi; cualquiera puede clonarlo, levantarlo
 y usarlo. Lo que puede venir después está en
 [`docs/ideas-futuro.md`](docs/ideas-futuro.md), y las tareas pequeñas para
 empezar a contribuir son las
