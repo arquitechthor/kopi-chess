@@ -11,8 +11,9 @@ pruebas.
   (solo se añaden rutas y mensajes), se añadieron el historial en la cuenta
   (§9) y el canal entre dispositivos para la app Android (§8 y §10). Están
   desplegados en AWS y probados contra AWS real
-  (`test-chess-history-devices.ps1` de `kopi-media-admin`, 43 de 43);
-  Kopi Chess todavía no los usa.
+  (`test-chess-history-devices.ps1` de `kopi-media-admin`, 43 de 43).
+  Kopi Chess usa el historial desde la 1.2 ([ADR-021](adr/021-historial-en-la-cuenta.md));
+  el canal entre dispositivos, todavía no.
 - **Cambios:** un cambio que rompa clientes sube la versión. Añadir campos a
   una respuesta no la sube: el cliente ignora lo que no conoce.
 
@@ -378,9 +379,9 @@ Una por cuenta y partida:
   antes la sincronización en ese equipo y avisar de que los demás también
   deben apagarla.
 
-### 9.6 Cómo sincroniza Kopi Chess (orientativo)
+### 9.6 Cómo sincroniza Kopi Chess
 
-Esto lo decidirá su ADR. El relé permite, por ejemplo:
+Lo fija el [ADR-021](adr/021-historial-en-la-cuenta.md) (`HistorySync`):
 
 1. **La primera vez:** bajar todo (`since` vacío) y unir. Lo que solo está
    en un lado se copia al otro: se baja lo que falta y se sube con `rev: 0`

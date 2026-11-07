@@ -38,6 +38,7 @@ import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.GameRepository.GameVersion;
 import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
@@ -287,6 +288,11 @@ class RestAdapterTestApplication {
         @Override
         public synchronized long count(GameFilter filter) {
             return games.values().stream().filter(filter::matches).count();
+        }
+
+        @Override
+        public synchronized List<GameVersion> versions() {
+            return games.values().stream().map(GameVersion::of).toList();
         }
 
         @Override

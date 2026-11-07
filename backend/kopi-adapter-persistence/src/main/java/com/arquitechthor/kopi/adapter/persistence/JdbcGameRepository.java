@@ -6,6 +6,7 @@ import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.GameRepository.GameVersion;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
@@ -140,6 +141,20 @@ public final class JdbcGameRepository implements GameRepository {
     public long count(GameFilter filter) {
         var where = Where.of(filter);
         return where.bind(jdbc.sql("select count(*) from game" + where.sql())).query(Long.class).single();
+    }
+
+    /// Ids and versions only. An online game in progress has a `REMOTE:`
+    /// player (V5) and no result yet.
+    @Override
+    public List<GameVersion> versions() {
+        return jdbc.sql("""
+                select id, version,
+                       not (status = 'IN_PROGRESS'
+                            and (white_player like 'REMOTE:%' or black_player like 'REMOTE:%')) as syncable
+                  from game""")
+                .query((rs, _) -> new GameVersion(new GameId(rs.getObject("id", UUID.class)), rs.getLong("version"),
+                        rs.getBoolean("syncable")))
+                .list();
     }
 
     /// One aggregate query: the person's side is `human_color`, so a win

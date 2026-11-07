@@ -52,6 +52,32 @@ final class KopiApi {
     /// @throws KopiOnlineException with the relay's code, `NOT_SIGNED_IN`
     ///                             or `UNREACHABLE`
     JsonNode call(String method, String path, Object body) {
+        return answer(exchange(method, path, body));
+    }
+
+    /// Like [#call], but an answer `409` with `code` = `conflictCode` comes
+    /// back as such instead of as an exception: the history's
+    /// `REV_CONFLICT` carries the current entry (protocol §9.4).
+    Answer callAllowingConflict(String method, String path, Object body, String conflictCode) {
+        var response = exchange(method, path, body);
+        if (response.statusCode() == 409) {
+            JsonNode node;
+            try {
+                node = json.readTree(response.body());
+            } catch (RuntimeException e) {
+                node = null;
+            }
+            if (node != null && conflictCode.equals(CognitoTokens.text(node, "code"))) {
+                return new Answer(409, node);
+            }
+        }
+        return new Answer(response.statusCode(), answer(response));
+    }
+
+    /// An answer's status and JSON (`null` for `204`).
+    record Answer(int status, JsonNode body) {}
+
+    private HttpResponse<String> exchange(String method, String path, Object body) {
         var session = sessions.load()
                 .orElseThrow(() -> new KopiOnlineException(Problem.NOT_SIGNED_IN, "No Kopi session"));
         if (session.expiresAt().minus(RENEW_BEFORE).isBefore(clock.instant())) {
@@ -65,7 +91,7 @@ final class KopiApi {
                 throw new KopiOnlineException(Problem.NOT_SIGNED_IN, "Kopi does not accept this session");
             }
         }
-        return answer(response);
+        return response;
     }
 
     /// A valid access token for the stored session (renewed if it is about

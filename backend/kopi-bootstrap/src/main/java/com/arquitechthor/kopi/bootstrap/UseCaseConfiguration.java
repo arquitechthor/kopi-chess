@@ -33,15 +33,19 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.history.HistorySync;
+import com.arquitechthor.kopi.application.history.HistoryUseCase;
 import com.arquitechthor.kopi.application.online.OnlineGames;
 import com.arquitechthor.kopi.application.online.OnlineService;
 import com.arquitechthor.kopi.application.online.OnlineUseCase;
 import com.arquitechthor.kopi.application.port.AnalysisEvents;
+import com.arquitechthor.kopi.application.port.AccountHistory;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.ChessEngine;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.HistorySyncStore;
 import com.arquitechthor.kopi.application.port.IdGenerator;
 import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.OnlineEvents;
@@ -145,6 +149,20 @@ class UseCaseConfiguration {
     @Bean
     OnlineSyncWorker onlineSyncWorker(OnlineUseCase online, RelayNotifications notifications) {
         return new OnlineSyncWorker(online, notifications);
+    }
+
+    /// The history in the Kopi account (ADR-021): optional, off by default.
+    @Bean
+    HistoryUseCase historyUseCase(AccountHistory remote, HistorySyncStore store, GameRepository games,
+            AnalysisJobQueue analyses, KopiAccount account, IdGenerator ids, Clock clock) {
+        return new HistorySync(remote, store, games, analyses, account, ids, clock);
+    }
+
+    /// Syncs the history in the background; starts and stops with the
+    /// application (`SmartLifecycle`).
+    @Bean
+    HistorySyncWorker historySyncWorker(HistoryUseCase history) {
+        return new HistorySyncWorker(history);
     }
 
     @Bean

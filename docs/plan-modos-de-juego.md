@@ -67,13 +67,9 @@ Para retomar desde cualquier máquina:
   en [`protocolo-rele.md`](protocolo-rele.md) §8 y §10. Lo que queda (ADR-021,
   `kopi-adapter-remote` y la app) no necesita AWS: se puede hacer en
   cualquier máquina.
-- **Propuesto, sin decidir:** guardar el historial en la cuenta Kopi
-  ([`ideas-futuro.md`](ideas-futuro.md)), antes o después de la app Android.
-  Encaja con ella: el móvil vería las partidas aunque el PC esté apagado. Su
-  parte de AWS **también está hecha** (tabla, rutas `/chess/history` y
-  borrado al eliminar la cuenta; contrato en `protocolo-rele.md` §9). Falta
-  decidirlo, su ADR, el código de Kopi Chess y el aviso en los textos
-  legales de `kopi-web` antes de publicarlo.
+- **Historial en la cuenta Kopi: hecho** (2026-11-07, decidido hacerlo
+  antes de la app Android; [ADR-021](adr/021-historial-en-la-cuenta.md)).
+  Saldrá en la 1.2.0. Los textos legales de `kopi-web` ya lo cuentan.
 
 ---
 
