@@ -35,6 +35,10 @@ unos minutos (compila la aplicación); los siguientes, segundos.
 - **Una cuenta Kopi** (opcional), para jugar en línea: entras en la página de
   Kopi desde *Cuenta Kopi* y eliges tu id de Kopi público. Nunca hace falta
   para jugar aquí.
+- **En línea, contra un amigo**, cada uno desde su Kopi Chess: lo invitas
+  por su id de Kopi, sin reloj (una partida sin jugadas en 30 días la gana
+  quien movió el último). Cada jugada se valida en los dos equipos; el relé
+  que hay en medio no sabe de ajedrez.
 - **Una revisión de cada partida terminada**, en segundo plano: veredicto de
   cada jugada (teoría, la mejor, buena, imprecisión, error, error grave, mate
   perdido), la apertura, la precisión de cada bando y una gráfica de las posibilidades

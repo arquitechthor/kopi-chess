@@ -33,6 +33,10 @@ few minutes (it builds the application); later ones, seconds.
   every move, and you can agree to a draw. Reviewed like any other game.
 - **A Kopi account** (optional), to play online: sign in on Kopi's page from
   *Kopi account* and choose your public Kopi id. Never needed to play here.
+- **Online, against a friend**, each from their own Kopi Chess: invite them
+  by their Kopi id, no clock (a game with no moves for 30 days is won by
+  whoever moved last). Every move is validated on both computers; the relay
+  in between knows no chess.
 - **A review of every finished game**, in the background: a verdict on each
   move (book, best, good, inaccuracy, mistake, blunder, missed mate), the opening,
   accuracy for both sides and a graph of the winning chances.
