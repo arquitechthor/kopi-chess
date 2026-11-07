@@ -62,5 +62,5 @@ mira dentro de las partidas.
   borrada en otro equipo puede volver.
 - Una partida jugada a la vez en dos equipos acaba duplicada en lugar de
   perder jugadas. Es un caso raro, y el historial no pierde nada.
-- La app Android podrá leer el historial de la cuenta sin el PC encendido
-  (decisión D2 de su plan).
+- La app Android no lo usa: desde el móvil no se ve el historial (decisión
+  D2 de su plan, [ADR-022](022-movil-cliente-remoto-del-pc.md)).

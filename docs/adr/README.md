@@ -25,6 +25,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-019](019-id-de-kopi.md) — El id de Kopi y la cuenta Kopi en Kopi Chess
 - [ADR-020](020-rele-de-partidas.md) — Relé de partidas en AWS sin reglas de ajedrez
 - [ADR-021](021-historial-en-la-cuenta.md) — Historial en la cuenta Kopi, opcional
+- [ADR-022](022-movil-cliente-remoto-del-pc.md) — El móvil como cliente remoto del PC
 
 ## Plantilla
 

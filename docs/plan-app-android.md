@@ -1,8 +1,9 @@
 # Plan: app Android (fase F)
 
-- **Estado:** propuesta, con decisiones abiertas (§9). La parte de AWS ya está
-  hecha y probada (2026-11-07); todo lo demás se puede hacer en cualquier
-  máquina.
+- **Estado:** decisiones tomadas (§9), [ADR-022](adr/022-movil-cliente-remoto-del-pc.md)
+  y [protocolo remoto](protocolo-remoto.md) escritos (fase F1). La parte de
+  AWS ya está hecha y probada (2026-11-07); todo lo demás se puede hacer en
+  cualquier máquina.
 - **Fecha:** 2026-11-07, sobre la versión 1.1.0.
 - **Origen:** §11 del [plan de jugador contra jugador](plan-jugador-contra-jugador.md),
   que fija la idea: una app sencilla para jugar desde el móvil contra los bots
@@ -22,8 +23,6 @@
    - elegir bot y color, o retomar una partida en curso;
    - mover; el PC responde con la jugada del bot;
    - abandonar.
-4. **Ver el historial** guardado en la cuenta, aunque el PC esté apagado, si
-   la decisión D2 lo incluye (§9).
 
 ## 2. Qué no hace
 
@@ -32,8 +31,8 @@
   navegador.
 - **No guarda partidas ni las analiza.** Todo ocurre en el PC: bots, reglas,
   Stockfish, guardado e historial.
-- **No borra partidas ni cambia la configuración del PC:** el PC solo acepta
-  la lista blanca de operaciones (§4).
+- **No borra partidas, no cambia la configuración del PC ni enseña el
+  historial** (D2): el PC solo acepta la lista blanca de operaciones (§4).
 - **No enciende el PC a distancia.**
 
 ## 3. Cómo encaja
@@ -57,8 +56,8 @@ bot en la misma respuesta: un ida y vuelta por jugada.
 Un adaptador de entrada nuevo, con su módulo Maven:
 
 - **«Modo servidor»,** apagado por defecto. Se enciende en la página de
-  cuenta (hace falta haber entrado con la cuenta Kopi). Mientras está
-  encendido:
+  cuenta (hace falta haber entrado con la cuenta Kopi) y se recuerda al
+  reiniciar (D7). Mientras está encendido:
   - el PC mantiene una conexión `role=server&name=<nombre del equipo>` con el
     relé (la misma lógica de reconexión y *ping* que `RelayWebSocket`);
   - todas las páginas muestran un aviso visible: «Modo servidor: tu móvil
@@ -77,8 +76,8 @@ Un adaptador de entrada nuevo, con su módulo Maven:
   | `resign` | `Resign` | la partida terminada |
 
   Cualquier otra `op` responde `{ "error": "NOT_ALLOWED" }`. Las respuestas
-  reutilizan los objetos de la API REST (`ApiModel`), para no inventar otro
-  formato.
+  tienen la misma forma que las de la API REST, con sus propios `record`
+  (los adaptadores no se conocen entre sí).
 - **Versión del protocolo remoto** dentro de `payload` (`"v": 1`), aparte de
   la del relé: el relé no mira dentro, y así la app y el PC pueden avisar de
   que hay que actualizar uno de los dos.
@@ -95,17 +94,18 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 
 - **En este repositorio,** en `android-app/` junto a `backend/`, porque
   depende del protocolo y de los casos de uso de Kopi Chess.
-- **Tecnología** (decisión D1): Capacitor + Vite + TypeScript + Chessground
-  (el mismo tablero que la web) + Amplify Auth (SRP con
+- **Tecnología** (D1): Capacitor + Vite + TypeScript, sin React, con
+  Chessground (el mismo tablero que la web) y Amplify Auth (SRP con
   `kopi-chess-mobile-client`, como `kopi-tools-app`).
+- **Identificador** (D4): `com.arquitechthor.kopichess`, nombre «Kopi
+  Chess». **Licencia** (D8): GPL-3.0-or-later; gratis y sin anuncios.
 - **Pantallas:**
   1. Entrar (correo y contraseña; registro y recuperación, en la web de Kopi).
   2. Inicio: «tu PC está conectado» o «no hay ningún PC en modo servidor»,
      con qué hacer para conectarlo.
   3. Elegir bot y color, o retomar una partida.
   4. Tablero: jugadas, turno, abandonar, resultado.
-  5. Historial (si D2).
-- **Idiomas:** inglés y español, como Kopi Chess (decisión D5).
+- **Idiomas** (D5): inglés y español, según el idioma del móvil.
 - **Conexión:** un WebSocket `role=device`; se reconecta al volver la app a
   primer plano y pide `presence` y el estado de la partida.
 - **Pruebas:** unitarias del cliente del canal (Vitest), con un relé falso en
@@ -126,10 +126,12 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 
 ### Fase F1: decisiones y ADR
 
-- [ ] Decisiones de §9 tomadas.
-- [ ] ADR-022: el móvil como cliente remoto del PC, el «modo servidor», la
-      lista blanca y el protocolo remoto (`payload` con `op` y `v`).
-- [ ] `protocolo-remoto.md`: cada `op` con su petición y su respuesta.
+- [x] Decisiones de §9 tomadas (2026-11-07).
+- [x] [ADR-022](adr/022-movil-cliente-remoto-del-pc.md): el móvil como
+      cliente remoto del PC, el «modo servidor», la lista blanca y el
+      protocolo remoto (`payload` con `op` y `v`).
+- [x] [`protocolo-remoto.md`](protocolo-remoto.md): cada `op` con su
+      petición y su respuesta.
 
 ### Fase F2: el PC en modo servidor
 
@@ -143,7 +145,6 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 - [ ] `android-app/` con Capacitor, Vite y Chessground; CI.
 - [ ] Entrar con la cuenta Kopi (Amplify, SRP).
 - [ ] Presencia, elegir PC, elegir bot, jugar, retomar, abandonar.
-- [ ] Historial desde la cuenta (si D2).
 - [ ] Prueba real: una partida completa desde el móvil por 4G.
 
 ### Fase F4: publicación
@@ -173,17 +174,25 @@ Play.
   encendido necesita una ficha y unas instrucciones muy claras, y una cuenta
   de prueba para el revisor.
 
-## 9. Decisiones abiertas
+## 9. Decisiones (tomadas el 2026-11-07)
 
-Cada una con una propuesta. Hasta decidirlas no conviene empezar la fase F3.
-
-| # | Decisión | Propuesta |
+| # | Decisión | Qué se decidió |
 |---|---|---|
-| D1 | Tecnología de la app: Capacitor + web (como Kopi Tools) o nativa en Kotlin (como Kopi Player). | **Capacitor + Vite + TypeScript**, sin React: reutiliza Chessground y el aspecto de la web, y la app es pequeña. |
-| D2 | ¿Ver el historial guardado en la cuenta desde el móvil (aunque el PC esté apagado)? | **Sí, de solo lectura** (lista y repetir la partida), en una versión posterior a la primera si retrasa la publicación. El historial en la cuenta ya está hecho (ADR-021). |
-| D3 | ¿Jugar en línea contra un amigo desde el móvil? | **No en la primera versión.** Se podría más adelante por el mismo canal, con el PC haciendo de cliente del relé. |
-| D4 | Nombre e identificador: «Kopi Chess» y `com.arquitechthor.kopichess`. | **Sí**, como `com.arquitechthor.kopitools` y `com.arquitechthor.kopimediaplayer`. |
-| D5 | Idiomas: inglés y español (como Kopi Chess) o solo español (como las demás apps Kopi). | **Inglés y español**, según el idioma del móvil. |
-| D6 | Versión de la app: la misma que Kopi Chess (se publican juntas) o una propia. | **La misma versión**, etiquetada a la vez: el protocolo remoto los acopla. |
-| D7 | El modo servidor, ¿sigue encendido al reiniciar Kopi Chess? | **Sí, se recuerda**, y el aviso visible lo deja claro. Apagarlo es un clic. |
-| D8 | ¿Precio y anuncios? | **Gratis y sin anuncios**, como el resto de Kopi. |
+| D1 | Tecnología de la app | **Capacitor + Vite + TypeScript**, sin React, con Chessground. |
+| D2 | ¿Ver el historial desde el móvil? | **No.** El móvil solo juega contra los bots del PC. |
+| D3 | ¿Jugar en línea contra un amigo desde el móvil? | **No en la primera versión;** queda documentado para después (§10). |
+| D4 | Nombre e identificador | **«Kopi Chess»**, `com.arquitechthor.kopichess`. |
+| D5 | Idiomas | **Inglés y español**, según el idioma del móvil. |
+| D6 | Versión | **La misma que Kopi Chess,** etiquetadas y publicadas juntas. |
+| D7 | ¿El modo servidor sigue encendido al reiniciar? | **Sí, se recuerda,** con el aviso visible en todas las páginas. |
+| D8 | Precio y licencia | **Gratis, sin anuncios y código libre** (GPL-3.0-or-later, como el resto del repositorio). |
+
+## 10. Después de la primera versión
+
+- **Jugar en línea contra un amigo desde el móvil** (D3). El móvil seguiría
+  hablando solo con su PC: nuevas operaciones del protocolo remoto
+  (`protocolo-remoto.md` §5) que el PC traduce a su cliente del relé de
+  partidas. Así el móvil sigue sin saber de ajedrez, y cada jugada se valida
+  en el PC como ahora.
+- **Publicar también en F-Droid,** al ser código libre, si la app no
+  necesita nada propietario (Amplify es Apache-2.0).
