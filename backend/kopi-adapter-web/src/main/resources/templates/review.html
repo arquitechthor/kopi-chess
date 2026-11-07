@@ -95,7 +95,7 @@
                         <th scope="col"></th>
                         <th scope="col">
                             <span th:text="#{review.accuracy}">Accuracy</span>
-                            <a class="muted" href="https://lichess.org/page/accuracy" th:text="#{review.accuracyNote}">Lichess formula</a>
+                            <a class="muted" href="https://lichess.org/page/accuracy" target="_blank" rel="noopener noreferrer" th:text="#{review.accuracyNote}">Lichess formula</a>
                         </th>
                         <th scope="col" th:each="category : ${r.categories()}">
                             <span th:class="|cat cat-${category}|" th:title="#{|category.${category}|}"
