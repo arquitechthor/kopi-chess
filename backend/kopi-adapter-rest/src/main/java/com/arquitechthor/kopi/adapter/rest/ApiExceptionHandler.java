@@ -6,8 +6,10 @@ import com.arquitechthor.kopi.application.game.InvalidUciException;
 import com.arquitechthor.kopi.application.game.NotALocalGameException;
 import com.arquitechthor.kopi.application.game.PgnTooLargeException;
 import com.arquitechthor.kopi.application.game.VersionMismatchException;
+import com.arquitechthor.kopi.application.online.OnlineGameDesyncedException;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
+import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.InvalidPgnException;
 import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
@@ -168,6 +170,32 @@ class ApiExceptionHandler {
     @ExceptionHandler
     ProblemDetail missingVersion(Versions.MissingVersionException e, HttpServletRequest request) {
         return problem(HttpStatus.PRECONDITION_REQUIRED, "PRECONDITION_REQUIRED", request);
+    }
+
+    /// The backend Kopi refused or could not be reached (phase D): the
+    /// relay's code, with the closest status.
+    @ExceptionHandler
+    ProblemDetail kopiOnline(KopiOnlineException e, HttpServletRequest request) {
+        var status = switch (e.problem()) {
+            case NOT_SIGNED_IN -> HttpStatus.UNAUTHORIZED;
+            case PENDING_APPROVAL, NO_KOPI_ID, NOT_ALLOWED -> HttpStatus.FORBIDDEN;
+            case KOPI_ID_NOT_FOUND, GAME_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case INVALID_KOPI_ID, RESERVED_KOPI_ID, CANNOT_INVITE_YOURSELF, INVALID_FEN, LOGIN_FAILED ->
+                HttpStatus.BAD_REQUEST;
+            case KOPI_ID_TAKEN, ALREADY_HAS_KOPI_ID, WRONG_STATUS, NOT_YOUR_TURN, WRONG_PLY, NO_DRAW_OFFER,
+                 TOO_MANY_MOVES -> HttpStatus.CONFLICT;
+            case PROTOCOL_MISMATCH -> HttpStatus.UPGRADE_REQUIRED;
+            case TOO_MANY_REQUESTS -> HttpStatus.TOO_MANY_REQUESTS;
+            case UNREACHABLE, OTHER -> HttpStatus.BAD_GATEWAY;
+        };
+        var problem = problem(status, "KOPI_ONLINE", request, e.problem().name());
+        problem.setProperty("onlineProblem", e.problem().name());
+        return problem;
+    }
+
+    @ExceptionHandler
+    ProblemDetail desynced(OnlineGameDesyncedException e, HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, "DESYNCED", request);
     }
 
     @ExceptionHandler

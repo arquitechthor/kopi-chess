@@ -92,6 +92,24 @@ if (element) {
     }
   }
 
+  // Online: when the relay says the friend has moved (or offered a draw,
+  // or resigned), fetch the part of the page that changes, as after a move.
+  const events = element.dataset.events;
+  if (events) {
+    const source = new EventSource(events);
+    source.addEventListener('changed', async () => {
+      try {
+        const response = await fetch(element.dataset.live, { headers: { Accept: 'text/html' } });
+        if (!response.ok) return;
+        document.getElementById('game-live').outerHTML = await response.text();
+        board.set(config());
+        form.elements.version.value = state().version;
+      } catch {
+        // the next notification, or a reload, will catch up
+      }
+    });
+  }
+
   function chosen(from, to) {
     const moves = JSON.parse(state().legalMoves).filter((uci) => uci.startsWith(from + to));
     if (moves.length === 1) {

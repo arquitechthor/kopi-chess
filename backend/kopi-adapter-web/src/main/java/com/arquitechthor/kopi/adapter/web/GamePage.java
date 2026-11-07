@@ -161,6 +161,14 @@ record GamePage(
         return rows;
     }
 
+    /// The friend's Kopi id in an online game; else `null`.
+    static String opponent(GameView view) {
+        if (view.mode() != GameMode.ONLINE) {
+            return null;
+        }
+        return Players.name(view.player(view.humanColor().orElseThrow().opposite()));
+    }
+
     static String statusKey(GameView view) {
         if (view.outcome().isPresent()) {
             // Exhaustive over the sealed GameOutcome: every ending needs a
@@ -183,14 +191,20 @@ record GamePage(
         if (view.isHumanToMove()) {
             return view.inCheck() ? "status.yourTurnInCheck" : "status.yourTurn";
         }
-        return "status.botToMove";
+        return view.mode() == GameMode.ONLINE ? "status.friendToMove" : "status.botToMove";
     }
 
     /// The argument of [#statusKey]'s message: the name of the person to
     /// move between two people here, `null` otherwise.
     static String statusArg(GameView view) {
-        return view.mode() == GameMode.LOCAL && view.outcome().isEmpty()
-                ? Players.name(view.player(view.sideToMove())) : null;
+        if (view.outcome().isPresent()) {
+            return null;
+        }
+        return switch (view.mode()) {
+            case LOCAL -> Players.name(view.player(view.sideToMove()));
+            case ONLINE -> opponent(view);
+            case AGAINST_BOT, IMPORTED -> null;
+        };
     }
 
     /// The players of a game without a bot (see [Players]): an imported
@@ -199,7 +213,8 @@ record GamePage(
     static String players(GameView view) {
         return switch (view.mode()) {
             case IMPORTED -> Players.of(view.pgnTags());
-            case LOCAL, ONLINE -> Players.local(view.white(), view.black());
+            case LOCAL -> Players.local(view.white(), view.black());
+            case ONLINE -> opponent(view);
             case AGAINST_BOT -> null;
         };
     }

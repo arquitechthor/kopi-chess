@@ -375,15 +375,30 @@ principio a fin; una jugada con número repetido o fuera de turno se rechaza.
 
 ### Fase D: Kopi Chess en línea
 
-- [ ] `kopi-adapter-relay` (`PvpRelay`), con la versión del protocolo.
-- [ ] Casos de uso: invitar, aceptar, recibir y validar, sincronizar al
+- [x] `kopi-adapter-relay` (`PvpRelay` por HTTP y avisos por WebSocket con
+      reconexión), con la versión del protocolo.
+- [x] Casos de uso: invitar, aceptar, recibir y validar, sincronizar al
       abrir, tablas, abandonar, confirmar el final al relé, terminar por
-      inactividad a los 30 días; marca de partida desincronizada.
-- [ ] Páginas: «Contra un amigo», bandeja de invitaciones, jugada del rival
-      por SSE.
-- [ ] API REST equivalente.
-- [ ] Prueba E2E con dos navegadores y dos cuentas de prueba contra un
-      entorno del relé (o un relé falso en las pruebas).
+      inactividad a los 30 días; marca de partida desincronizada
+      (`OnlineGames`, `OnlineService`; tabla `online_game`, V7). Sincroniza
+      al recibir un aviso y, por si se pierde, cada 2 minutos
+      (`OnlineSyncWorker`).
+- [x] Páginas: «Jugar en línea» (invitar, invitaciones, partidas), jugada
+      del rival por SSE en la página de la partida, ofertas de tablas.
+- [x] API REST equivalente (`/api/v1/online`, `…/draw-offer|accept|decline`).
+- [x] Prueba E2E: `TwoComputersTest` juega con **dos Kopi Chess contra un
+      relé falso** que aplica las reglas del protocolo (invitar, aceptar,
+      jugadas validadas al otro lado, desincronización, mate, abandono,
+      tablas, inactividad con el reloj de las pruebas, otra cuenta).
+- [x] **Prueba real (2026-11-07)**, con Kopi Chess de esta rama en
+      `localhost:8080` contra el relé y Cognito de verdad: el dueño entró con
+      su cuenta (`guzman6001`) por la página de login de Kopi; una cuenta
+      sintética (`KopiTester`, manejada invocando las Lambdas) le invitó; la
+      invitación apareció sola por el WebSocket; aceptó y jugaron 1. e4 e5 2.
+      ♘f3 ♘c6 (las jugadas del rival llegaron al tablero abierto por SSE, con
+      su Zobrist comprobado); ofreció tablas y el rival las rechazó; el rival
+      abandonó y la partida terminó sola en su pantalla, se confirmó y el relé
+      la borró. Falta repetirla con dos cuentas reales en dos equipos.
 
 **Aceptación:** dos personas en dos PCs juegan una partida con los dos
 conectados y otra por correspondencia (cerrando la app entre jugadas), y

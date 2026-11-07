@@ -109,7 +109,7 @@ public record GameView(
         return color == Color.WHITE ? white : black;
     }
 
-    static GameView of(Game game) {
+    public static GameView of(Game game) {
         var position = game.currentPosition();
         var moves = game.moves().stream()
                 .map(played -> new PlayedMoveView(played.ply(), played.move().toUci(), played.san()))

@@ -3,6 +3,9 @@ package com.arquitechthor.kopi.adapter.web;
 import com.arquitechthor.kopi.application.game.AgreeDrawCommand;
 import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
+import com.arquitechthor.kopi.application.online.OnlineGameDesyncedException;
+import com.arquitechthor.kopi.application.online.OnlineUseCase;
+import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.CreateLocalGameCommand;
 import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
@@ -38,6 +41,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /// The game pages. Classic forms with Post/Redirect/Get: a move is a `POST`
@@ -67,10 +72,14 @@ class GameController {
     private final ResignUseCase resign;
     private final DeleteGameUseCase deleteGame;
     private final MessageSource messages;
+    private final OnlineUseCase online;
+    private final SseOnlineEvents events;
 
     GameController(CreateGameUseCase createGame, CreateLocalGameUseCase createLocalGame, AgreeDrawUseCase agreeDraw,
             GetGameUseCase getGame, PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
-            MessageSource messages) {
+            MessageSource messages, OnlineUseCase online, SseOnlineEvents events) {
+        this.online = online;
+        this.events = events;
         this.createGame = createGame;
         this.createLocalGame = createLocalGame;
         this.agreeDraw = agreeDraw;
@@ -144,7 +153,51 @@ class GameController {
             return "game-office";
         }
         model.addAttribute("game", GamePage.of(game));
+        model.addAttribute("online", online.status(game.id()).orElse(null));
         return "game";
+    }
+
+    /// The part of the page that changes, for `board.js` when the relay
+    /// says the friend has moved (or offered a draw, or resigned).
+    @GetMapping("/games/{id}/live")
+    String live(@PathVariable UUID id, Model model) {
+        var game = getGame.get(new GameId(id));
+        model.addAttribute("game", GamePage.of(game));
+        model.addAttribute("online", online.status(game.id()).orElse(null));
+        return "game :: live";
+    }
+
+    /// Server-Sent Events for an online game: `changed` when the relay
+    /// brings news of it.
+    @GetMapping("/games/{id}/events")
+    @ResponseBody
+    SseEmitter follow(@PathVariable UUID id) {
+        return events.subscribe(new GameId(id));
+    }
+
+    /// Online: offer a draw (accepted at once if the friend had offered one).
+    @PostMapping("/games/{id}/draw-offer")
+    String offerDraw(@PathVariable UUID id, RedirectAttributes redirect) {
+        return onlineAction(id, redirect, () -> online.offerDraw(new GameId(id)));
+    }
+
+    @PostMapping("/games/{id}/draw-accept")
+    String acceptDraw(@PathVariable UUID id, RedirectAttributes redirect) {
+        return onlineAction(id, redirect, () -> online.acceptDraw(new GameId(id)));
+    }
+
+    @PostMapping("/games/{id}/draw-decline")
+    String declineDraw(@PathVariable UUID id, RedirectAttributes redirect) {
+        return onlineAction(id, redirect, () -> online.declineDraw(new GameId(id)));
+    }
+
+    private static String onlineAction(UUID id, RedirectAttributes redirect, Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException e) {
+            redirect.addFlashAttribute(ERROR, refusal(e));
+        }
+        return "redirect:/games/" + id;
     }
 
     @PostMapping("/games/{id}/moves")
@@ -172,6 +225,7 @@ class GameController {
             model.addAttribute(ERROR, refusal(e));
             model.addAttribute("game", GamePage.of(getGame.get(gameId)));
         }
+        model.addAttribute("online", online.status(gameId).orElse(null));
         return "game :: live";
     }
 
@@ -213,6 +267,9 @@ class GameController {
             case VersionMismatchException _, ConcurrentGameUpdateException _ -> "VERSION_MISMATCH";
             case BotUnavailableException _ -> "BOT_UNAVAILABLE";
             case NotALocalGameException _ -> "NOT_A_LOCAL_GAME";
+            // Online (phase D): the relay's refusals, and a game out of step.
+            case KopiOnlineException online -> "ONLINE." + online.problem();
+            case OnlineGameDesyncedException _ -> "DESYNCED";
             default -> throw e;
         };
     }
