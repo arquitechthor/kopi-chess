@@ -354,10 +354,16 @@ prueba de extremo a extremo invoca las Lambdas con dos cuentas sintéticas
 contra DynamoDB real (56 comprobaciones, incluida una jugada repetida y otra
 fuera de turno), y con `curl` se comprobó que API Gateway rechaza peticiones
 sin *token* o con uno no válido (`401`) y que el WebSocket rechaza conexiones
-sin *token* (`401`) o con otra versión del protocolo (`426`). **Falta probar
-con una cuenta real** (login, *token* de verdad en HTTP y WebSocket, avisos):
-se hará con el `kopi-adapter-relay` de la fase D, o antes con `curl` y un
-*token* sacado a mano del login.
+sin *token* (`401`) o con otra versión del protocolo (`426`).
+
+**Prueba con una cuenta real (2026-11-07), en verde:** login en la página
+gestionada con PKCE y cambio del código por los *tokens*; renovación con el
+*refresh token*; las rutas con el *token* real; **aislamiento**: el mismo
+*token* da `401` en `/notes` y en `/study/*`; WebSocket conectado con ese
+*token* (`ping` → `pong`); y una partida contra una cuenta sintética en la que
+llegaron todos los avisos (`invited`, `accepted`, `move`, `resigned`) en unos
+100 ms, hasta borrarse del relé tras el `ack`. La cuenta del dueño tiene el id
+de Kopi `guzman6001`.
 
 **Aceptación:** con dos cuentas de prueba y `curl`, se juega una partida de
 principio a fin; una jugada con número repetido o fuera de turno se rechaza.
