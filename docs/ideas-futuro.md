@@ -73,7 +73,8 @@ están en [`plan-modos-de-juego.md`](plan-modos-de-juego.md).
   solo pasan por el relé mientras se juegan. Esto lo cambiaría (de forma
   opcional), así que necesita su ADR.
 - **Cómo (estimación del 2026-11-07):**
-  - **AWS** (en la máquina con acceso, 1–2 días): tabla
+  - **AWS: hecho el 2026-11-07** y probado contra AWS real; contrato en
+    [`protocolo-rele.md`](protocolo-rele.md) §9. Tabla
     `kopi_chess_history` (una fila por cuenta y partida: jugadas, jugadores,
     resultado, fechas, versión), tres Lambdas (subir cambios, bajar cambios
     desde una marca, borrar) con el mismo autorizador `kopi-chess-authorizer`,
