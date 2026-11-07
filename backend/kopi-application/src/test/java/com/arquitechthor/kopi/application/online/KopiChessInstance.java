@@ -31,6 +31,7 @@ final class KopiChessInstance {
     final MemoryLinks links = new MemoryLinks();
     final InMemoryAnalysisJobQueue analyses = new InMemoryAnalysisJobQueue();
     final List<GameId> changed = new ArrayList<>();
+    int lobbyChanges;
     final OnlineService online;
     private final PlayMove playMove;
     private final Resign resign;
@@ -47,7 +48,9 @@ final class KopiChessInstance {
             }
 
             @Override
-            public void lobbyChanged() {}
+            public void lobbyChanged() {
+                lobbyChanges++;
+            }
         };
         var account = new FixedAccount(this, kopiId);
         var onlineGames = new OnlineGames(relay.forAccount(sub), links, games,
