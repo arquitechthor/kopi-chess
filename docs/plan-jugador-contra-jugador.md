@@ -193,10 +193,11 @@ Lambdas pequeñas en el API Gateway compartido (`api.kopitools.link`), con el
   terminar nueva. Las partidas existentes pasan a `Local` contra `Bot`.
 - **Nuevo `kopi-adapter-relay`:** implementa `PvpRelay` y `KopiAccount` con
   HTTP y WebSocket hacia el backend Kopi.
-- **Seguridad (`kopi-bootstrap`):** Spring Security `oauth2Login` con un
-  **cliente de aplicación nuevo** en el User Pool de Kopi (*managed login*,
-  PKCE, callback a `http://localhost:8080/…`). Los *tokens* se guardan en la
-  base de datos local. El cliente que usan las otras apps no se toca.
+- **Seguridad:** un **cliente de aplicación nuevo** en el User Pool de Kopi
+  (*managed login*, PKCE, callback a `http://localhost:8080/…`), con el flujo
+  hecho en `kopi-adapter-relay` sin Spring Security (ADR-019). Los *tokens* se
+  guardan en la base de datos local. El cliente que usan las otras apps no se
+  toca.
 - **REST:** las mismas operaciones en `/api/v1`, para scripts y una futura
   app Android.
 
@@ -331,8 +332,10 @@ analizan; las partidas contra bots y las importadas siguen igual.
 - [x] Cliente de aplicación nuevo en el User Pool, con callback a
       `localhost` (`kopi-chess-client`; valores en
       [`protocolo-rele.md`](protocolo-rele.md) §1).
-- [ ] Kopi Chess: «Entrar con Kopi» (`oauth2Login`), *tokens* guardados en
-      local, pantalla para crear el id. Puerto `KopiAccount`.
+- [x] Kopi Chess: «Entrar con Kopi» (PKCE en `kopi-adapter-relay`, sin
+      Spring Security), *tokens* guardados en local (V6, `kopi_session`),
+      página `/account` para crear el id. Puertos `KopiAccount` y
+      `KopiSessionStore`.
 
 **Aceptación:** entro con mi cuenta Kopi desde mi Kopi Chess local y reservo
 un id que nadie más puede tener.

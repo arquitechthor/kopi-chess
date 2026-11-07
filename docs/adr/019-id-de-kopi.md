@@ -26,8 +26,13 @@ secreto.
   de Kopi:
   - Público, **sin secreto**, con *Authorization Code* + PKCE y la página de
     login gestionada de Cognito. La contraseña nunca pasa por Kopi Chess.
-  - Vuelta a `http://localhost:8080/login/oauth2/code/kopi` (la ruta por
-    defecto de `oauth2Login` de Spring Security con el registro `kopi`).
+  - Vuelta a `http://localhost:8080/login/oauth2/code/kopi`.
+  - **Sin Spring Security** (actualizado el 2026-11-07, al implementarlo):
+    el flujo es corto (una redirección, un intercambio de código, renovar) y
+    lo hace `kopi-adapter-relay` con el `HttpClient` del JDK, como las webs
+    de estudio lo hacen en JavaScript. Spring Security traería CSRF a todos
+    los formularios, justo lo que ADR-016 evitó. El verificador PKCE espera
+    en memoria, unido al `state`, como mucho 10 minutos.
   - *Scopes* `openid` y `email`; *access token* de 60 min y *refresh token* de
     30 días. Kopi Chess guarda los *tokens* en su base de datos local y
     renueva el de acceso con el de refresco.

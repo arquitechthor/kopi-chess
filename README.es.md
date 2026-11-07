@@ -32,6 +32,9 @@ unos minutos (compila la aplicación); los siguientes, segundos.
 - **Dos personas en este equipo**: cada una pone su nombre, el tablero gira
   después de cada jugada y se pueden acordar tablas. Se revisa como cualquier
   otra partida.
+- **Una cuenta Kopi** (opcional), para jugar en línea: entras en la página de
+  Kopi desde *Cuenta Kopi* y eliges tu id de Kopi público. Nunca hace falta
+  para jugar aquí.
 - **Una revisión de cada partida terminada**, en segundo plano: veredicto de
   cada jugada (teoría, la mejor, buena, imprecisión, error, error grave, mate
   perdido), la apertura, la precisión de cada bando y una gráfica de las posibilidades
