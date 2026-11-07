@@ -56,7 +56,8 @@ class HistoryController {
         static Row of(GameSummary game) {
             var players = switch (game.mode()) {
                 case IMPORTED -> Players.of(game.pgnTags());
-                case LOCAL, ONLINE -> Players.local(game.white(), game.black());
+                case LOCAL -> Players.local(game.white(), game.black());
+                case ONLINE -> Players.name(game.player(game.humanColor().orElseThrow().opposite()));
                 case AGAINST_BOT -> null;
             };
             return new Row(game.id().toString(), game.createdAt(), game.botProfile().orElse(null),

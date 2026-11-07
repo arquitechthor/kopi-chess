@@ -72,6 +72,17 @@
         </div>
     </section>
 
+    <!--/* Against a friend online (phase D): the online page does the rest. */-->
+    <section id="online-game" aria-labelledby="online-game-title">
+        <div class="container">
+            <div class="card new-game">
+                <h2 id="online-game-title" th:text="#{online.homeTitle}">Against a friend, online</h2>
+                <p class="muted" th:text="#{online.homeIntro}">Each one from their own Kopi Chess.</p>
+                <a class="btn btn-primary" th:href="@{/online}" th:text="#{online.homeButton}">Play online</a>
+            </div>
+        </div>
+    </section>
+
     <!--/* Two people taking turns at this computer (ADR-018). */-->
     <section id="local-game" aria-labelledby="local-game-title">
         <div class="container">
@@ -116,7 +127,8 @@
                         <td><a th:href="@{/games/{id}(id=${summary.id})}"
                                th:text="${#temporals.format(summary.createdAt, #messages.msg('recent.dateFormat'))}">23/10/2026 12:00</a></td>
                         <td th:text="${summary.botProfile.isPresent()} ? #{|bot.${summary.botProfile.get()}.name|}
-                                     : (${summary.mode.name() == 'LOCAL'} ? |${summary.white.get().name()} – ${summary.black.get().name()}| : #{recent.imported})">Pawn</td>
+                                     : (${summary.mode.name() == 'LOCAL'} ? |${summary.white.get().name()} – ${summary.black.get().name()}|
+                                     : (${summary.mode.name() == 'ONLINE'} ? ${summary.player(summary.humanColor.get().opposite()).get().kopiId()} : #{recent.imported}))">Pawn</td>
                         <td th:text="${summary.humanColor.isPresent()} ? #{|color.${summary.humanColor.get()}|} : '—'">White</td>
                         <td th:text="${(summary.plies + 1) / 2}">12</td>
                         <td th:text="${summary.result.isPresent()} ? #{|result.${summary.result.get()}|} : #{result.IN_PROGRESS}">In progress</td>

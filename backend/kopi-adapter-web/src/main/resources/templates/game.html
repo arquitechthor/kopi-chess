@@ -11,7 +11,10 @@
     <div class="board-column" role="region" th:aria-label="#{game.board}">
         <!--/* The position and legal moves are in #board-state, in the panel below,
                so a move can update both without reloading the page. */-->
-        <div id="board" class="board" th:data-orientation="${game.orientation}"></div>
+        <!--/* Online, the page listens for the friend's moves (data-events, Server-Sent Events). */-->
+        <div id="board" class="board" th:data-orientation="${game.orientation}"
+             th:data-events="${game.mode.name() == 'ONLINE' and !game.finished} ? @{/games/{id}/events(id=${game.id})}"
+             th:data-live="@{/games/{id}/live(id=${game.id})}"></div>
 
         <form id="move-form" method="post" th:action="@{/games/{id}/moves(id=${game.id})}"
               th:data-live-action="@{/games/{id}/live-moves(id=${game.id})}">
@@ -33,6 +36,7 @@
     <aside class="game-panel card">
         <span class="eyebrow" th:if="${game.mode.name() == 'AGAINST_BOT'}" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
         <span class="eyebrow" th:if="${game.mode.name() == 'LOCAL'}" th:text="#{game.local(${game.players})}">Two people · Ana – Luis</span>
+        <span class="eyebrow" th:if="${game.mode.name() == 'ONLINE'}" th:text="#{game.online(${game.players})}">Online · against luis</span>
         <span class="eyebrow" th:if="${game.mode.name() == 'IMPORTED'}"
               th:text="${game.players.isEmpty()} ? #{game.importedAnonymous} : #{game.imported(${game.players})}">Imported game</span>
 
@@ -50,9 +54,16 @@
                  th:data-legal-moves="${game.legalMovesJson}"
                  th:data-last-move="${game.lastMove}"
                  th:data-version="${game.version}"
-                 th:data-thinking="${game.mode.name() == 'LOCAL'} ? #{status.sending} : #{status.botToMove}"></div>
+                 th:data-thinking="${game.mode.name() == 'AGAINST_BOT'} ? #{status.botToMove} : #{status.sending}"></div>
             <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}(${game.statusArg})}">Your move</h1>
             <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
+            <!--/* Online: a game out of step, and the draw offers (ADR-020). */-->
+            <p class="notice-error" role="alert" th:if="${online != null and online.desynced}"
+               th:text="#{online.desyncedNotice}">This game is out of step with your friend's.</p>
+            <p class="notice" th:if="${online != null and online.drawOffered()}"
+               th:text="#{online.drawOffered(${online.opponentKopiId})}">luis offers a draw.</p>
+            <p class="muted" th:if="${online != null and online.drawPending()}"
+               th:text="#{online.drawPending}">You offered a draw.</p>
 
             <!--/* Who is ahead in material, counted in Java (MaterialBalance), not here. */-->
             <div class="material" role="group" th:aria-label="#{game.material}" th:unless="${#lists.isEmpty(game.material)}">
@@ -79,6 +90,18 @@
                     <button class="btn btn-secondary" type="submit"
                             th:text="${game.toMoveName != null} ? #{game.resignLocal(${game.toMoveName})} : #{game.resign}">Resign</button>
                 </form>
+                <th:block th:if="${online != null and !game.finished and !online.desynced}">
+                    <form method="post" th:action="@{/games/{id}/draw-accept(id=${game.id})}" th:if="${online.drawOffered()}">
+                        <button class="btn btn-primary" type="submit" th:text="#{online.acceptDraw}">Accept the draw</button>
+                    </form>
+                    <form method="post" th:action="@{/games/{id}/draw-decline(id=${game.id})}" th:if="${online.drawOffered()}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{online.declineDraw}">Decline</button>
+                    </form>
+                    <form method="post" th:action="@{/games/{id}/draw-offer(id=${game.id})}"
+                          th:unless="${online.drawOffered() or online.drawPending()}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{online.offerDraw}">Offer a draw</button>
+                    </form>
+                </th:block>
                 <!--/* Two people here agree to a draw on the spot (ADR-018). */-->
                 <form method="post" th:action="@{/games/{id}/draw(id=${game.id})}"
                       th:if="${game.mode.name() == 'LOCAL' and !game.finished}">

@@ -3,14 +3,14 @@ package com.arquitechthor.kopi.bootstrap;
 import com.arquitechthor.kopi.adapter.bots.KopiBots;
 import com.arquitechthor.kopi.adapter.openings.LichessOpeningBook;
 import com.arquitechthor.kopi.adapter.stockfish.StockfishBots;
+import com.arquitechthor.kopi.application.account.KopiAccountService;
+import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
 import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJob;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJobUseCase;
-import com.arquitechthor.kopi.application.account.KopiAccountService;
-import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
 import com.arquitechthor.kopi.application.game.AgreeDraw;
 import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
@@ -33,15 +33,22 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.online.OnlineGames;
+import com.arquitechthor.kopi.application.online.OnlineService;
+import com.arquitechthor.kopi.application.online.OnlineUseCase;
 import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
 import com.arquitechthor.kopi.application.port.ChessEngine;
 import com.arquitechthor.kopi.application.port.GameRepository;
-import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.IdGenerator;
+import com.arquitechthor.kopi.application.port.KopiAccount;
+import com.arquitechthor.kopi.application.port.OnlineEvents;
+import com.arquitechthor.kopi.application.port.OnlineGameStore;
 import com.arquitechthor.kopi.application.port.OpeningBook;
+import com.arquitechthor.kopi.application.port.PvpRelay;
+import com.arquitechthor.kopi.application.port.RelayNotifications;
 import com.arquitechthor.kopi.domain.game.GameId;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
@@ -110,13 +117,34 @@ class UseCaseConfiguration {
     }
 
     @Bean
-    PlayMoveUseCase playMove(GameRepository games, BotPlayer bot, AnalysisJobQueue analyses, Clock clock) {
-        return new PlayMove(games, bot, analyses, clock);
+    PlayMoveUseCase playMove(GameRepository games, BotPlayer bot, AnalysisJobQueue analyses, Clock clock,
+            OnlineGames online) {
+        return new PlayMove(games, bot, analyses, clock, online);
     }
 
     @Bean
-    ResignUseCase resign(GameRepository games, AnalysisJobQueue analyses, Clock clock) {
-        return new Resign(games, analyses, clock);
+    ResignUseCase resign(GameRepository games, AnalysisJobQueue analyses, Clock clock, OnlineGames online) {
+        return new Resign(games, analyses, clock, online);
+    }
+
+    /// Online play (phase D): keeping the games here in step with the relay.
+    @Bean
+    OnlineGames onlineGames(PvpRelay relay, OnlineGameStore links, GameRepository games, IdGenerator ids,
+            AnalysisJobQueue analyses, OnlineEvents events, Clock clock) {
+        return new OnlineGames(relay, links, games, ids, analyses, events, clock);
+    }
+
+    @Bean
+    OnlineUseCase onlineUseCase(OnlineGames online, KopiAccount account, KopiAccountUseCase accounts,
+            GameRepository games, OnlineEvents events) {
+        return new OnlineService(online, account, accounts, games, events);
+    }
+
+    /// Syncs with the relay in the background; starts and stops with the
+    /// application (`SmartLifecycle`).
+    @Bean
+    OnlineSyncWorker onlineSyncWorker(OnlineUseCase online, RelayNotifications notifications) {
+        return new OnlineSyncWorker(online, notifications);
     }
 
     @Bean

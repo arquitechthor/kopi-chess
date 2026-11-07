@@ -68,6 +68,19 @@ final class KopiApi {
         return answer(response);
     }
 
+    /// A valid access token for the stored session (renewed if it is about
+    /// to expire), for the WebSocket, which cannot renew it on a `401`.
+    ///
+    /// @throws KopiOnlineException `NOT_SIGNED_IN`, `UNREACHABLE`
+    String accessToken() {
+        var session = sessions.load()
+                .orElseThrow(() -> new KopiOnlineException(Problem.NOT_SIGNED_IN, "No Kopi session"));
+        if (session.expiresAt().minus(RENEW_BEFORE).isBefore(clock.instant())) {
+            session = renew(session);
+        }
+        return session.accessToken();
+    }
+
     /// A new access token for `session`, stored; forgets the session if
     /// the refresh token no longer works.
     private StoredSession renew(StoredSession session) {

@@ -2,6 +2,7 @@ package com.arquitechthor.kopi.adapter.relay;
 
 import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.KopiSessionStore;
+import com.arquitechthor.kopi.application.port.PvpRelay;
 import java.net.http.HttpClient;
 import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -23,9 +24,28 @@ public class RelayAdapterConfiguration {
     private final JsonMapper json = JsonMapper.builder().build();
 
     @Bean
-    KopiAccount kopiAccount(RelayProperties properties, KopiSessionStore sessions, Clock clock) {
-        var tokens = new CognitoTokens(http, json, properties);
-        return new RelayKopiAccount(tokens, new KopiApi(http, json, properties, sessions, tokens, clock), sessions,
-                clock);
+    CognitoTokens cognitoTokens(RelayProperties properties) {
+        return new CognitoTokens(http, json, properties);
+    }
+
+    @Bean
+    KopiApi kopiApi(RelayProperties properties, KopiSessionStore sessions, CognitoTokens tokens, Clock clock) {
+        return new KopiApi(http, json, properties, sessions, tokens, clock);
+    }
+
+    @Bean
+    KopiAccount kopiAccount(CognitoTokens tokens, KopiApi api, KopiSessionStore sessions, Clock clock) {
+        return new RelayKopiAccount(tokens, api, sessions, clock);
+    }
+
+    @Bean
+    PvpRelay pvpRelay(KopiApi api) {
+        return new RelayPvp(api);
+    }
+
+    /// Closed on shutdown (`close()` is inferred), which stops its thread.
+    @Bean
+    RelayWebSocket relayNotifications(RelayProperties properties, KopiApi api) {
+        return new RelayWebSocket(http, json, properties, api);
     }
 }

@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.adapter.rest;
 
+import com.arquitechthor.kopi.application.account.AccountView;
 import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
@@ -26,6 +27,8 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.online.LobbyView;
+import com.arquitechthor.kopi.application.online.OnlineUseCase;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
@@ -35,6 +38,7 @@ import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
 import com.arquitechthor.kopi.domain.game.BotProfile;
@@ -144,6 +148,84 @@ class RestAdapterTestApplication {
     @Bean
     PlayMoveUseCase playMove(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
         return new PlayMove(games, BOT, analyses, clock);
+    }
+
+    /// Online play, faked (phase D): an empty lobby, and a refusal when
+    /// `failure` is set.
+    @Bean
+    FakeOnline fakeOnline() {
+        return new FakeOnline();
+    }
+
+    static final class FakeOnline implements OnlineUseCase {
+        KopiOnlineException.Problem failure;
+        final java.util.List<String> calls = new java.util.ArrayList<>();
+
+        private void record(String call) {
+            calls.add(call);
+            if (failure != null) {
+                throw new KopiOnlineException(failure, "fake");
+            }
+        }
+
+        @Override
+        public LobbyView lobby() {
+            return new LobbyView(new AccountView(true, java.util.Optional.empty(), java.util.Optional.of("Ana_92"),
+                    false, false), java.util.Optional.empty(), java.util.List.of(), java.util.List.of(),
+                    java.util.List.of(), java.util.List.of());
+        }
+
+        @Override
+        public void invite(String kopiId, java.util.Optional<com.arquitechthor.kopi.domain.chess.Color> color) {
+            record("invite " + kopiId);
+        }
+
+        @Override
+        public GameId accept(String relayGameId) {
+            record("accept " + relayGameId);
+            return new GameId(new UUID(9, 9));
+        }
+
+        @Override
+        public void decline(String relayGameId) {
+            record("decline " + relayGameId);
+        }
+
+        @Override
+        public void cancel(String relayGameId) {
+            record("cancel " + relayGameId);
+        }
+
+        @Override
+        public void dismiss(String relayGameId) {
+            record("dismiss " + relayGameId);
+        }
+
+        @Override
+        public void sync() {}
+
+        @Override
+        public java.util.Optional<OnlineStatus> status(GameId gameId) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.game.GameView offerDraw(GameId gameId) {
+            record("offerDraw");
+            return null;
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.game.GameView acceptDraw(GameId gameId) {
+            record("acceptDraw");
+            return null;
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.game.GameView declineDraw(GameId gameId) {
+            record("declineDraw");
+            return null;
+        }
     }
 
     @Bean

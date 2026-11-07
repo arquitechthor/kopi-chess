@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{online.title}, ~{})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<main class="container online" th:with="a=${lobby.account}">
+    <section class="card" aria-labelledby="online-title">
+        <span class="eyebrow" th:text="#{online.eyebrow}">Against a friend</span>
+        <h1 id="online-title" th:text="#{online.title}">Play online</h1>
+        <p class="muted" th:text="#{online.intro}">Each of you plays from your own Kopi Chess.</p>
+        <p class="notice-error" role="alert" th:if="${accountError}"
+           th:text="#{|account.error.${accountError}|}">Something went wrong.</p>
+        <p class="notice-error" role="alert" th:if="${lobby.problem.isPresent()}"
+           th:text="#{|account.error.${lobby.problem.get()}|}">Kopi cannot be reached.</p>
+
+        <!--/* Not ready yet: the account page says what is missing. */-->
+        <p th:unless="${a.signedIn}">
+            <span th:text="#{online.needAccount}">You need a Kopi account.</span>
+            <a th:href="@{/account}" th:text="#{online.toAccount}">Kopi account</a>
+        </p>
+        <p th:if="${a.signedIn and a.pendingApproval}" th:text="#{account.pending}">Waiting for approval.</p>
+        <p th:if="${a.signedIn and !a.pendingApproval and a.kopiId.isEmpty() and !a.unreachable}">
+            <span th:text="#{online.needKopiId}">Choose your Kopi id first.</span>
+            <a th:href="@{/account}" th:text="#{online.toAccount}">Kopi account</a>
+        </p>
+        <p class="muted" th:if="${a.readyToPlay()}">
+            <span th:text="#{online.playingAs}">You play as</span>
+            <strong th:text="${a.kopiId.get()}">Ana_92</strong> ·
+            <a th:href="@{/account}" th:text="#{online.toAccount}">Kopi account</a>
+        </p>
+    </section>
+
+    <th:block th:if="${a.readyToPlay() and lobby.problem.isEmpty()}">
+        <section class="card" aria-labelledby="invite-title">
+            <h2 id="invite-title" th:text="#{online.invite}">Invite a friend</h2>
+            <p class="notice" th:if="${invited}" th:text="#{online.invited(${invited})}">Invitation sent to luis.</p>
+            <form class="online-invite" method="post" th:action="@{/online/invite}">
+                <label class="field">
+                    <span class="field-label" th:text="#{online.friendId}">Your friend's Kopi id</span>
+                    <input type="text" name="kopiId" required minlength="3" maxlength="20"
+                           pattern="[A-Za-z0-9_]{3,20}" autocomplete="off" th:value="${kopiId}">
+                </label>
+                <fieldset>
+                    <legend th:text="#{newGame.color}">Your colour</legend>
+                    <div class="choices choices-inline">
+                        <label class="choice"><input type="radio" name="color" value="WHITE">
+                            <span class="choice-name" th:text="#{color.WHITE}">White</span></label>
+                        <label class="choice"><input type="radio" name="color" value="BLACK">
+                            <span class="choice-name" th:text="#{color.BLACK}">Black</span></label>
+                        <label class="choice"><input type="radio" name="color" value="RANDOM" checked>
+                            <span class="choice-name" th:text="#{newGame.random}">Random</span></label>
+                    </div>
+                </fieldset>
+                <button class="btn btn-primary" type="submit" th:text="#{online.send}">Send the invitation</button>
+            </form>
+        </section>
+
+        <section class="card" aria-labelledby="received-title" th:unless="${#lists.isEmpty(lobby.received)}">
+            <h2 id="received-title" th:text="#{online.received}">Invitations for you</h2>
+            <ul class="online-list">
+                <li th:each="i : ${lobby.received}">
+                    <span th:text="#{online.receivedFrom(${i.opponentKopiId}, #{|color.${i.myColor}|})}">luis invites you, with White</span>
+                    <form method="post" th:action="@{/online/invitations/{id}/accept(id=${i.relayGameId})}">
+                        <button class="btn btn-primary" type="submit" th:text="#{online.accept}">Accept</button>
+                    </form>
+                    <form method="post" th:action="@{/online/invitations/{id}/decline(id=${i.relayGameId})}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{online.decline}">Decline</button>
+                    </form>
+                </li>
+            </ul>
+        </section>
+
+        <section class="card" aria-labelledby="games-title">
+            <h2 id="games-title" th:text="#{online.games}">Your online games</h2>
+            <p class="muted" th:if="${#lists.isEmpty(lobby.games)}" th:text="#{online.noGames}">No online games in progress.</p>
+            <ul class="online-list" th:unless="${#lists.isEmpty(lobby.games)}">
+                <li th:each="g : ${lobby.games}">
+                    <a th:href="@{/games/{id}(id=${g.gameId})}"
+                       th:text="#{online.against(${g.opponentKopiId}, #{|color.${g.myColor}|})}">Against luis, with White</a>
+                    <span class="badge" th:if="${g.myTurn and !g.desynced}" th:text="#{online.yourTurn}">Your move</span>
+                    <span class="muted" th:if="${!g.myTurn and !g.desynced}" th:text="#{online.theirTurn}">Their move</span>
+                    <span class="notice-error" th:if="${g.desynced}" th:text="#{online.desynced}">Out of step</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="card" aria-labelledby="sent-title"
+                 th:unless="${#lists.isEmpty(lobby.sent) and #lists.isEmpty(lobby.declined)}">
+            <h2 id="sent-title" th:text="#{online.sent}">Invitations you sent</h2>
+            <ul class="online-list">
+                <li th:each="i : ${lobby.sent}">
+                    <span th:text="#{online.sentTo(${i.opponentKopiId})}">Waiting for luis</span>
+                    <form method="post" th:action="@{/online/invitations/{id}/cancel(id=${i.relayGameId})}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{online.cancel}">Withdraw</button>
+                    </form>
+                </li>
+                <li th:each="i : ${lobby.declined}">
+                    <span th:text="#{online.declinedBy(${i.opponentKopiId})}">luis declined</span>
+                    <form method="post" th:action="@{/online/invitations/{id}/dismiss(id=${i.relayGameId})}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{online.dismiss}">OK</button>
+                    </form>
+                </li>
+            </ul>
+        </section>
+        <!--/* News from the relay (an invitation, a friend's move) reloads the page (online.js). */-->
+        <div id="online-events" hidden th:data-events="@{/online/events}"></div>
+        <script type="module" th:src="@{/js/online.js}"></script>
+    </th:block>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

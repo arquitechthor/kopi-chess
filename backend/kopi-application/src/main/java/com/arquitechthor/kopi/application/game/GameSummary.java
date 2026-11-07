@@ -49,6 +49,11 @@ public record GameSummary(
         pgnTags = Collections.unmodifiableMap(new LinkedHashMap<>(pgnTags));
     }
 
+    /// Who plays `color`, if anyone does (not in an imported game).
+    public Optional<Player> player(Color color) {
+        return color == Color.WHITE ? white : black;
+    }
+
     static GameSummary of(Game game) {
         return new GameSummary(game.id(), game.origin(), game.status(), game.mode(), game.player(Color.WHITE),
                 game.player(Color.BLACK), game.humanColor(), game.botProfile(),

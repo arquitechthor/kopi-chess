@@ -37,8 +37,8 @@ class AccountPageTest {
     }
 
     @Test
-    void everyPageLinksToIt() {
-        assertThat(mvc.get().uri("/?lang=en")).bodyText().contains("href=\"/account\"", "Kopi account");
+    void theOnlinePageLinksToIt() {
+        assertThat(mvc.get().uri("/online?lang=en")).bodyText().contains("href=\"/account\"", "Kopi account");
     }
 
     @Test

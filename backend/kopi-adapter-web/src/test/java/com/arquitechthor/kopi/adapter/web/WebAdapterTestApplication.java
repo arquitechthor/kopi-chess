@@ -1,8 +1,8 @@
 package com.arquitechthor.kopi.adapter.web;
 
-import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.account.AccountView;
 import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
+import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
@@ -16,6 +16,7 @@ import com.arquitechthor.kopi.application.game.DeleteGame;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
+import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.game.GetBotRecords;
 import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
 import com.arquitechthor.kopi.application.game.GetGame;
@@ -28,6 +29,8 @@ import com.arquitechthor.kopi.application.game.PlayMove;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.Resign;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.online.LobbyView;
+import com.arquitechthor.kopi.application.online.OnlineUseCase;
 import com.arquitechthor.kopi.application.port.AnalysisJob;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
@@ -36,8 +39,8 @@ import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
-import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
 import com.arquitechthor.kopi.domain.game.BotProfile;
@@ -140,6 +143,97 @@ class WebAdapterTestApplication {
     @Bean
     GetAnalysisUseCase getAnalysis(InMemoryGames games, QueuedAnalyses analyses, SavedAnalyses saved) {
         return new GetAnalysis(games, analyses, saved);
+    }
+
+    /// Online play, faked: tests set the lobby and what each game shows.
+    @Bean
+    FakeOnline fakeOnline() {
+        return new FakeOnline();
+    }
+
+    /// Online play in memory (phase D): records what was asked.
+    static final class FakeOnline implements OnlineUseCase {
+        LobbyView lobby = new LobbyView(AccountView.SIGNED_OUT, java.util.Optional.empty(), java.util.List.of(),
+                java.util.List.of(), java.util.List.of(), java.util.List.of());
+        final java.util.Map<GameId, OnlineStatus> statuses = new java.util.HashMap<>();
+        final java.util.List<String> calls = new java.util.ArrayList<>();
+        KopiOnlineException.Problem failure;
+        GameId accepted;
+
+        void reset() {
+            lobby = new LobbyView(AccountView.SIGNED_OUT, java.util.Optional.empty(), java.util.List.of(),
+                    java.util.List.of(), java.util.List.of(), java.util.List.of());
+            statuses.clear();
+            calls.clear();
+            failure = null;
+            accepted = null;
+        }
+
+        private void record(String call) {
+            calls.add(call);
+            if (failure != null) {
+                throw new KopiOnlineException(failure, "fake");
+            }
+        }
+
+        @Override
+        public LobbyView lobby() {
+            return lobby;
+        }
+
+        @Override
+        public void invite(String kopiId, java.util.Optional<com.arquitechthor.kopi.domain.chess.Color> color) {
+            record("invite " + kopiId + " " + color.map(Enum::name).orElse("RANDOM"));
+        }
+
+        @Override
+        public GameId accept(String relayGameId) {
+            record("accept " + relayGameId);
+            return accepted;
+        }
+
+        @Override
+        public void decline(String relayGameId) {
+            record("decline " + relayGameId);
+        }
+
+        @Override
+        public void cancel(String relayGameId) {
+            record("cancel " + relayGameId);
+        }
+
+        @Override
+        public void dismiss(String relayGameId) {
+            record("dismiss " + relayGameId);
+        }
+
+        @Override
+        public void sync() {
+            calls.add("sync");
+        }
+
+        @Override
+        public java.util.Optional<OnlineStatus> status(GameId gameId) {
+            return java.util.Optional.ofNullable(statuses.get(gameId));
+        }
+
+        @Override
+        public GameView offerDraw(GameId gameId) {
+            record("offerDraw");
+            return null;
+        }
+
+        @Override
+        public GameView acceptDraw(GameId gameId) {
+            record("acceptDraw");
+            return null;
+        }
+
+        @Override
+        public GameView declineDraw(GameId gameId) {
+            record("declineDraw");
+            return null;
+        }
     }
 
     /// The Kopi account, faked: tests set what it answers.
