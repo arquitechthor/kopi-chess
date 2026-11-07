@@ -60,20 +60,20 @@ class HomePageTest {
 
     @Test
     void sharesTheMenuAndFooterOfTheFamilysSites() {
-        // Design §11.6: "Home" first and "About me" last in the menu, and
-        // the closing line Kopi Tools · Apuntes AWS · Tech Spider · Kopi Chess · Prompt Quest · About me in the footer.
+        // Design §11.6: "Home" first and "Arquitechthor" last in the menu, and
+        // the closing line Kopi Tools · Apuntes AWS · Tech Spider · Kopi Chess · Prompt Quest · Arquitechthor in the footer.
         assertThat(mvc.get().uri("/?lang=es"))
                 .hasStatusOk()
                 .bodyText()
                 .containsPattern("(?s)class=\"nav-links\">\\s*<a href=\"/\">Inicio</a>.*"
-                        + "<a href=\"https://arquitechthor.github.io/\">Sobre mí</a>\\s*<span class=\"language-switch\"")
+                        + "<a href=\"https://arquitechthor.github.io/\">Arquitechthor</a>\\s*<span class=\"language-switch\"")
                 .containsPattern("(?s)class=\"footer-sitios\".*"
                         + "<a href=\"https://kopitools.link\">Kopi Tools</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/aws-cert-study/\">Apuntes AWS</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/arquitechthor-spider/\">Tech Spider</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/#kopi-chess\">Kopi Chess</a>\\s*"
                         + "<a href=\"https://arquitechthor.github.io/#prompt-quest\">Prompt Quest</a>\\s*"
-                        + "<a href=\"https://arquitechthor.github.io/\">Sobre mí</a>")
+                        + "<a href=\"https://arquitechthor.github.io/\">Arquitechthor</a>")
                 .contains("/css/kopi.css", "/js/nav.js", "/img/logo.svg");
     }
 

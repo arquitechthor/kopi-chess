@@ -1122,14 +1122,14 @@ autor:
   `.eyebrow`, `.gradient-text`, `.hero` con `--gradient-radial`, `.card`),
   contenedor de 1120 px y corte móvil a 760 px.
 - **Menú:** el mismo patrón que las otras webs: marca a la izquierda
-  (logo + «Kopi Chess»), «Inicio» el primer enlace y «Sobre mí» (a
+  (logo + «Kopi Chess»), «Inicio» el primer enlace y «Arquitechthor» (a
   `arquitechthor.github.io`) el último, sin botón de llamada a la acción, y
   botón ☰ en móvil con `static/js/nav.js`, la misma lógica que en las otras
   webs. Kopi Chess añade al final el selector de idioma (`EN · ES`).
 - **Pie:** © y licencia, enlace al código y, al final, la línea común
-  `.footer-sitios`: **Kopi Tools · Apuntes AWS · Tech Spider · Kopi Chess · Prompt Quest · Sobre mí**, con
+  `.footer-sitios`: **Kopi Tools · Apuntes AWS · Tech Spider · Kopi Chess · Prompt Quest · Arquitechthor**, con
   los mismos enlaces. Como Kopi Chess se ejecuta en local y no tiene URL
-  pública, su enlace lleva a su sección en la página «Sobre mí»
+  pública, su enlace lleva a su sección en la página «Arquitechthor»
   (`https://arquitechthor.github.io/#kopi-chess`).
 - **Logo:** provisional, un caballo (♞) con el degradado de la marca
   (`static/img/logo.svg`, también *favicon*). Cada web de la familia tiene
