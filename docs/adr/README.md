@@ -21,6 +21,7 @@ cambia, se escribe uno nuevo que lo sustituye.
 - [ADR-015](015-partidas-importadas.md) — Partidas importadas: final declarado y sin tablas automáticas
 - [ADR-016](016-solo-esta-maquina.md) — Solo responde a esta máquina: `Host` local y cambios de páginas locales
 - [ADR-017](017-metricas-fuera-de-los-casos-de-uso.md) — Métricas fuera de los casos de uso: decoradores de puertos y adaptadores
+- [ADR-018](018-un-jugador-por-color.md) — Un jugador por color, tablas de mutuo acuerdo e inactividad
 - [ADR-019](019-id-de-kopi.md) — El id de Kopi y la cuenta Kopi en Kopi Chess
 - [ADR-020](020-rele-de-partidas.md) — Relé de partidas en AWS sin reglas de ajedrez
 
