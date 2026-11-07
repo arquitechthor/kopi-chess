@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<!--/* Same menu pattern as the family's sites: "Home" first, "About me" last (design §11.6). */-->
+<!--/* Same menu pattern as the family's sites: "Home" first, "Arquitechthor" last (design §11.6). */-->
 <nav th:fragment="header" class="nav">
     <div class="nav-inner">
         <a class="nav-brand" th:href="@{/}">
@@ -26,7 +26,7 @@
             <a th:href="@{/games/import}" th:text="#{nav.import}">Import PGN</a>
             <a th:href="@{/online}" th:text="#{nav.online}">Play online</a>
             <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{nav.source}">Source code</a>
-            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">About me</a>
+            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">Arquitechthor</a>
             <span class="language-switch" th:aria-label="#{language.label}" role="group">
                 <a href="?lang=en" hreflang="en" lang="en"
                    th:aria-current="${#locale.language == 'en'} ? 'true'"
@@ -55,7 +55,7 @@
             <a href="https://arquitechthor.github.io/arquitechthor-spider/" th:text="#{sites.techSpider}">Tech Spider</a>
             <a href="https://arquitechthor.github.io/#kopi-chess" th:text="#{sites.kopiChess}">Kopi Chess</a>
             <a href="https://arquitechthor.github.io/#prompt-quest" th:text="#{sites.promptQuest}">Prompt Quest</a>
-            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">About me</a>
+            <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">Arquitechthor</a>
         </nav>
     </div>
 </footer>
