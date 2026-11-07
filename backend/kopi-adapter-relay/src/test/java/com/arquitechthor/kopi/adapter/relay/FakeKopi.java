@@ -23,7 +23,7 @@ import java.util.function.Function;
 final class FakeKopi implements AutoCloseable {
 
     /// A request as received.
-    record Request(String method, String path, Map<String, String> headers, String body) {
+    record Request(String method, String path, Map<String, String> headers, String body, String query) {
         Map<String, String> form() {
             var values = new LinkedHashMap<String, String>();
             for (var pair : body.split("&")) {
@@ -72,7 +72,8 @@ final class FakeKopi implements AutoCloseable {
         var headers = new LinkedHashMap<String, String>();
         exchange.getRequestHeaders().forEach((name, values) -> headers.put(name.toLowerCase(), values.getFirst()));
         var request = new Request(exchange.getRequestMethod(), exchange.getRequestURI().getPath(), headers,
-                new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+                new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8),
+                exchange.getRequestURI().getRawQuery());
         synchronized (requests) {
             requests.add(request);
         }

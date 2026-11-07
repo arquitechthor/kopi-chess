@@ -3,6 +3,8 @@ package com.arquitechthor.kopi.application.port;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameMode;
+import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +45,21 @@ public interface GameRepository {
     /// The person's record against each of the five bots, as
     /// [BotRecord#tally] defines it.
     Map<BotProfile, BotRecord> recordsAgainstBots();
+
+    /// The id and version of every game, for the history in the Kopi
+    /// account (ADR-021): cheap to read, so a sync only loads the games that
+    /// changed. `syncable` is false for an online game still in progress,
+    /// which lives in the relay until it ends.
+    List<GameVersion> versions();
+
+    /// A game's id and version.
+    record GameVersion(GameId id, long version, boolean syncable) {
+
+        public static GameVersion of(Game game) {
+            var onlineInProgress = game.mode() == GameMode.ONLINE && game.status() == GameStatus.IN_PROGRESS;
+            return new GameVersion(game.id(), game.version(), !onlineInProgress);
+        }
+    }
 
     /// Every game, from the newest to the oldest, skipping `offset` and
     /// returning at most `limit`.

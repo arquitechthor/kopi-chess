@@ -2,6 +2,8 @@ package com.arquitechthor.kopi.adapter.web;
 
 import com.arquitechthor.kopi.application.account.AccountView;
 import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
+import com.arquitechthor.kopi.application.history.HistoryUseCase;
+import com.arquitechthor.kopi.application.history.HistoryView;
 import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
@@ -40,6 +42,7 @@ import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.GameRepository.GameVersion;
 import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
@@ -242,6 +245,72 @@ class WebAdapterTestApplication {
         return new FakeAccount();
     }
 
+    @Bean
+    FakeHistory fakeHistory() {
+        return new FakeHistory();
+    }
+
+    /// The history in the Kopi account (ADR-021), in memory: off at first.
+    static final class FakeHistory implements HistoryUseCase {
+        HistoryView view = new HistoryView(false, true, false, java.util.Optional.empty(), java.util.Optional.empty(),
+                0, 0);
+        KopiOnlineException.Problem failure;
+        int syncs;
+        boolean deleted;
+
+        void reset() {
+            view = new HistoryView(false, true, false, java.util.Optional.empty(), java.util.Optional.empty(), 0, 0);
+            failure = null;
+            syncs = 0;
+            deleted = false;
+        }
+
+        private void failIfAsked() {
+            if (failure != null) {
+                throw new KopiOnlineException(failure, "fake");
+            }
+        }
+
+        @Override
+        public HistoryView view() {
+            return view;
+        }
+
+        @Override
+        public HistoryView enable() {
+            failIfAsked();
+            view = new HistoryView(true, true, false, java.util.Optional.of(java.time.Instant.parse("2026-11-07T17:00:00Z")),
+                    java.util.Optional.empty(), 3, 1);
+            return view;
+        }
+
+        @Override
+        public HistoryView disable() {
+            view = new HistoryView(false, true, false, view.lastSyncAt(), java.util.Optional.empty(), view.syncedGames(),
+                    view.pendingGames());
+            return view;
+        }
+
+        @Override
+        public HistoryView syncNow() {
+            syncs++;
+            return view;
+        }
+
+        @Override
+        public HistoryView deleteFromAccount() {
+            failIfAsked();
+            deleted = true;
+            view = new HistoryView(false, true, false, java.util.Optional.empty(), java.util.Optional.empty(), 0, 0);
+            return view;
+        }
+
+        @Override
+        public void sync() {
+            syncs++;
+        }
+    }
+
     /// A Kopi account in memory, signed out at first (ADR-019).
     static final class FakeAccount implements KopiAccountUseCase {
         AccountView view = AccountView.SIGNED_OUT;
@@ -362,6 +431,11 @@ class WebAdapterTestApplication {
         @Override
         public synchronized long count(GameFilter filter) {
             return games.values().stream().filter(filter::matches).count();
+        }
+
+        @Override
+        public synchronized List<GameVersion> versions() {
+            return games.values().stream().map(GameVersion::of).toList();
         }
 
         @Override

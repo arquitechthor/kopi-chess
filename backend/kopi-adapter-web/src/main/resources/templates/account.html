@@ -49,6 +49,44 @@
                 <button class="btn btn-primary" type="submit" th:text="#{account.reserve}">Reserve it</button>
             </form>
 
+            <!--/* The history in the Kopi account (ADR-021): optional, off by default. */-->
+            <section class="account-history" aria-labelledby="history-title">
+                <h2 id="history-title" th:text="#{accountHistory.title}">Your history in the Kopi account</h2>
+                <p class="muted" th:text="#{accountHistory.intro}">Keep your games in your Kopi account and in step between your computers.</p>
+                <p class="notice" th:if="${historyDeleted}" th:text="#{accountHistory.deleted}">Your history was deleted from the Kopi account.</p>
+
+                <form method="post" th:action="@{/account/history/enable}" th:unless="${accountHistory.enabled}">
+                    <button class="btn btn-primary" type="submit" th:text="#{accountHistory.enable}">Keep my history in the account</button>
+                </form>
+
+                <th:block th:if="${accountHistory.enabled}">
+                    <p class="notice" th:if="${accountHistory.otherAccount}" th:text="#{accountHistory.otherAccount}">Paused: it was turned on with another Kopi account.</p>
+                    <p class="history-status" th:unless="${accountHistory.otherAccount}">
+                        <span th:text="#{accountHistory.status(${accountHistory.syncedGames}, ${accountHistory.pendingGames})}">3 games in the account, 1 to upload.</span>
+                        <span th:if="${accountHistory.lastSyncAt.isPresent()}"
+                              th:text="#{accountHistory.lastSync(${#temporals.format(accountHistory.lastSyncAt.get().atZone(T(java.time.ZoneId).systemDefault()), #messages.msg('recent.dateFormat'))})}">Last sync: 07/11/2026 18:00.</span>
+                    </p>
+                    <p class="notice-error" th:if="${accountHistory.lastProblem.isPresent()}"
+                       th:text="#{|account.error.${accountHistory.lastProblem.get()}|}">Kopi cannot be reached right now.</p>
+                    <div class="actions">
+                        <form method="post" th:action="@{/account/history/sync}">
+                            <button class="btn btn-secondary" type="submit" th:text="#{accountHistory.syncNow}">Sync now</button>
+                        </form>
+                        <form method="post" th:action="@{/account/history/disable}">
+                            <button class="btn btn-secondary" type="submit" th:text="#{accountHistory.disable}">Stop keeping it</button>
+                        </form>
+                    </div>
+                </th:block>
+
+                <details class="history-delete">
+                    <summary th:text="#{accountHistory.deleteTitle}">Delete my history from the Kopi account</summary>
+                    <p class="muted" th:text="#{accountHistory.deleteHelp}">The games on this computer stay.</p>
+                    <form method="post" th:action="@{/account/history/delete}">
+                        <button class="btn btn-secondary" type="submit" th:text="#{accountHistory.delete}">Delete it from the account</button>
+                    </form>
+                </details>
+            </section>
+
             <form method="post" th:action="@{/account/logout}">
                 <button class="btn btn-secondary" type="submit" th:text="#{account.signOut}">Sign out</button>
             </form>

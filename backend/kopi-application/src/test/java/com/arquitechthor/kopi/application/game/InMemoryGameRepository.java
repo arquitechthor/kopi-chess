@@ -4,6 +4,7 @@ import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.GameRepository.GameVersion;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
@@ -60,6 +61,11 @@ public final class InMemoryGameRepository implements GameRepository {
     @Override
     public long count(GameFilter filter) {
         return games.values().stream().filter(filter::matches).count();
+    }
+
+    @Override
+    public List<GameVersion> versions() {
+        return games.values().stream().map(GameVersion::of).toList();
     }
 
     @Override

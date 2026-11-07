@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.persistence;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.GameRepository;
+import com.arquitechthor.kopi.application.port.HistorySyncStore;
 import com.arquitechthor.kopi.application.port.KopiSessionStore;
 import com.arquitechthor.kopi.application.port.OnlineGameStore;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +36,11 @@ public class PersistenceAdapterConfiguration {
     @Bean
     KopiSessionStore kopiSessionStore(JdbcClient jdbc) {
         return new JdbcKopiSessionStore(jdbc);
+    }
+
+    @Bean
+    HistorySyncStore historySyncStore(JdbcClient jdbc) {
+        return new JdbcHistorySyncStore(jdbc);
     }
 
     @Bean

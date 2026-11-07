@@ -39,6 +39,11 @@ public final class KopiOnlineException extends RuntimeException {
         WRONG_PLY,
         NO_DRAW_OFFER,
         TOO_MANY_MOVES,
+        /// History: another computer changed the game first (handled by the
+        /// adapter, which returns the current entry).
+        REV_CONFLICT,
+        /// History: the game is too big for the account.
+        TOO_LARGE,
         /// The relay speaks another version of the protocol: update Kopi Chess.
         PROTOCOL_MISMATCH,
         TOO_MANY_REQUESTS,

@@ -1,6 +1,7 @@
 package com.arquitechthor.kopi.adapter.web;
 
 import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
+import com.arquitechthor.kopi.application.history.HistoryUseCase;
 import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,14 +23,17 @@ class AccountController {
     static final String ERROR = "accountError";
 
     private final KopiAccountUseCase account;
+    private final HistoryUseCase history;
 
-    AccountController(KopiAccountUseCase account) {
+    AccountController(KopiAccountUseCase account, HistoryUseCase history) {
         this.account = account;
+        this.history = history;
     }
 
     @GetMapping("/account")
     String page(Model model) {
         model.addAttribute("account", account.account());
+        model.addAttribute("accountHistory", history.view());
         return "account";
     }
 

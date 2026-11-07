@@ -1,5 +1,6 @@
 package com.arquitechthor.kopi.adapter.relay;
 
+import com.arquitechthor.kopi.application.port.AccountHistory;
 import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.KopiSessionStore;
 import com.arquitechthor.kopi.application.port.PvpRelay;
@@ -41,6 +42,11 @@ public class RelayAdapterConfiguration {
     @Bean
     PvpRelay pvpRelay(KopiApi api) {
         return new RelayPvp(api);
+    }
+
+    @Bean
+    AccountHistory accountHistory(KopiApi api) {
+        return new RelayAccountHistory(api);
     }
 
     /// Closed on shutdown (`close()` is inferred), which stops its thread.
