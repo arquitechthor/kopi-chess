@@ -49,6 +49,26 @@ cd backend
   `kopi-bootstrap/target/playwright/` (open it at
   <https://trace.playwright.dev>).
 
+## Online play without a real account
+
+Online play talks to the backend Kopi: a Kopi account (Cognito) and a relay
+of games in AWS, whose contract is [`docs/protocolo-rele.md`](docs/protocolo-rele.md)
+(ADR-019, ADR-020). You do not need either to work on it:
+
+- **Every test runs without AWS.** The relay adapter is tested against a fake
+  Cognito and backend on a local port (`FakeKopi`, the JDK's `HttpServer`),
+  and online games end to end with two Kopi Chess instances and a fake relay
+  that applies the protocol's rules (`TwoComputersTest`, with `FakeRelay`).
+  A change to online play should come with a case there.
+- **Running the app**, Kopi Chess starts and plays against the bots without a
+  network: it only calls Kopi when someone signs in or plays online.
+- **To try it for real** you need an approved Kopi account, and Kopi Chess on
+  `http://localhost:8080`: it is the only return address registered for
+  Kopi's login page. The addresses are in `kopi.online.*` (`application.yml`);
+  they are not secrets (a public client with PKCE), and each can be
+  overridden with an environment variable (`KOPI_ONLINE_API`…) to point at
+  another backend.
+
 ## How a change goes in
 
 1. **A branch per change**, from `main`: `feat/delete-game`,
