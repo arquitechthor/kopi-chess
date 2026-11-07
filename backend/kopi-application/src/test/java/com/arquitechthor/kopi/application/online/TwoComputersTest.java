@@ -108,6 +108,30 @@ class TwoComputersTest {
         }
 
         @Test
+        void aNewInvitationTellsTheOnlinePageOnce() {
+            luis.online.sync();
+            var before = luis.lobbyChanges;
+
+            ana.online.invite("luis", Optional.empty());
+            luis.online.sync(); // as when the relay's notification arrives
+            luis.online.sync(); // the next periodic sync: nothing new
+
+            assertThat(luis.lobbyChanges).isEqualTo(before + 1);
+        }
+
+        @Test
+        void aDeclinedInvitationTellsTheInvitersPage() {
+            ana.online.invite("luis", Optional.empty());
+            ana.online.sync();
+            var before = ana.lobbyChanges;
+
+            luis.online.decline(luis.online.lobby().received().getFirst().relayGameId());
+            ana.online.sync();
+
+            assertThat(ana.lobbyChanges).isEqualTo(before + 1);
+        }
+
+        @Test
         void aCancelledInvitationDisappears() {
             ana.online.invite("luis", Optional.empty());
             ana.online.cancel(ana.online.lobby().sent().getFirst().relayGameId());
