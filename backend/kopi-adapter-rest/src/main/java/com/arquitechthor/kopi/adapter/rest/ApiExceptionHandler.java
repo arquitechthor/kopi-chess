@@ -3,6 +3,7 @@ package com.arquitechthor.kopi.adapter.rest;
 import com.arquitechthor.kopi.application.analysis.AnalysisNotPossibleException;
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
+import com.arquitechthor.kopi.application.game.NotALocalGameException;
 import com.arquitechthor.kopi.application.game.PgnTooLargeException;
 import com.arquitechthor.kopi.application.game.VersionMismatchException;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
@@ -167,6 +168,11 @@ class ApiExceptionHandler {
     @ExceptionHandler
     ProblemDetail missingVersion(Versions.MissingVersionException e, HttpServletRequest request) {
         return problem(HttpStatus.PRECONDITION_REQUIRED, "PRECONDITION_REQUIRED", request);
+    }
+
+    @ExceptionHandler
+    ProblemDetail notALocalGame(NotALocalGameException e, HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, "NOT_A_LOCAL_GAME", request);
     }
 
     @ExceptionHandler

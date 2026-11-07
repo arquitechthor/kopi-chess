@@ -44,7 +44,7 @@
         <p class="msg msg-error" role="alert" th:if="${error}"
            th:text="${error == 'OFFICE_AMBIGUOUS'} ? #{error.OFFICE_AMBIGUOUS(${candidates})} : #{|error.${error}|}">
             Not a valid code.</p>
-        <p class="msg" th:text="#{${o.statusKey}}">Your move</p>
+        <p class="msg" th:text="#{${o.statusKey}(${o.statusArg})}">Your move</p>
     </div>
 
     <div class="layout">

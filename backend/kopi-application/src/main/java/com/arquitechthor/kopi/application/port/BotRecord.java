@@ -3,7 +3,7 @@ package com.arquitechthor.kopi.application.port;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
-import com.arquitechthor.kopi.domain.game.GameOrigin;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -34,15 +34,15 @@ public record BotRecord(int won, int lost, int drawn, int unfinished) {
     }
 
     /// The records of these games, one for each of the five bots (`NONE`
-    /// for a bot never played). Imported games do not count: they have no
-    /// bot. This is what the numbers mean; the database adapter must give
+    /// for a bot never played). Only games against a bot count: not the
+    /// imported ones, nor those between people. This is what the numbers mean; the database adapter must give
     /// the same in SQL.
     public static Map<BotProfile, BotRecord> tally(Stream<Game> games) {
         var records = new EnumMap<BotProfile, BotRecord>(BotProfile.class);
         for (var profile : BotProfile.values()) {
             records.put(profile, NONE);
         }
-        games.filter(game -> game.origin() == GameOrigin.PLAYED).forEach(game -> {
+        games.filter(game -> game.mode() == GameMode.AGAINST_BOT).forEach(game -> {
             var profile = game.botProfile().orElseThrow();
             records.put(profile, records.get(profile).with(game));
         });

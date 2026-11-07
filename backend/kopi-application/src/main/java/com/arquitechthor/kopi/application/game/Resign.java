@@ -5,8 +5,9 @@ import com.arquitechthor.kopi.application.port.GameRepository;
 import java.time.Clock;
 import java.util.Objects;
 
-/// [ResignUseCase]: the person resigns; the bot wins, and the game's
-/// analysis is queued.
+/// [ResignUseCase]: the person at this computer resigns (in a game between
+/// two people here, whoever is to move); the other side wins, and the
+/// game's analysis is queued.
 public final class Resign implements ResignUseCase {
 
     private final GameRepository repository;
@@ -22,8 +23,7 @@ public final class Resign implements ResignUseCase {
     @Override
     public GameView resign(ResignCommand command) {
         var loaded = Games.loadAtVersion(repository, command.gameId(), command.expectedVersion());
-        // An imported game has no person, but it is finished: resign refuses it as such.
-        var game = loaded.resign(loaded.humanColor().orElse(null), clock.instant());
+        var game = loaded.resign(Games.localColor(loaded), clock.instant());
         repository.update(game, loaded.version());
         AnalysisOnFinish.request(analyses, game, clock.instant());
         return GameView.of(game);

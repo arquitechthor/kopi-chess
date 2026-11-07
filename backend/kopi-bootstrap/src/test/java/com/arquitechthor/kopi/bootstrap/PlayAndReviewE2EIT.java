@@ -4,6 +4,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -93,9 +94,9 @@ class PlayAndReviewE2EIT {
     void playResignReviewAndDeleteAGame() {
         // A new game against the weakest bot, with White.
         page.navigate("/");
-        page.locator("form.new-game input[name=bot][value=PAWN]").check();
-        page.locator("form.new-game input[name=color][value=WHITE]").check();
-        page.locator("form.new-game button[type=submit]").click();
+        page.locator("#new-game input[name=bot][value=PAWN]").check();
+        page.locator("#new-game input[name=color][value=WHITE]").check();
+        page.locator("#new-game button[type=submit]").click();
         page.waitForURL(GAME_URL);
         var gameId = gameIdOf(page.url());
         assertThat(page.locator("#board cg-board")).isVisible();
@@ -135,23 +136,57 @@ class PlayAndReviewE2EIT {
         Assertions.assertThat(games.findById(gameId)).isEmpty();
     }
 
-    /// Clicks `from`, then `to`, on the board (White at the bottom), and
-    /// waits until the move list has `plies` moves: the person's and the
-    /// bot's reply.
+    @Test
+    void twoPeoplePlayAMateOnTheTurningBoardAndReviewIt() {
+        // A game for two people at this computer (ADR-018).
+        page.navigate("/");
+        page.locator("#local-game input[name=white]").fill("Ana");
+        page.locator("#local-game input[name=black]").fill("Luis");
+        page.locator("#local-game button[type=submit]").click();
+        page.waitForURL(GAME_URL);
+        var gameId = gameIdOf(page.url());
+        assertThat(page.locator(".game-status")).hasText("Ana to move");
+
+        // Fool's mate. The board turns after every move, so each one plays
+        // from their own side; no bot answers.
+        var state = page.locator("#board-state");
+        play("f2", "f3", 1);
+        assertThat(state).hasAttribute("data-orientation", "black");
+        assertThat(page.locator(".game-status")).hasText("Luis to move");
+        play("e7", "e5", 2);
+        assertThat(state).hasAttribute("data-orientation", "white");
+        play("g2", "g4", 3);
+        play("d8", "h4", 4);
+        assertThat(page.locator(".game-status")).hasText("Checkmate. Black wins.");
+
+        // Reviewed like any other game.
+        page.locator(".panel-actions a[href$='/analysis']").click();
+        assertThat(page.locator(".review-moves .review-move"))
+                .hasCount(4, new LocatorAssertions.HasCountOptions().setTimeout(60_000));
+        assertThat(page.locator(".eyebrow").first()).containsText("Ana – Luis");
+        Assertions.assertThat(games.findById(gameId).orElseThrow().mode()).isEqualTo(GameMode.LOCAL);
+    }
+
+    /// Clicks `from`, then `to`, on the board, as it is turned now, and
+    /// waits until the move list has `plies` moves (against a bot, the
+    /// person's and the bot's reply).
     private void play(String from, String to, int plies) {
         assertThat(page.locator("#board-state")).hasAttribute("data-movable", "true");
+        var whiteAtBottom = "white".equals(page.locator("#board-state").getAttribute("data-orientation"));
         var board = page.locator("#board cg-board").boundingBox();
-        click(board, from);
-        click(board, to);
+        click(board, from, whiteAtBottom);
+        click(board, to, whiteAtBottom);
         page.waitForFunction("n => [...document.querySelectorAll('.move-list .move')]"
                 + ".filter(m => m.textContent.trim()).length === n", plies);
     }
 
-    private void click(BoundingBox board, String square) {
+    private void click(BoundingBox board, String square, boolean whiteAtBottom) {
         var file = square.charAt(0) - 'a';
         var rank = square.charAt(1) - '1';
+        var column = whiteAtBottom ? file : 7 - file;
+        var row = whiteAtBottom ? 7 - rank : rank;
         var size = board.width / 8;
-        page.mouse().click(board.x + (file + 0.5) * size, board.y + (7 - rank + 0.5) * size);
+        page.mouse().click(board.x + (column + 0.5) * size, board.y + (row + 0.5) * size);
     }
 
     private static GameId gameIdOf(String url) {

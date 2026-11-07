@@ -72,6 +72,31 @@
         </div>
     </section>
 
+    <!--/* Two people taking turns at this computer (ADR-018). */-->
+    <section id="local-game" aria-labelledby="local-game-title">
+        <div class="container">
+            <form class="card new-game" method="post" th:action="@{/games/local}">
+                <h2 id="local-game-title" th:text="#{localGame.title}">Two people at this computer</h2>
+                <p class="muted" th:text="#{localGame.intro}">Take turns on the same board.</p>
+                <p class="notice-error" role="alert" th:if="${localError}"
+                   th:text="#{|localGame.error.${localError}|}">Each player needs a name.</p>
+                <div class="local-names">
+                    <label class="field">
+                        <span class="field-label" th:text="#{localGame.white}">White</span>
+                        <input type="text" name="white" maxlength="30" required autocomplete="off"
+                               th:value="${white}" th:placeholder="#{localGame.namePlaceholder}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label" th:text="#{localGame.black}">Black</span>
+                        <input type="text" name="black" maxlength="30" required autocomplete="off"
+                               th:value="${black}" th:placeholder="#{localGame.namePlaceholder}">
+                    </label>
+                </div>
+                <button class="btn btn-primary" type="submit" th:text="#{localGame.play}">Play</button>
+            </form>
+        </div>
+    </section>
+
     <section aria-labelledby="recent-title" th:unless="${#lists.isEmpty(recentGames)}">
         <div class="container">
             <h2 id="recent-title" th:text="#{recent.title}">Recent games</h2>
@@ -90,7 +115,8 @@
                     <tr th:each="summary : ${recentGames}">
                         <td><a th:href="@{/games/{id}(id=${summary.id})}"
                                th:text="${#temporals.format(summary.createdAt, #messages.msg('recent.dateFormat'))}">23/10/2026 12:00</a></td>
-                        <td th:text="${summary.botProfile.isPresent()} ? #{|bot.${summary.botProfile.get()}.name|} : #{recent.imported}">Pawn</td>
+                        <td th:text="${summary.botProfile.isPresent()} ? #{|bot.${summary.botProfile.get()}.name|}
+                                     : (${summary.mode.name() == 'LOCAL'} ? |${summary.white.get().name()} – ${summary.black.get().name()}| : #{recent.imported})">Pawn</td>
                         <td th:text="${summary.humanColor.isPresent()} ? #{|color.${summary.humanColor.get()}|} : '—'">White</td>
                         <td th:text="${(summary.plies + 1) / 2}">12</td>
                         <td th:text="${summary.result.isPresent()} ? #{|result.${summary.result.get()}|} : #{result.IN_PROGRESS}">In progress</td>

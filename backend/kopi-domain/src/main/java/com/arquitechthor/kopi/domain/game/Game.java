@@ -15,8 +15,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-/// A game of chess, played here against a bot or imported from PGN: the
-/// aggregate root of the domain.
+/// A game of chess, played here (against a bot, between two people at this
+/// computer or online against a friend) or imported from PGN: the aggregate
+/// root of the domain.
 ///
 /// It guards the invariants of design §5.2, so no controller or use case
 /// has to:
@@ -32,16 +33,18 @@ import java.util.Optional;
 /// passed in (from the application's `Clock` port) instead of read here,
 /// so the domain stays deterministic.
 ///
-/// An imported game ([#imported]) has no person and no bot, arrives
+/// Each colour has its [Player] (ADR-018). The game does not decide which
+/// colour the person at this computer may move: the application does, from
+/// the [#mode]. An imported game ([#imported]) has no players, arrives
 /// finished, and keeps its PGN tags (`White`, `Event`…).
 public final class Game {
 
     private final GameId id;
     private final GameOrigin origin;
     /// `null` for an imported game.
-    private final Color humanColor;
+    private final Player white;
     /// `null` for an imported game.
-    private final BotProfile botProfile;
+    private final Player black;
     private final Position initialPosition;
     private final List<PlayedMove> moves;
     private final Optional<GameOutcome> outcome;
@@ -50,13 +53,13 @@ public final class Game {
     private final Optional<Instant> finishedAt;
     private final Map<String, String> pgnTags;
 
-    private Game(GameId id, GameOrigin origin, Color humanColor, BotProfile botProfile, Position initialPosition,
+    private Game(GameId id, GameOrigin origin, Player white, Player black, Position initialPosition,
             List<PlayedMove> moves, Optional<GameOutcome> outcome, long version,
             Instant createdAt, Optional<Instant> finishedAt, Map<String, String> pgnTags) {
         this.id = id;
         this.origin = origin;
-        this.humanColor = humanColor;
-        this.botProfile = botProfile;
+        this.white = white;
+        this.black = black;
         this.initialPosition = initialPosition;
         this.moves = List.copyOf(moves);
         this.outcome = outcome;
@@ -67,23 +70,59 @@ public final class Game {
     }
 
     /// A new game against `botProfile` from `initialPosition` (usually
-    /// [Position#initial]), with the human playing `humanColor`.
+    /// [Position#initial]), with the person (unnamed) playing `humanColor`.
     ///
     /// If the bot's colour is to move, the bot plays first: the application
     /// asks it for a move right away.
+    public static Game start(GameId id, Color humanColor, BotProfile botProfile, Position initialPosition,
+            Instant now) {
+        Objects.requireNonNull(humanColor, "humanColor");
+        Objects.requireNonNull(botProfile, "botProfile");
+        var bot = new Player.Bot(botProfile);
+        return humanColor == Color.WHITE
+                ? start(id, Player.Local.YOU, bot, initialPosition, now)
+                : start(id, bot, Player.Local.YOU, initialPosition, now);
+    }
+
+    /// A new game between `white` and `black` from `initialPosition`
+    /// (usually [Position#initial]).
+    ///
+    /// Who may face whom (ADR-018): a person here against a bot, two people
+    /// here, or a person here against a friend online. Two bots, two
+    /// friends online or a bot against a friend online are refused.
     ///
     /// A position where the game is already over (mate, stalemate…) gives
     /// a game that is finished from the start.
-    public static Game start(GameId id, Color humanColor, BotProfile botProfile, Position initialPosition,
-            Instant now) {
+    ///
+    /// @throws IllegalArgumentException if the pair is not one of those
+    public static Game start(GameId id, Player white, Player black, Position initialPosition, Instant now) {
         Objects.requireNonNull(id, "id");
-        Objects.requireNonNull(humanColor, "humanColor");
-        Objects.requireNonNull(botProfile, "botProfile");
+        Objects.requireNonNull(white, "white");
+        Objects.requireNonNull(black, "black");
         Objects.requireNonNull(initialPosition, "initialPosition");
         Objects.requireNonNull(now, "now");
+        mode(white, black); // validates the pair
         var outcome = ending(initialPosition, List.of(initialPosition));
-        return new Game(id, GameOrigin.PLAYED, humanColor, botProfile, initialPosition, List.of(), outcome, 0, now,
+        return new Game(id, GameOrigin.PLAYED, white, black, initialPosition, List.of(), outcome, 0, now,
                 outcome.map(_ -> now), Map.of());
+    }
+
+    /// The mode of a game between `white` and `black`.
+    ///
+    /// @throws IllegalArgumentException if they cannot face each other
+    private static GameMode mode(Player white, Player black) {
+        if (white instanceof Player.Local && black instanceof Player.Local) {
+            return GameMode.LOCAL;
+        }
+        if (white instanceof Player.Bot && black instanceof Player.Local
+                || white instanceof Player.Local && black instanceof Player.Bot) {
+            return GameMode.AGAINST_BOT;
+        }
+        if (white instanceof Player.Remote && black instanceof Player.Local
+                || white instanceof Player.Local && black instanceof Player.Remote) {
+            return GameMode.ONLINE;
+        }
+        throw new IllegalArgumentException("A game cannot be played between " + white + " and " + black);
     }
 
     /// A game imported from PGN at `now` (plan §9): finished, with no
@@ -219,7 +258,7 @@ public final class Game {
         played.forEach(each -> history.add(each.positionAfter()));
 
         var nextOutcome = ending(after, history);
-        return new Game(id, origin, humanColor, botProfile, initialPosition, played, nextOutcome, version + 1,
+        return new Game(id, origin, white, black, initialPosition, played, nextOutcome, version + 1,
                 createdAt, nextOutcome.map(_ -> now), pgnTags);
     }
 
@@ -230,9 +269,43 @@ public final class Game {
     public Game resign(Color color, Instant now) {
         requireInProgress();
         Objects.requireNonNull(color, "color");
+        return finish(new GameOutcome.Resignation(color), now);
+    }
+
+    /// The game after both players agree to a draw at `now` (ADR-018): two
+    /// people here, or an offer accepted online. A bot never agrees.
+    ///
+    /// @throws GameNotInProgressException if the game is over
+    /// @throws IllegalStateException      if it is a game against a bot
+    public Game agreeDraw(Instant now) {
+        requireInProgress();
+        if (mode() != GameMode.LOCAL && mode() != GameMode.ONLINE) {
+            throw new IllegalStateException("Only two people can agree to a draw, not in a " + mode() + " game");
+        }
+        return finish(new GameOutcome.DrawByAgreement(), now);
+    }
+
+    /// The game after 30 days without moves (ADR-018): an online game only,
+    /// won by whoever made the last move. The application decides when the
+    /// time is up (from the relay's time of the last move); with no moves
+    /// at all, the side that was to move first loses.
+    ///
+    /// @throws GameNotInProgressException if the game is over
+    /// @throws IllegalStateException      if it is not an online game
+    public Game endByInactivity(Instant now) {
+        requireInProgress();
+        if (mode() != GameMode.ONLINE) {
+            throw new IllegalStateException("Only an online game ends by inactivity, not a " + mode() + " game");
+        }
+        // The side to move let the game go cold; the other one moved last.
+        var winner = currentPosition().sideToMove().opposite();
+        return finish(new GameOutcome.Inactivity(winner), now);
+    }
+
+    private Game finish(GameOutcome ending, Instant now) {
         Objects.requireNonNull(now, "now");
-        return new Game(id, origin, humanColor, botProfile, initialPosition, moves,
-                Optional.of(new GameOutcome.Resignation(color)), version + 1, createdAt, Optional.of(now), pgnTags);
+        return new Game(id, origin, white, black, initialPosition, moves, Optional.of(ending), version + 1,
+                createdAt, Optional.of(now), pgnTags);
     }
 
     private void requireInProgress() {
@@ -286,19 +359,46 @@ public final class Game {
         return outcome.isPresent() ? GameStatus.FINISHED : GameStatus.IN_PROGRESS;
     }
 
-    /// The colour the person plays; empty for an imported game.
+    /// What kind of game it is: against a bot, two people here, online or
+    /// imported.
+    public GameMode mode() {
+        return origin == GameOrigin.IMPORTED ? GameMode.IMPORTED : mode(white, black);
+    }
+
+    /// Who plays `color`; empty for an imported game.
+    public Optional<Player> player(Color color) {
+        Objects.requireNonNull(color, "color");
+        return Optional.ofNullable(color == Color.WHITE ? white : black);
+    }
+
+    /// The colour of **the** person at this computer: against a bot or
+    /// online, where there is just one. Empty for two people here (both are
+    /// local) and for an imported game.
     public Optional<Color> humanColor() {
-        return Optional.ofNullable(humanColor);
+        return switch (mode()) {
+            case AGAINST_BOT, ONLINE -> Optional.of(white instanceof Player.Local ? Color.WHITE : Color.BLACK);
+            case LOCAL, IMPORTED -> Optional.empty();
+        };
     }
 
-    /// The colour the bot plays; empty for an imported game.
+    /// The colour the bot plays; empty if no bot plays.
     public Optional<Color> botColor() {
-        return humanColor().map(Color::opposite);
+        if (white instanceof Player.Bot) {
+            return Optional.of(Color.WHITE);
+        }
+        return black instanceof Player.Bot ? Optional.of(Color.BLACK) : Optional.empty();
     }
 
-    /// The opponent; empty for an imported game.
+    /// The bot that plays; empty if no bot plays.
     public Optional<BotProfile> botProfile() {
-        return Optional.ofNullable(botProfile);
+        return botColor().flatMap(this::player).map(bot -> ((Player.Bot) bot).profile());
+    }
+
+    /// Whether a person at this computer is to move: the game is in progress
+    /// and the side to move is played by someone here (in a game between
+    /// two people here, always, each one on their turn).
+    public boolean isLocalToMove() {
+        return outcome.isEmpty() && player(currentPosition().sideToMove()).orElse(null) instanceof Player.Local;
     }
 
     /// The tags of the PGN an imported game came from, in their order;

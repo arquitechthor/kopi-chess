@@ -29,6 +29,8 @@ few minutes (it builds the application); later ones, seconds.
 - **Five bots**, from `PAWN` (plays like a child who has just learnt the
   moves) to Stockfish at full strength. Your record against each one is next
   to it.
+- **Two people at this computer**: each gives a name, the board turns after
+  every move, and you can agree to a draw. Reviewed like any other game.
 - **A review of every finished game**, in the background: a verdict on each
   move (book, best, good, inaccuracy, mistake, blunder, missed mate), the opening,
   accuracy for both sides and a graph of the winning chances.

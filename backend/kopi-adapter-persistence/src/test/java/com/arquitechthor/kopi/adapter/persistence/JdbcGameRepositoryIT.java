@@ -16,9 +16,11 @@ import com.arquitechthor.kopi.domain.chess.Position;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -275,11 +277,31 @@ class JdbcGameRepositoryIT {
         games.add(play(newGameWithId(Color.WHITE), "e2e4"));                                 // unfinished
         games.add(Game.start(new GameId(UUID.randomUUID()), Color.WHITE, BotProfile.QUEEN, Position.initial(), START));
         games.add(imported("1. e4 e5 1/2-1/2"));                                            // not against a bot
+        games.add(play(Game.start(new GameId(UUID.randomUUID()), new Player.Local("Ana"),     // two people here
+                new Player.Local("Luis"), Position.initial(), START), "f2f3 e7e5 g2g4 d8h4"));
         games.forEach(repository::insert);
 
         assertThat(repository.recordsAgainstBots()).isEqualTo(BotRecord.tally(games.stream()));
         assertThat(repository.recordsAgainstBots().get(BotProfile.PAWN)).isEqualTo(new BotRecord(2, 2, 0, 1));
         assertThat(repository.recordsAgainstBots().get(BotProfile.QUEEN)).isEqualTo(new BotRecord(0, 0, 0, 1));
         assertThat(repository.recordsAgainstBots().get(BotProfile.ROOK)).isEqualTo(BotRecord.NONE);
+    }
+
+    @Test
+    void storesAndLoadsAGameBetweenTwoPeopleWithTheirNames() {
+        var game = Game.start(new GameId(UUID.randomUUID()), new Player.Local("Ana"), new Player.Local("Luis"),
+                Position.initial(), START);
+        repository.insert(game);
+        var drawn = play(game, "e2e4 e7e5").agreeDraw(START.plusSeconds(60));
+        repository.update(drawn, game.version());
+
+        var loaded = repository.findById(game.id()).orElseThrow();
+
+        assertThat(loaded.mode()).isEqualTo(GameMode.LOCAL);
+        assertThat(loaded.player(Color.WHITE)).hasValue(new Player.Local("Ana"));
+        assertThat(loaded.player(Color.BLACK)).hasValue(new Player.Local("Luis"));
+        assertThat(loaded.outcome()).hasValue(new GameOutcome.DrawByAgreement());
+        assertThat(jdbc.sql("select human_color is null and bot_profile is null from game where id = :id")
+                .param("id", game.id().value()).query(Boolean.class).single()).isTrue();
     }
 }

@@ -9,15 +9,19 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJob;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJobUseCase;
+import com.arquitechthor.kopi.application.game.AgreeDraw;
+import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.CreateLocalGame;
+import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
 import com.arquitechthor.kopi.application.game.DeleteGame;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
-import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetBotRecords;
 import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
+import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ImportPgn;
 import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
@@ -85,6 +89,16 @@ class UseCaseConfiguration {
     @Bean
     CreateGameUseCase createGame(GameRepository games, BotPlayer bot, IdGenerator ids, Clock clock) {
         return new CreateGame(games, bot, ids, clock);
+    }
+
+    @Bean
+    CreateLocalGameUseCase createLocalGame(GameRepository games, IdGenerator ids, Clock clock) {
+        return new CreateLocalGame(games, ids, clock);
+    }
+
+    @Bean
+    AgreeDrawUseCase agreeDraw(GameRepository games, AnalysisJobQueue analyses, Clock clock) {
+        return new AgreeDraw(games, analyses, clock);
     }
 
     @Bean

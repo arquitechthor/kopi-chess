@@ -9,7 +9,6 @@ import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.analysis.MoveCategory;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.game.BotProfile;
-import com.arquitechthor.kopi.domain.game.GameOrigin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,9 +23,10 @@ import java.util.stream.Collectors;
 /// each move, and the positions for the board to step through.
 ///
 /// @param id          the game
-/// @param botProfile  the opponent; `null` for an imported game
-/// @param players     an imported game's players, `White – Black`; `null`
-///                    for a game played here
+/// @param botProfile  the bot; `null` if no bot plays
+/// @param players     the players of a game without a bot, `White – Black`:
+///                    an imported game's or two people here; `null` against
+///                    a bot
 /// @param orientation `white` or `black`: the person's side at the bottom
 /// @param state       `QUEUED`, `RUNNING`, `DONE` or `FAILED`
 /// @param error       why it failed, if it did
@@ -102,9 +102,10 @@ record ReviewPage(
     ///
     /// @param openingName the opening's name in the visitor's language
     static ReviewPage of(GameView game, AnalysisView view, UnaryOperator<String> openingName) {
+        // Between two people here, from White's side, like an imported game.
         var orientation = game.humanColor().orElse(Color.WHITE) == Color.WHITE ? "white" : "black";
         var bot = game.botProfile().orElse(null);
-        var players = game.origin() == GameOrigin.IMPORTED ? GamePage.players(game) : null;
+        var players = GamePage.players(game);
         if (view.analysis().isEmpty()) {
             var job = view.job().orElseThrow();
             return new ReviewPage(game.id().toString(), bot, players, orientation, job.state(),

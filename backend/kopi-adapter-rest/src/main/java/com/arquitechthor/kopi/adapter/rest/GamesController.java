@@ -3,12 +3,17 @@ package com.arquitechthor.kopi.adapter.rest;
 import static com.arquitechthor.kopi.adapter.rest.RestAdapterConfiguration.API;
 
 import com.arquitechthor.kopi.adapter.rest.ApiModel.CreateGameRequest;
+import com.arquitechthor.kopi.adapter.rest.ApiModel.CreateLocalGameRequest;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.GamePageResponse;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.GameResponse;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.ImportPgnRequest;
 import com.arquitechthor.kopi.adapter.rest.ApiModel.PlayMoveRequest;
+import com.arquitechthor.kopi.application.game.AgreeDrawCommand;
+import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.CreateLocalGameCommand;
+import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
 import com.arquitechthor.kopi.application.game.GameView;
@@ -55,6 +60,8 @@ class GamesController {
     static final String PGN_MEDIA_TYPE = "application/x-chess-pgn";
 
     private final CreateGameUseCase createGame;
+    private final CreateLocalGameUseCase createLocalGame;
+    private final AgreeDrawUseCase agreeDraw;
     private final GetGameUseCase getGame;
     private final ListGamesUseCase listGames;
     private final PlayMoveUseCase playMove;
@@ -63,10 +70,12 @@ class GamesController {
     private final ExportPgnUseCase exportPgn;
     private final ImportPgnUseCase importPgn;
 
-    GamesController(CreateGameUseCase createGame, GetGameUseCase getGame, ListGamesUseCase listGames,
-            PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
-            ExportPgnUseCase exportPgn, ImportPgnUseCase importPgn) {
+    GamesController(CreateGameUseCase createGame, CreateLocalGameUseCase createLocalGame, AgreeDrawUseCase agreeDraw,
+            GetGameUseCase getGame, ListGamesUseCase listGames, PlayMoveUseCase playMove, ResignUseCase resign,
+            DeleteGameUseCase deleteGame, ExportPgnUseCase exportPgn, ImportPgnUseCase importPgn) {
         this.createGame = createGame;
+        this.createLocalGame = createLocalGame;
+        this.agreeDraw = agreeDraw;
         this.getGame = getGame;
         this.listGames = listGames;
         this.playMove = playMove;
@@ -87,6 +96,28 @@ class GamesController {
         return ResponseEntity.created(URI.create(API + "/games/" + view.id()))
                 .eTag(Versions.etag(view.version()))
                 .body(GameResponse.of(view));
+    }
+
+    /// `201 Created` with a new game between two people at this computer
+    /// (ADR-018): `whiteName` plays White and `blackName` Black. Both names
+    /// are required, of up to 30 characters (else `400`).
+    @PostMapping("/local")
+    ResponseEntity<GameResponse> createLocal(@RequestBody CreateLocalGameRequest request) {
+        if (request == null) {
+            throw new InvalidRequestException("whiteName and blackName are required");
+        }
+        var view = createLocalGame.create(new CreateLocalGameCommand(request.whiteName(), request.blackName()));
+        return ResponseEntity.created(URI.create(API + "/games/" + view.id()))
+                .eTag(Versions.etag(view.version()))
+                .body(GameResponse.of(view));
+    }
+
+    /// Two people here agree to a draw (`409` in any other kind of game).
+    @PostMapping("/{id}/draw")
+    ResponseEntity<GameResponse> draw(@PathVariable UUID id,
+            @RequestHeader(name = HttpHeaders.IF_MATCH, required = false) String ifMatch) {
+        var version = Versions.fromIfMatch(ifMatch);
+        return ok(agreeDraw.agree(new AgreeDrawCommand(new GameId(id), version)));
     }
 
     @GetMapping("/{id}")

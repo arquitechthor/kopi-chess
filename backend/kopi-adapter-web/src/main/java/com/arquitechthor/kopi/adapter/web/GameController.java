@@ -1,11 +1,17 @@
 package com.arquitechthor.kopi.adapter.web;
 
+import com.arquitechthor.kopi.application.game.AgreeDrawCommand;
+import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGameCommand;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.CreateLocalGameCommand;
+import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
+import com.arquitechthor.kopi.application.game.InvalidPlayerNameException;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
+import com.arquitechthor.kopi.application.game.NotALocalGameException;
 import com.arquitechthor.kopi.application.game.PlayMoveCommand;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.ResignCommand;
@@ -47,19 +53,27 @@ class GameController {
     /// Flash attribute with the code of the last refused action.
     static final String ERROR = "error";
 
+    /// Flash attribute with the code of a refused local game (a missing name).
+    static final String LOCAL_ERROR = "localError";
+
     /// Flash attribute for the history: a game was just deleted.
     static final String DELETED = "deleted";
 
     private final CreateGameUseCase createGame;
+    private final CreateLocalGameUseCase createLocalGame;
+    private final AgreeDrawUseCase agreeDraw;
     private final GetGameUseCase getGame;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
     private final DeleteGameUseCase deleteGame;
     private final MessageSource messages;
 
-    GameController(CreateGameUseCase createGame, GetGameUseCase getGame, PlayMoveUseCase playMove,
-            ResignUseCase resign, DeleteGameUseCase deleteGame, MessageSource messages) {
+    GameController(CreateGameUseCase createGame, CreateLocalGameUseCase createLocalGame, AgreeDrawUseCase agreeDraw,
+            GetGameUseCase getGame, PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
+            MessageSource messages) {
         this.createGame = createGame;
+        this.createLocalGame = createLocalGame;
+        this.agreeDraw = agreeDraw;
         this.getGame = getGame;
         this.playMove = playMove;
         this.resign = resign;
@@ -82,6 +96,34 @@ class GameController {
             redirect.addFlashAttribute(ERROR, "BOT_UNAVAILABLE");
             return "redirect:/";
         }
+    }
+
+    /// From the home page form "Two people at this computer": `white` plays
+    /// White, `black` Black (ADR-018). A missing or too long name sends the
+    /// form back with a message.
+    @PostMapping("/games/local")
+    String createLocal(@RequestParam(defaultValue = "") String white, @RequestParam(defaultValue = "") String black,
+            RedirectAttributes redirect) {
+        try {
+            var game = createLocalGame.create(new CreateLocalGameCommand(white, black));
+            return "redirect:/games/" + game.id();
+        } catch (InvalidPlayerNameException _) {
+            redirect.addFlashAttribute(LOCAL_ERROR, "INVALID_NAME");
+            redirect.addFlashAttribute("white", white);
+            redirect.addFlashAttribute("black", black);
+            return "redirect:/#local-game";
+        }
+    }
+
+    /// Two people here agree to a draw (ADR-018).
+    @PostMapping("/games/{id}/draw")
+    String draw(@PathVariable UUID id, @RequestParam long version, RedirectAttributes redirect) {
+        try {
+            agreeDraw.agree(new AgreeDrawCommand(new GameId(id), version));
+        } catch (RuntimeException e) {
+            redirect.addFlashAttribute(ERROR, refusal(e));
+        }
+        return "redirect:/games/" + id;
     }
 
     /// The game, on the board or in office mode (design §11.5).
@@ -170,6 +212,7 @@ class GameController {
             case InvalidUciException _ -> "INVALID_UCI";
             case VersionMismatchException _, ConcurrentGameUpdateException _ -> "VERSION_MISMATCH";
             case BotUnavailableException _ -> "BOT_UNAVAILABLE";
+            case NotALocalGameException _ -> "NOT_A_LOCAL_GAME";
             default -> throw e;
         };
     }

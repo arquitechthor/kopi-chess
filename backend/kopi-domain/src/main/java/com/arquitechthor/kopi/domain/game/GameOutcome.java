@@ -3,7 +3,7 @@ package com.arquitechthor.kopi.domain.game;
 import com.arquitechthor.kopi.domain.chess.Color;
 import java.util.Objects;
 
-/// How a game ended. A sealed interface: these seven records are every way a
+/// How a game ended. A sealed interface: these nine records are every way a
 /// game can finish, and a `switch` over them must handle all of them (the
 /// web adapter's translations, the PGN termination, the database column).
 ///
@@ -43,6 +43,21 @@ public sealed interface GameOutcome {
         }
     }
 
+    /// Both players agreed to a draw (ADR-018): two people at this computer,
+    /// or an offer accepted online. Never against a bot.
+    record DrawByAgreement() implements GameOutcome {}
+
+    /// An online game with no moves for 30 days (ADR-018, plan of player
+    /// versus player §6): it is over, and whoever made the last move wins,
+    /// because the other one let it go cold.
+    ///
+    /// @param winner the side that made the last move
+    record Inactivity(Color winner) implements GameOutcome {
+        public Inactivity {
+            Objects.requireNonNull(winner, "winner");
+        }
+    }
+
     /// An imported game whose PGN gives a result the moves do not show: a
     /// resignation, a loss on time, a draw by agreement… The PGN says who
     /// won, not how (phase 6). Never the ending of a game played here.
@@ -59,7 +74,9 @@ public sealed interface GameOutcome {
         return switch (this) {
             case Checkmate(var winner) -> winsFor(winner);
             case Resignation(var resigned) -> winsFor(resigned.opposite());
-            case Stalemate _, InsufficientMaterial _, ThreefoldRepetition _, FiftyMoveRule _ -> GameResult.DRAW;
+            case Inactivity(var winner) -> winsFor(winner);
+            case Stalemate _, InsufficientMaterial _, ThreefoldRepetition _, FiftyMoveRule _, DrawByAgreement _ ->
+                GameResult.DRAW;
             case Declared(var declared) -> declared;
         };
     }

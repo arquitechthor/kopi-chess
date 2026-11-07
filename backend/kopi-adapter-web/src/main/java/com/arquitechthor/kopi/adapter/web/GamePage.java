@@ -4,7 +4,7 @@ import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.MaterialBalance;
 import com.arquitechthor.kopi.domain.game.BotProfile;
-import com.arquitechthor.kopi.domain.game.GameOrigin;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import java.util.ArrayList;
@@ -19,9 +19,14 @@ import java.util.stream.Collectors;
 /// @param id              the game, for URLs
 /// @param version         sent back with every move or resignation
 /// @param fen             the position for the board
-/// @param orientation     `white` or `black`: the person's side at the bottom
+/// @param mode            against a bot, two people here, online or imported
+/// @param orientation     `white` or `black`: the person's side at the bottom;
+///                        between two people here, the side to move, so
+///                        the board turns after every move
 /// @param turnColor       `white` or `black`
 /// @param humanToMove     whether the board accepts a move
+/// @param movableColor    `white` or `black`: the pieces the board lets the
+///                        person move now; `null` if none
 /// @param inCheck         highlights the king to move
 /// @param material        who is ahead in material: a row per side that has
 ///                        pieces more than the other, the side at the top of
@@ -29,25 +34,38 @@ import java.util.stream.Collectors;
 /// @param legalMovesJson  the legal moves in UCI as a JSON array, for the board
 /// @param lastMove        the last move in UCI, or empty
 /// @param moveRows        the moves, one row per move number
-/// @param botProfile      the opponent; `null` for an imported game
-/// @param humanColor      the person's colour; `null` for an imported game
-/// @param players         an imported game's players, `White – Black`, from
-///                        its PGN (empty if it names neither); `null` for
-///                        a game played here
+/// @param botProfile      the bot; `null` if no bot plays
+/// @param humanColor      the colour of the one person here; `null` for
+///                        two people here and an imported game
+/// @param players         the players of a game without a bot, `White –
+///                        Black`: an imported game's, from its PGN (empty
+///                        if it names neither), or the names of two people
+///                        here; `null` against a bot
+/// @param toMoveName      between two people here, the name of the one to
+///                        move (for the status line and *Resign*); else
+///                        `null`
 /// @param finished        whether the game is over
 /// @param rematchColor    for *Play again*: the other colour, against the same
 ///                        bot (`WHITE` or `BLACK`, as the home page form
-///                        sends it); `null` while the game goes on and for an
-///                        imported game
+///                        sends it); `null` while the game goes on and for a
+///                        game without a bot
+/// @param rematchWhite    for *Play again* between two people here: who
+///                        takes White (they swap colours); else `null`
+/// @param rematchBlack    who takes Black then
 /// @param statusKey       message key of the status line (`status.yourTurn`,
 ///                        `outcome.CHECKMATE.BLACK`…)
+/// @param statusArg       the argument of that message (the name of the
+///                        person to move, between two people here), or
+///                        `null`
 record GamePage(
         String id,
         long version,
+        GameMode mode,
         String fen,
         String orientation,
         String turnColor,
         boolean humanToMove,
+        String movableColor,
         boolean inCheck,
         List<MaterialRow> material,
         String legalMovesJson,
@@ -56,9 +74,13 @@ record GamePage(
         BotProfile botProfile,
         Color humanColor,
         String players,
+        String toMoveName,
         boolean finished,
         Color rematchColor,
-        String statusKey) {
+        String rematchWhite,
+        String rematchBlack,
+        String statusKey,
+        String statusArg) {
 
     /// One side's lead in material: the opponent's pieces it is ahead by,
     /// as figurines (`♞♟`: what it has taken, net), and its points ahead,
@@ -71,28 +93,47 @@ record GamePage(
 
     static GamePage of(GameView view) {
         var finished = view.status() == GameStatus.FINISHED;
+        var local = view.mode() == GameMode.LOCAL;
         var legalMoves = view.legalMoves().stream()
                 .map(move -> "\"" + move.uci() + "\"")
                 .collect(Collectors.joining(",", "[", "]"));
+        var bottom = bottom(view);
         return new GamePage(
                 view.id().toString(),
                 view.version(),
+                view.mode(),
                 view.fen(),
-                // An imported game has no "you": it is seen from White's side.
-                colorName(view.humanColor().orElse(Color.WHITE)),
+                colorName(bottom),
                 colorName(view.sideToMove()),
                 view.isHumanToMove(),
+                view.isHumanToMove() ? colorName(view.sideToMove()) : null,
                 view.inCheck(),
-                material(view.material(), view.humanColor().orElse(Color.WHITE)),
+                material(view.material(), bottom),
                 legalMoves,
                 view.lastMove().map(GameView.PlayedMoveView::uci).orElse(""),
                 rows(view.moves()),
                 view.botProfile().orElse(null),
                 view.humanColor().orElse(null),
-                view.origin() == GameOrigin.IMPORTED ? players(view) : null,
+                players(view),
+                local ? Players.name(view.player(view.sideToMove())) : null,
                 finished,
-                finished ? view.humanColor().map(Color::opposite).orElse(null) : null,
-                statusKey(view));
+                finished && view.mode() == GameMode.AGAINST_BOT
+                        ? view.humanColor().map(Color::opposite).orElse(null) : null,
+                finished && local ? Players.name(view.black()) : null,
+                finished && local ? Players.name(view.white()) : null,
+                statusKey(view),
+                statusArg(view));
+    }
+
+    /// The side at the bottom of the board: the one person's colour against
+    /// a bot or online; between two people here, the side to move, so each
+    /// one plays from their side; an imported game is seen from White's.
+    static Color bottom(GameView view) {
+        return switch (view.mode()) {
+            case AGAINST_BOT, ONLINE -> view.humanColor().orElse(Color.WHITE);
+            case LOCAL -> view.sideToMove();
+            case IMPORTED -> Color.WHITE;
+        };
     }
 
     /// The rows of [#material], the side at the bottom of the board
@@ -132,7 +173,12 @@ record GamePage(
                 case GameOutcome.ThreefoldRepetition _ -> "outcome.THREEFOLD_REPETITION";
                 case GameOutcome.FiftyMoveRule _ -> "outcome.FIFTY_MOVE_RULE";
                 case GameOutcome.Declared(var result) -> "outcome.DECLARED." + result;
+                case GameOutcome.DrawByAgreement _ -> "outcome.DRAW_AGREEMENT";
+                case GameOutcome.Inactivity(var winner) -> "outcome.INACTIVITY." + winner;
             };
+        }
+        if (view.mode() == GameMode.LOCAL) {
+            return view.inCheck() ? "status.localTurnInCheck" : "status.localTurn";
         }
         if (view.isHumanToMove()) {
             return view.inCheck() ? "status.yourTurnInCheck" : "status.yourTurn";
@@ -140,9 +186,22 @@ record GamePage(
         return "status.botToMove";
     }
 
-    /// An imported game's players (see [Players]).
+    /// The argument of [#statusKey]'s message: the name of the person to
+    /// move between two people here, `null` otherwise.
+    static String statusArg(GameView view) {
+        return view.mode() == GameMode.LOCAL && view.outcome().isEmpty()
+                ? Players.name(view.player(view.sideToMove())) : null;
+    }
+
+    /// The players of a game without a bot (see [Players]): an imported
+    /// game's from its PGN, two people here by their names; `null` against
+    /// a bot.
     static String players(GameView view) {
-        return Players.of(view.pgnTags());
+        return switch (view.mode()) {
+            case IMPORTED -> Players.of(view.pgnTags());
+            case LOCAL, ONLINE -> Players.local(view.white(), view.black());
+            case AGAINST_BOT -> null;
+        };
     }
 
     private static String colorName(Color color) {

@@ -6,8 +6,9 @@ import com.arquitechthor.kopi.application.port.GameRepository;
 import java.time.Clock;
 import java.util.Objects;
 
-/// [PlayMoveUseCase]: load, check the version, play the person's move,
-/// let the bot reply if the game goes on, save once. If that finished the
+/// [PlayMoveUseCase]: load, check the version, play the move of the person
+/// at this computer (in a game between two people here, whoever is to
+/// move), let the bot reply if the game goes on, save once. If that finished the
 /// game, its analysis is queued.
 ///
 /// Saving once at the end means a failure anywhere (an illegal move, the
@@ -30,8 +31,7 @@ public final class PlayMove implements PlayMoveUseCase {
     @Override
     public GameView play(PlayMoveCommand command) {
         var loaded = Games.loadAtVersion(repository, command.gameId(), command.expectedVersion());
-        // An imported game has no person, but it is finished: play refuses it as such.
-        var game = loaded.play(command.uci(), loaded.humanColor().orElse(null), clock.instant());
+        var game = loaded.play(command.uci(), Games.localColor(loaded), clock.instant());
         game = BotTurn.playIfBotToMove(game, bot, clock);
         repository.update(game, loaded.version());
         AnalysisOnFinish.request(analyses, game, clock.instant());

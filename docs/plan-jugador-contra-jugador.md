@@ -308,15 +308,17 @@ por funcionalidad en `documentation/scripts/`). Ese repositorio va directo a
 
 ### Fase A: el dominio con personas, y el modo local
 
-- [ ] ADR-018: jugadores por color (`Player`), tablas de mutuo acuerdo e
+- [x] ADR-018: jugadores por color (`Player`), tablas de mutuo acuerdo e
       inactividad como formas de terminar.
-- [ ] `Player` en el dominio; `Game` con un jugador por color; tablas por
+- [x] `Player` en el dominio; `Game` con un jugador por color; tablas por
       acuerdo e inactividad como terminaciones. Pruebas unitarias; *perft*
       intacto.
-- [ ] Migración de Flyway; las partidas existentes, `Local` contra `Bot`.
-- [ ] Caso de uso y páginas de «Dos personas en este equipo» (nombres,
-      tablero que gira, historial, PGN con los nombres).
-- [ ] Prueba E2E: una partida local completa hasta la revisión.
+- [x] Migración de Flyway (V5); las partidas existentes, `Local` contra `Bot`.
+- [x] Caso de uso y páginas de «Dos personas en este equipo» (nombres,
+      tablero que gira, historial, PGN con los nombres), modo oficina, API
+      (`POST /api/v1/games/local`, `…/draw`) y tablas de mutuo acuerdo.
+- [x] Prueba E2E: una partida local completa hasta la revisión
+      (`PlayAndReviewE2EIT`, mate del pastor con el tablero girando).
 
 **Aceptación:** dos personas juegan en un PC una partida completa y la
 analizan; las partidas contra bots y las importadas siguen igual.

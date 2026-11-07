@@ -7,10 +7,12 @@ import com.arquitechthor.kopi.domain.chess.San;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,11 +28,17 @@ import java.util.Optional;
 /// @param id          the game
 /// @param origin      played here or imported from PGN
 /// @param status      in progress or finished
-/// @param humanColor  the colour the person plays; empty for an imported game
-/// @param botProfile  the opponent; empty for an imported game
+/// @param mode        against a bot, two people here, online or imported
+/// @param white       who plays White; empty for an imported game
+/// @param black       who plays Black; empty for an imported game
+/// @param humanColor  the colour of the one person here (against a bot or
+///                    online); empty for two people here and for an
+///                    imported game
+/// @param botProfile  the bot, if a bot plays
 /// @param fen         the current position
 /// @param sideToMove  whose turn it is
 /// @param inCheck     whether the side to move is in check
+/// @param localToMove whether a person at this computer may move now
 /// @param material    who is ahead in material on the board, and by what
 /// @param moves       every move played, in order
 /// @param legalMoves  the legal moves of the current position, sorted by
@@ -46,11 +54,15 @@ public record GameView(
         GameId id,
         GameOrigin origin,
         GameStatus status,
+        GameMode mode,
+        Optional<Player> white,
+        Optional<Player> black,
         Optional<Color> humanColor,
         Optional<BotProfile> botProfile,
         String fen,
         Color sideToMove,
         boolean inCheck,
+        boolean localToMove,
         MaterialBalance material,
         List<PlayedMoveView> moves,
         List<LegalMoveView> legalMoves,
@@ -86,9 +98,15 @@ public record GameView(
         return moves.isEmpty() ? Optional.empty() : Optional.of(moves.getLast());
     }
 
-    /// Whether it is the person's turn in a game still in progress.
+    /// Whether it is the turn of a person at this computer in a game still
+    /// in progress (in a game between two people here, always).
     public boolean isHumanToMove() {
-        return status == GameStatus.IN_PROGRESS && humanColor.filter(color -> color == sideToMove).isPresent();
+        return localToMove;
+    }
+
+    /// Who plays `color`, if anyone does (not in an imported game).
+    public Optional<Player> player(Color color) {
+        return color == Color.WHITE ? white : black;
     }
 
     static GameView of(Game game) {
@@ -102,8 +120,9 @@ public record GameView(
                         .sorted(Comparator.comparing(Move::toUci))
                         .map(move -> new LegalMoveView(move.toUci(), San.format(position, move)))
                         .toList();
-        return new GameView(game.id(), game.origin(), game.status(), game.humanColor(), game.botProfile(),
-                position.toFen(), position.sideToMove(), position.isInCheck(), position.materialBalance(), moves,
+        return new GameView(game.id(), game.origin(), game.status(), game.mode(), game.player(Color.WHITE),
+                game.player(Color.BLACK), game.humanColor(), game.botProfile(), position.toFen(),
+                position.sideToMove(), position.isInCheck(), game.isLocalToMove(), position.materialBalance(), moves,
                 legalMoves, game.outcome(), game.result(), game.version(), game.createdAt(), game.finishedAt(),
                 game.pgnTags());
     }

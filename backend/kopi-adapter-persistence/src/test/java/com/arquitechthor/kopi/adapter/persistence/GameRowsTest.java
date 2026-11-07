@@ -12,6 +12,7 @@ import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.Game;
 import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,7 @@ class GameRowsTest {
 
         var row = GameRows.gameRow(game);
 
-        assertThat(row).isEqualTo(new GameRow(ID.value(), "PLAYED", "IN_PROGRESS", "WHITE", "PAWN", Fen.INITIAL,
+        assertThat(row).isEqualTo(new GameRow(ID.value(), "PLAYED", "IN_PROGRESS", "LOCAL:", "BOT:PAWN", "WHITE", "PAWN", Fen.INITIAL,
                 null, null, 2, START, null, null));
         assertThat(GameRows.moveRows(game)).extracting(GameRows.MoveRow::ply, GameRows.MoveRow::uci,
                         GameRows.MoveRow::san)
@@ -125,7 +126,8 @@ class GameRowsTest {
     void refusesRowsWhoseVersionDoesNotReplay() {
         var game = play(newGame(Color.WHITE), "e2e4");
         var row = GameRows.gameRow(game);
-        var tampered = new GameRow(row.id(), row.origin(), row.status(), row.humanColor(), row.botProfile(),
+        var tampered = new GameRow(row.id(), row.origin(), row.status(), row.whitePlayer(), row.blackPlayer(), row.humanColor(),
+                row.botProfile(),
                 row.initialFen(), row.result(), row.termination(), 7, row.createdAt(), row.finishedAt(), null);
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
@@ -136,9 +138,55 @@ class GameRowsTest {
         // Stored as checkmate, but the moves end nothing.
         var game = play(newGame(Color.WHITE), "e2e4");
         var row = GameRows.gameRow(game);
-        var tampered = new GameRow(row.id(), row.origin(), "FINISHED", row.humanColor(), row.botProfile(),
+        var tampered = new GameRow(row.id(), row.origin(), "FINISHED", row.whitePlayer(), row.blackPlayer(), row.humanColor(),
+                row.botProfile(),
                 row.initialFen(), "WHITE_WIN", "CHECKMATE", row.version(), row.createdAt(), START, null);
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
+    }
+
+    @Test
+    void aLocalGameStoresBothNamesAndNoSinglePersonOrBot() {
+        var game = Game.start(ID, new Player.Local("Ana"), new Player.Local("Luis"), Position.initial(), START);
+        var row = GameRows.gameRow(play(game, "e2e4"));
+
+        assertThat(row.whitePlayer()).isEqualTo("LOCAL:Ana");
+        assertThat(row.blackPlayer()).isEqualTo("LOCAL:Luis");
+        assertThat(row.humanColor()).isNull();
+        assertThat(row.botProfile()).isNull();
+        assertThat(GameRows.game(row, GameRows.moveRows(play(game, "e2e4"))).player(Color.BLACK))
+                .hasValue(new Player.Local("Luis"));
+    }
+
+    @Test
+    void anAgreedDrawReplays() {
+        var game = Game.start(ID, new Player.Local("Ana"), new Player.Local("Luis"), Position.initial(), START);
+        var drawn = play(game, "e2e4 e7e5").agreeDraw(START.plusSeconds(90));
+
+        var back = GameRows.game(GameRows.gameRow(drawn), GameRows.moveRows(drawn));
+
+        assertThat(back.outcome()).hasValue(new GameOutcome.DrawByAgreement());
+        assertThat(back.version()).isEqualTo(drawn.version());
+    }
+
+    @Test
+    void anOnlineGameLostByInactivityReplays() {
+        var game = Game.start(ID, new Player.Local(""), new Player.Remote("luis_92"), Position.initial(), START);
+        var cold = play(game, "e2e4").endByInactivity(START.plusSeconds(3600));
+
+        var row = GameRows.gameRow(cold);
+        var back = GameRows.game(row, GameRows.moveRows(cold));
+
+        assertThat(row.blackPlayer()).isEqualTo("REMOTE:luis_92");
+        assertThat(row.humanColor()).isEqualTo("WHITE");
+        assertThat(back.outcome()).hasValue(new GameOutcome.Inactivity(Color.WHITE));
+    }
+
+    @Test
+    void playersAreReadBackFromTheirColumn() {
+        assertThat(GameRows.player("BOT:QUEEN")).isEqualTo(new Player.Bot(BotProfile.QUEEN));
+        assertThat(GameRows.player("LOCAL:")).isEqualTo(Player.Local.YOU);
+        assertThat(GameRows.player("LOCAL:Ana: la reina")).isEqualTo(new Player.Local("Ana: la reina"));
+        assertThatIllegalStateException().isThrownBy(() -> GameRows.player("ROBOT:x"));
     }
 }

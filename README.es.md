@@ -29,6 +29,9 @@ unos minutos (compila la aplicación); los siguientes, segundos.
 
 - **Cinco bots**, de `PAWN` (juega como un niño que acaba de aprender) a
   Stockfish a plena fuerza. Tu balance contra cada uno aparece a su lado.
+- **Dos personas en este equipo**: cada una pone su nombre, el tablero gira
+  después de cada jugada y se pueden acordar tablas. Se revisa como cualquier
+  otra partida.
 - **Una revisión de cada partida terminada**, en segundo plano: veredicto de
   cada jugada (teoría, la mejor, buena, imprecisión, error, error grave, mate
   perdido), la apertura, la precisión de cada bando y una gráfica de las posibilidades

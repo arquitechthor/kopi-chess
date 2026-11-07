@@ -358,6 +358,16 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
+/* ── Two people at this computer (ADR-018) ───────────────── */
+.local-names { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.field { display: grid; gap: 6px; }
+.field-label { font-weight: 700; }
+.field input[type=text] {
+  width: 100%; font: inherit; color: var(--text); background: var(--bg-alt);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.field input[type=text]:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
 /* ── Import PGN (plan §9) ─────────────────────────────────── */
 .import-form { margin: 40px auto 60px; display: grid; gap: 12px; }
 .import-form h1 { font-size: clamp(24px, 3vw, 32px); margin: 0; }
