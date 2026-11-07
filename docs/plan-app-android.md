@@ -127,7 +127,7 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 ### Fase F1: decisiones y ADR
 
 - [ ] Decisiones de §9 tomadas.
-- [ ] ADR-021: el móvil como cliente remoto del PC, el «modo servidor», la
+- [ ] ADR-022: el móvil como cliente remoto del PC, el «modo servidor», la
       lista blanca y el protocolo remoto (`payload` con `op` y `v`).
 - [ ] `protocolo-remoto.md`: cada `op` con su petición y su respuesta.
 
@@ -180,7 +180,7 @@ Cada una con una propuesta. Hasta decidirlas no conviene empezar la fase F3.
 | # | Decisión | Propuesta |
 |---|---|---|
 | D1 | Tecnología de la app: Capacitor + web (como Kopi Tools) o nativa en Kotlin (como Kopi Player). | **Capacitor + Vite + TypeScript**, sin React: reutiliza Chessground y el aspecto de la web, y la app es pequeña. |
-| D2 | ¿Ver el historial guardado en la cuenta desde el móvil (aunque el PC esté apagado)? | **Sí, de solo lectura** (lista y repetir la partida), en una versión posterior a la primera si retrasa la publicación. Necesita el historial en la cuenta, que se hace antes. |
+| D2 | ¿Ver el historial guardado en la cuenta desde el móvil (aunque el PC esté apagado)? | **Sí, de solo lectura** (lista y repetir la partida), en una versión posterior a la primera si retrasa la publicación. El historial en la cuenta ya está hecho (ADR-021). |
 | D3 | ¿Jugar en línea contra un amigo desde el móvil? | **No en la primera versión.** Se podría más adelante por el mismo canal, con el PC haciendo de cliente del relé. |
 | D4 | Nombre e identificador: «Kopi Chess» y `com.arquitechthor.kopichess`. | **Sí**, como `com.arquitechthor.kopitools` y `com.arquitechthor.kopimediaplayer`. |
 | D5 | Idiomas: inglés y español (como Kopi Chess) o solo español (como las demás apps Kopi). | **Inglés y español**, según el idioma del móvil. |

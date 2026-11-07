@@ -39,6 +39,9 @@ unos minutos (compila la aplicación); los siguientes, segundos.
   por su id de Kopi, sin reloj (una partida sin jugadas en 30 días la gana
   quien movió el último). Cada jugada se valida en los dos equipos; el relé
   que hay en medio no sabe de ajedrez.
+- **Tu historial en la cuenta Kopi** (opcional, apagado por defecto): guarda
+  tus partidas en la cuenta y en sintonía entre tus equipos. Cada partida que
+  llega se reproduce jugada a jugada, y se analiza en cada equipo.
 - **Una revisión de cada partida terminada**, en segundo plano: veredicto de
   cada jugada (teoría, la mejor, buena, imprecisión, error, error grave, mate
   perdido), la apertura, la precisión de cada bando y una gráfica de las posibilidades

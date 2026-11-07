@@ -37,6 +37,9 @@ few minutes (it builds the application); later ones, seconds.
   by their Kopi id, no clock (a game with no moves for 30 days is won by
   whoever moved last). Every move is validated on both computers; the relay
   in between knows no chess.
+- **Your history in the Kopi account** (optional, off by default): keeps
+  your games in the account and in step between your computers. Every game
+  that comes in is replayed move by move, and analysed on each computer.
 - **A review of every finished game**, in the background: a verdict on each
   move (book, best, good, inaccuracy, mistake, blunder, missed mate), the opening,
   accuracy for both sides and a graph of the winning chances.

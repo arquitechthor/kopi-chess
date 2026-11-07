@@ -66,6 +66,9 @@ están en [`plan-modos-de-juego.md`](plan-modos-de-juego.md).
 
 ### Historial en la cuenta Kopi
 
+> **Hecho** en la 1.2 ([ADR-021](adr/021-historial-en-la-cuenta.md)). Se
+> deja aquí la estimación con la que se decidió.
+
 - **Qué:** opcional, con un interruptor en la página de cuenta: guardar las
   partidas en la cuenta Kopi y sincronizarlas entre todos tus equipos (y,
   más adelante, con la app Android aunque el PC esté apagado).
