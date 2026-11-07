@@ -323,11 +323,12 @@ analizan; las partidas contra bots y las importadas siguen igual.
 
 ### Fase B: cuenta Kopi e id de Kopi
 
-- [ ] ADR-019: el id de Kopi, común a las apps Kopi.
-- [ ] Backend Kopi: tabla `KopiIds` y sus rutas (reservar, consultar,
-      comprobar), con el *authorizer* de Cognito.
-- [ ] Cliente de aplicación nuevo en el User Pool, con callback a
-      `localhost`.
+- [x] ADR-019: el id de Kopi, común a las apps Kopi (2026-11-07).
+- [x] Backend Kopi: tabla `kopi_ids` y sus rutas (reservar, consultar,
+      comprobar), con un *authorizer* propio (2026-11-07, ADR-019).
+- [x] Cliente de aplicación nuevo en el User Pool, con callback a
+      `localhost` (`kopi-chess-client`; valores en
+      [`protocolo-rele.md`](protocolo-rele.md) §1).
 - [ ] Kopi Chess: «Entrar con Kopi» (`oauth2Login`), *tokens* guardados en
       local, pantalla para crear el id. Puerto `KopiAccount`.
 
@@ -336,14 +337,27 @@ un id que nadie más puede tener.
 
 ### Fase C: el relé
 
-- [ ] ADR-020: relé de partidas en AWS sin reglas, validación local, y su
-      relación con ADR-016.
-- [ ] Tablas `PvpGames` y `PvpMoves`: TTL de 30 días que se renueva con
-      cada jugada, y borrado al confirmar el final el rival.
-- [ ] Lambdas: invitar, invitaciones, aceptar, rechazar, listar, traer,
-      mover (escritura condicional por número), abandonar, tablas.
-- [ ] WebSocket para avisar a quien esté conectado.
-- [ ] Límites por usuario. Pruebas de las Lambdas.
+- [x] ADR-020: relé de partidas en AWS sin reglas, validación local, y su
+      relación con ADR-016 (2026-11-07). Contrato en
+      [`protocolo-rele.md`](protocolo-rele.md).
+- [x] Tabla `kopi_chess_games` (una partida por ítem, con sus jugadas
+      dentro, en lugar de `PvpGames` y `PvpMoves`; ADR-020): TTL de 30 días
+      que se renueva con cada jugada, y borrado al confirmar el final el rival.
+- [x] Lambdas: invitar, invitaciones, aceptar, rechazar, cancelar, listar,
+      traer, mover (escritura condicional por número), abandonar, tablas.
+- [x] WebSocket para avisar a quien esté conectado (`kopi-chess-ws`).
+- [x] Límites por usuario. Pruebas de las Lambdas
+      (`kopi-media-admin/documentation/scripts/test-chess-relay.ps1`).
+
+**Estado (2026-11-07):** fases B (parte de AWS) y C hechas y desplegadas. La
+prueba de extremo a extremo invoca las Lambdas con dos cuentas sintéticas
+contra DynamoDB real (56 comprobaciones, incluida una jugada repetida y otra
+fuera de turno), y con `curl` se comprobó que API Gateway rechaza peticiones
+sin *token* o con uno no válido (`401`) y que el WebSocket rechaza conexiones
+sin *token* (`401`) o con otra versión del protocolo (`426`). **Falta probar
+con una cuenta real** (login, *token* de verdad en HTTP y WebSocket, avisos):
+se hará con el `kopi-adapter-relay` de la fase D, o antes con `curl` y un
+*token* sacado a mano del login.
 
 **Aceptación:** con dos cuentas de prueba y `curl`, se juega una partida de
 principio a fin; una jugada con número repetido o fuera de turno se rechaza.
