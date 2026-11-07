@@ -386,11 +386,19 @@ principio a fin; una jugada con número repetido o fuera de turno se rechaza.
 - [x] Páginas: «Jugar en línea» (invitar, invitaciones, partidas), jugada
       del rival por SSE en la página de la partida, ofertas de tablas.
 - [x] API REST equivalente (`/api/v1/online`, `…/draw-offer|accept|decline`).
-- [~] Prueba E2E: `TwoComputersTest` juega con **dos Kopi Chess contra un
+- [x] Prueba E2E: `TwoComputersTest` juega con **dos Kopi Chess contra un
       relé falso** que aplica las reglas del protocolo (invitar, aceptar,
       jugadas validadas al otro lado, desincronización, mate, abandono,
-      tablas, inactividad con el reloj de las pruebas, otra cuenta). Falta la
-      prueba con dos navegadores contra el relé real, con cuentas reales.
+      tablas, inactividad con el reloj de las pruebas, otra cuenta).
+- [x] **Prueba real (2026-11-07)**, con Kopi Chess de esta rama en
+      `localhost:8080` contra el relé y Cognito de verdad: el dueño entró con
+      su cuenta (`guzman6001`) por la página de login de Kopi; una cuenta
+      sintética (`KopiTester`, manejada invocando las Lambdas) le invitó; la
+      invitación apareció sola por el WebSocket; aceptó y jugaron 1. e4 e5 2.
+      ♘f3 ♘c6 (las jugadas del rival llegaron al tablero abierto por SSE, con
+      su Zobrist comprobado); ofreció tablas y el rival las rechazó; el rival
+      abandonó y la partida terminó sola en su pantalla, se confirmó y el relé
+      la borró. Falta repetirla con dos cuentas reales en dos equipos.
 
 **Aceptación:** dos personas en dos PCs juegan una partida con los dos
 conectados y otra por correspondencia (cerrando la app entre jugadas), y
