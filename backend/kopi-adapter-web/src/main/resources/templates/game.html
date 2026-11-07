@@ -31,8 +31,9 @@
     </div>
 
     <aside class="game-panel card">
-        <span class="eyebrow" th:if="${game.players == null}" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
-        <span class="eyebrow" th:unless="${game.players == null}"
+        <span class="eyebrow" th:if="${game.mode.name() == 'AGAINST_BOT'}" th:text="#{game.against(#{|bot.${game.botProfile}.name|})}">Against Pawn</span>
+        <span class="eyebrow" th:if="${game.mode.name() == 'LOCAL'}" th:text="#{game.local(${game.players})}">Two people · Ana – Luis</span>
+        <span class="eyebrow" th:if="${game.mode.name() == 'IMPORTED'}"
               th:text="${game.players.isEmpty()} ? #{game.importedAnonymous} : #{game.imported(${game.players})}">Imported game</span>
 
         <!--/* Everything that changes with a move. board.js asks the server for just
@@ -43,12 +44,14 @@
                  th:data-fen="${game.fen}"
                  th:data-turn="${game.turnColor}"
                  th:data-movable="${game.humanToMove}"
+                 th:data-movable-color="${game.movableColor}"
+                 th:data-orientation="${game.orientation}"
                  th:data-check="${game.inCheck}"
                  th:data-legal-moves="${game.legalMovesJson}"
                  th:data-last-move="${game.lastMove}"
                  th:data-version="${game.version}"
-                 th:data-thinking="#{status.botToMove}"></div>
-            <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}}">Your move</h1>
+                 th:data-thinking="${game.mode.name() == 'LOCAL'} ? #{status.sending} : #{status.botToMove}"></div>
+            <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}(${game.statusArg})}">Your move</h1>
             <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>
 
             <!--/* Who is ahead in material, counted in Java (MaterialBalance), not here. */-->
@@ -73,7 +76,14 @@
             <div class="panel-actions">
                 <form method="post" th:action="@{/games/{id}/resign(id=${game.id})}" th:unless="${game.finished}">
                     <input type="hidden" name="version" th:value="${game.version}">
-                    <button class="btn btn-secondary" type="submit" th:text="#{game.resign}">Resign</button>
+                    <button class="btn btn-secondary" type="submit"
+                            th:text="${game.toMoveName != null} ? #{game.resignLocal(${game.toMoveName})} : #{game.resign}">Resign</button>
+                </form>
+                <!--/* Two people here agree to a draw on the spot (ADR-018). */-->
+                <form method="post" th:action="@{/games/{id}/draw(id=${game.id})}"
+                      th:if="${game.mode.name() == 'LOCAL' and !game.finished}">
+                    <input type="hidden" name="version" th:value="${game.version}">
+                    <button class="btn btn-secondary" type="submit" th:text="#{game.agreeDraw}">Agree to a draw</button>
                 </form>
                 <a class="btn btn-secondary" th:if="${game.finished}" th:href="@{/games/{id}/analysis(id=${game.id})}"
                    th:text="#{game.review}">Review the game</a>
@@ -88,7 +98,13 @@
                 </form>
                 <a class="btn btn-secondary" th:if="${game.rematchColor != null}" th:href="@{/}"
                    th:text="#{game.otherBot}">Choose another bot</a>
-                <a class="btn btn-primary" th:unless="${game.rematchColor != null}" th:href="@{/}"
+                <!--/* Two people here: again, swapping colours. */-->
+                <form method="post" th:action="@{/games/local}" th:if="${game.rematchWhite != null}">
+                    <input type="hidden" name="white" th:value="${game.rematchWhite}">
+                    <input type="hidden" name="black" th:value="${game.rematchBlack}">
+                    <button class="btn btn-primary" type="submit" th:text="#{game.playAgainSwapped}">Play again, swapping colours</button>
+                </form>
+                <a class="btn btn-primary" th:unless="${game.rematchColor != null or game.rematchWhite != null}" th:href="@{/}"
                    th:text="#{game.newGame}">New game</a>
             </div>
             <details th:replace="~{fragments/delete-game :: control(${game.id})}"></details>

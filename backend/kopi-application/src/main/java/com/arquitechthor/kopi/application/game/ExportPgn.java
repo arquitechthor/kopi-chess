@@ -10,6 +10,7 @@ import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameStatus;
 import com.arquitechthor.kopi.domain.game.PlayedMove;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -80,9 +81,14 @@ public final class ExportPgn implements ExportPgnUseCase {
         return Pgn.format(new PgnGame(tags, game.initialPosition(), moves, result));
     }
 
-    /// `Player` for the person, `Kopi Pawn` … `Kopi Queen` for the bot.
+    /// `Kopi Pawn` … `Kopi Queen` for a bot, the name a person gave (or
+    /// `Player` if none), and the Kopi id of a friend online.
     private static String player(Game game, Color side) {
-        return game.humanColor().orElseThrow() == side ? "Player" : "Kopi " + botName(game.botProfile().orElseThrow());
+        return switch (game.player(side).orElseThrow()) {
+            case Player.Bot(var profile) -> "Kopi " + botName(profile);
+            case Player.Local local -> local.named() ? local.name() : "Player";
+            case Player.Remote(var kopiId) -> kopiId;
+        };
     }
 
     private static String botName(BotProfile profile) {

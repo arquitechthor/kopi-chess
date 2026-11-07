@@ -11,6 +11,7 @@ import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -31,17 +32,24 @@ import java.util.UUID;
 ///
 /// An imported game's PGN tags are stored as PGN text, the tag pairs alone
 /// (`[White "Morphy, Paul"]` lines), and read back with [Pgn].
+///
+/// Each colour's player is one column, `KIND:value` (V5): `BOT:PAWN`,
+/// `LOCAL:` (the person against a bot), `LOCAL:Ana`, `REMOTE:luis`.
 final class GameRows {
 
     private GameRows() {}
 
     /// A row of `game`. `result`, `termination` and `finishedAt` are `null`
-    /// while the game is in progress, as in the table; `humanColor` and
-    /// `botProfile` for an imported game, and `pgnTags` for a played one.
+    /// while the game is in progress, as in the table; the players for an
+    /// imported game, and `pgnTags` for a played one. `humanColor` and
+    /// `botProfile` are derived from the players, for queries: `null` when
+    /// there is no single person here or no bot.
     record GameRow(
             UUID id,
             String origin,
             String status,
+            String whitePlayer,
+            String blackPlayer,
             String humanColor,
             String botProfile,
             String initialFen,
@@ -60,6 +68,8 @@ final class GameRows {
                 game.id().value(),
                 game.origin().name(),
                 game.status().name(),
+                game.player(Color.WHITE).map(GameRows::playerText).orElse(null),
+                game.player(Color.BLACK).map(GameRows::playerText).orElse(null),
                 game.humanColor().map(Color::name).orElse(null),
                 game.botProfile().map(BotProfile::name).orElse(null),
                 game.initialPosition().toFen(),
@@ -93,8 +103,7 @@ final class GameRows {
         if (GameOrigin.IMPORTED.name().equals(row.origin())) {
             return imported(id, row, moves);
         }
-        var humanColor = Color.valueOf(row.humanColor());
-        var game = Game.start(id, humanColor, BotProfile.valueOf(row.botProfile()), Fen.parse(row.initialFen()),
+        var game = Game.start(id, player(row.whitePlayer()), player(row.blackPlayer()), Fen.parse(row.initialFen()),
                 row.createdAt());
         for (var move : moves) {
             game = game.play(move.uci(), game.currentPosition().sideToMove(), move.playedAt());
@@ -103,6 +112,10 @@ final class GameRows {
             // The loser is the one who resigned.
             var resigned = GameResult.valueOf(row.result()) == GameResult.WHITE_WIN ? Color.BLACK : Color.WHITE;
             game = game.resign(resigned, row.finishedAt());
+        } else if ("DRAW_AGREEMENT".equals(row.termination())) {
+            game = game.agreeDraw(row.finishedAt());
+        } else if ("INACTIVITY".equals(row.termination())) {
+            game = game.endByInactivity(row.finishedAt());
         }
 
         var termination = game.outcome().map(GameRows::termination).orElse(null);
@@ -155,6 +168,34 @@ final class GameRows {
             case GameOutcome.FiftyMoveRule _ -> "FIFTY_MOVE_RULE";
             case GameOutcome.Resignation _ -> "RESIGNATION";
             case GameOutcome.Declared _ -> "DECLARED";
+            case GameOutcome.DrawByAgreement _ -> "DRAW_AGREEMENT";
+            case GameOutcome.Inactivity _ -> "INACTIVITY";
+        };
+    }
+
+    /// A player as its column: `BOT:PAWN`, `LOCAL:Ana`, `REMOTE:luis`.
+    static String playerText(Player player) {
+        return switch (player) {
+            case Player.Bot(var profile) -> "BOT:" + profile.name();
+            case Player.Local(var name) -> "LOCAL:" + name;
+            case Player.Remote(var kopiId) -> "REMOTE:" + kopiId;
+        };
+    }
+
+    /// The player a column describes.
+    ///
+    /// @throws IllegalStateException if the text is not a player
+    static Player player(String text) {
+        var colon = text == null ? -1 : text.indexOf(':');
+        if (colon < 0) {
+            throw new IllegalStateException("Not a stored player: " + text);
+        }
+        var value = text.substring(colon + 1);
+        return switch (text.substring(0, colon)) {
+            case "BOT" -> new Player.Bot(BotProfile.valueOf(value));
+            case "LOCAL" -> new Player.Local(value);
+            case "REMOTE" -> new Player.Remote(value);
+            default -> throw new IllegalStateException("Not a stored player: " + text);
         };
     }
 

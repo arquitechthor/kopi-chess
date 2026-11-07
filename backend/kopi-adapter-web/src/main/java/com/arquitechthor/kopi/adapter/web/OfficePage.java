@@ -39,7 +39,8 @@ record OfficePage(
         List<GamePage.MoveRow> history,
         boolean finished,
         boolean humanToMove,
-        String statusKey) {
+        String statusKey,
+        String statusArg) {
 
     /// A row of the board table.
     record Rank(String label, List<Cell> cells) {}
@@ -68,7 +69,7 @@ record OfficePage(
 
     static OfficePage of(GameView view, OfficeNotation notation) {
         var position = Fen.parse(view.fen());
-        var whiteAtBottom = view.humanColor().orElse(Color.WHITE) == Color.WHITE;
+        var whiteAtBottom = GamePage.bottom(view) == Color.WHITE;
         var lastMove = view.lastMove()
                 .map(move -> Set.of(move.uci().substring(0, 2), move.uci().substring(2, 4)))
                 .orElse(Set.of());
@@ -101,7 +102,8 @@ record OfficePage(
 
         return new OfficePage(view.id().toString(), view.version(), files, ranks,
                 view.isHumanToMove() ? groups(view, position, notation) : List.of(), history,
-                view.status() == GameStatus.FINISHED, view.isHumanToMove(), GamePage.statusKey(view));
+                view.status() == GameStatus.FINISHED, view.isHumanToMove(), GamePage.statusKey(view),
+                GamePage.statusArg(view));
     }
 
     /// The legal moves grouped by the piece that moves, king first, each

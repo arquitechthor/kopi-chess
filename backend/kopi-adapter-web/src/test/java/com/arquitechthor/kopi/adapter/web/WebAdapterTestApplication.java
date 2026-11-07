@@ -4,15 +4,19 @@ import com.arquitechthor.kopi.application.analysis.GetAnalysis;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
+import com.arquitechthor.kopi.application.game.AgreeDraw;
+import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
+import com.arquitechthor.kopi.application.game.CreateLocalGame;
+import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
 import com.arquitechthor.kopi.application.game.DeleteGame;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.ExportPgn;
 import com.arquitechthor.kopi.application.game.ExportPgnUseCase;
-import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetBotRecords;
 import com.arquitechthor.kopi.application.game.GetBotRecordsUseCase;
+import com.arquitechthor.kopi.application.game.GetGame;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.ImportPgn;
 import com.arquitechthor.kopi.application.game.ImportPgnUseCase;
@@ -133,6 +137,18 @@ class WebAdapterTestApplication {
     @Bean
     GetAnalysisUseCase getAnalysis(InMemoryGames games, QueuedAnalyses analyses, SavedAnalyses saved) {
         return new GetAnalysis(games, analyses, saved);
+    }
+
+    @Bean
+    CreateLocalGameUseCase createLocalGame(InMemoryGames games, Clock clock) {
+        // Ids from the other end, so they never meet those of createGame.
+        var ids = new AtomicLong();
+        return new CreateLocalGame(games, () -> new GameId(new UUID(1, ids.incrementAndGet())), clock);
+    }
+
+    @Bean
+    AgreeDrawUseCase agreeDraw(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        return new AgreeDraw(games, analyses, clock);
     }
 
     @Bean

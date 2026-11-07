@@ -38,24 +38,29 @@ class HistoryController {
     ///
     /// @param id         the game, for its links
     /// @param createdAt  when it started (or was imported)
-    /// @param botProfile the opponent; `null` for an imported game
-    /// @param players    an imported game's players, `White – Black` (empty
-    ///                   if its PGN names neither); `null` for a game played
-    ///                   here
-    /// @param humanColor the person's colour; `null` for an imported game
+    /// @param botProfile the bot; `null` if no bot plays
+    /// @param players    the players of a game without a bot, `White –
+    ///                   Black`: an imported game's (empty if its PGN names
+    ///                   neither) or two people here; `null` against a bot
+    /// @param humanColor the one person's colour; `null` for two people here
+    ///                   and an imported game
     /// @param moves      full moves played
     /// @param result     the score, `null` while in progress
     /// @param forYou     `WON`, `LOST`, `DRAW` or `IN_PROGRESS` for a game
-    ///                   played here (resigning is losing); `null` for an
-    ///                   imported one
+    ///                   with one person here (resigning is losing); `null`
+    ///                   for two people here and an imported one
     /// @param finished   whether it has a review
     record Row(String id, Instant createdAt, BotProfile botProfile, String players, Color humanColor, int moves,
                GameResult result, String forYou, boolean finished) {
 
         static Row of(GameSummary game) {
-            var imported = game.origin() == GameOrigin.IMPORTED;
+            var players = switch (game.mode()) {
+                case IMPORTED -> Players.of(game.pgnTags());
+                case LOCAL, ONLINE -> Players.local(game.white(), game.black());
+                case AGAINST_BOT -> null;
+            };
             return new Row(game.id().toString(), game.createdAt(), game.botProfile().orElse(null),
-                    imported ? Players.of(game.pgnTags()) : null, game.humanColor().orElse(null), (game.plies() + 1) / 2,
+                    players, game.humanColor().orElse(null), (game.plies() + 1) / 2,
                     game.result().orElse(null), game.humanColor().map(human -> forYou(game, human)).orElse(null),
                     game.status() == GameStatus.FINISHED);
         }

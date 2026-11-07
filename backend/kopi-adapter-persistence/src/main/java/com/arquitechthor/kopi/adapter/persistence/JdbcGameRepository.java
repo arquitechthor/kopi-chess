@@ -2,8 +2,8 @@ package com.arquitechthor.kopi.adapter.persistence;
 
 import com.arquitechthor.kopi.adapter.persistence.GameRows.GameRow;
 import com.arquitechthor.kopi.adapter.persistence.GameRows.MoveRow;
-import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.BotRecord;
+import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.game.BotProfile;
@@ -39,8 +39,8 @@ import org.springframework.transaction.support.TransactionOperations;
 public final class JdbcGameRepository implements GameRepository {
 
     private static final String GAME_COLUMNS = """
-            id, origin, status, human_color, bot_profile, initial_fen, result, termination,
-            version, created_at, finished_at, pgn_tags""";
+            id, origin, status, white_player, black_player, human_color, bot_profile, initial_fen, result,
+            termination, version, created_at, finished_at, pgn_tags""";
 
     private final JdbcClient jdbc;
     private final TransactionOperations transactions;
@@ -64,13 +64,15 @@ public final class JdbcGameRepository implements GameRepository {
         var row = GameRows.gameRow(game);
         transactions.executeWithoutResult(_ -> {
             jdbc.sql("""
-                    insert into game (id, origin, status, human_color, bot_profile, initial_fen, result,
-                                      termination, version, created_at, finished_at, pgn_tags)
-                    values (:id, :origin, :status, :humanColor, :botProfile, :initialFen, :result,
-                            :termination, :version, :createdAt, :finishedAt, :pgnTags)""")
+                    insert into game (id, origin, status, white_player, black_player, human_color, bot_profile,
+                                      initial_fen, result, termination, version, created_at, finished_at, pgn_tags)
+                    values (:id, :origin, :status, :whitePlayer, :blackPlayer, :humanColor, :botProfile,
+                            :initialFen, :result, :termination, :version, :createdAt, :finishedAt, :pgnTags)""")
                     .param("id", row.id())
                     .param("origin", row.origin())
                     .param("status", row.status())
+                    .param("whitePlayer", row.whitePlayer())
+                    .param("blackPlayer", row.blackPlayer())
                     .param("humanColor", row.humanColor())
                     .param("botProfile", row.botProfile())
                     .param("initialFen", row.initialFen())
@@ -141,7 +143,8 @@ public final class JdbcGameRepository implements GameRepository {
     }
 
     /// One aggregate query: the person's side is `human_color`, so a win
-    /// is a result that names it. The same counts as `BotRecord.tally`.
+    /// is a result that names it. Only games against a bot (`bot_profile`
+    /// set): the same counts as `BotRecord.tally`.
     @Override
     public Map<BotProfile, BotRecord> recordsAgainstBots() {
         var records = new EnumMap<BotProfile, BotRecord>(BotProfile.class);
@@ -157,7 +160,7 @@ public final class JdbcGameRepository implements GameRepository {
                        count(*) filter (where result = 'DRAW') as drawn,
                        count(*) filter (where status = 'IN_PROGRESS') as unfinished
                   from game
-                 where origin = 'PLAYED'
+                 where origin = 'PLAYED' and bot_profile is not null
                  group by bot_profile""")
                 .query((rs, _) -> Map.entry(BotProfile.valueOf(rs.getString("bot_profile")),
                         new BotRecord(rs.getInt("won"), rs.getInt("lost"), rs.getInt("drawn"),
@@ -244,6 +247,8 @@ public final class JdbcGameRepository implements GameRepository {
                 rs.getObject("id", UUID.class),
                 rs.getString("origin"),
                 rs.getString("status"),
+                rs.getString("white_player"),
+                rs.getString("black_player"),
                 rs.getString("human_color"),
                 rs.getString("bot_profile"),
                 rs.getString("initial_fen"),

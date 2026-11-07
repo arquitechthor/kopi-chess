@@ -15,10 +15,12 @@ import com.arquitechthor.kopi.domain.analysis.SearchLimits;
 import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.chess.Opening;
 import com.arquitechthor.kopi.domain.game.BotProfile;
+import com.arquitechthor.kopi.domain.game.GameMode;
 import com.arquitechthor.kopi.domain.game.GameOrigin;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
+import com.arquitechthor.kopi.domain.game.Player;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,24 @@ final class ApiModel {
     /// `POST /games`.
     record CreateGameRequest(Color humanColor, BotProfile botProfile) {}
 
+    /// `POST /games/local`: two people at this computer (ADR-018).
+    record CreateLocalGameRequest(String whiteName, String blackName) {}
+
+    /// Who plays a colour (ADR-018): `{"kind": "BOT", "bot": "PAWN"}`,
+    /// `{"kind": "LOCAL", "name": "Ana"}` (`""` for the person against a
+    /// bot) or `{"kind": "REMOTE", "kopiId": "luis_92"}`. The fields of the
+    /// other kinds are `null`.
+    record PlayerResponse(String kind, BotProfile bot, String name, String kopiId) {
+
+        static PlayerResponse of(Player player) {
+            return switch (player) {
+                case Player.Bot(var profile) -> new PlayerResponse("BOT", profile, null, null);
+                case Player.Local(var name) -> new PlayerResponse("LOCAL", null, name, null);
+                case Player.Remote(var kopiId) -> new PlayerResponse("REMOTE", null, null, kopiId);
+            };
+        }
+    }
+
     /// `POST /games/{id}/moves`.
     record PlayMoveRequest(String uci) {}
 
@@ -47,8 +67,15 @@ final class ApiModel {
     /// chess rules on the client side (design §10.2).
     ///
     /// @param origin     `PLAYED` here or `IMPORTED` from PGN
-    /// @param humanColor the person's colour; `null` for an imported game
-    /// @param botProfile the opponent; `null` for an imported game
+    /// @param mode       `AGAINST_BOT`, `LOCAL` (two people here), `ONLINE`
+    ///                   or `IMPORTED`
+    /// @param white      who plays White; `null` for an imported game
+    /// @param black      who plays Black; `null` for an imported game
+    /// @param humanColor the colour of the one person here (against a bot or
+    ///                   online); `null` otherwise
+    /// @param botProfile the bot; `null` if no bot plays
+    /// @param humanToMove whether a person here may move now (between two
+    ///                   people here, while the game goes on)
     /// @param legalMoves the legal moves in UCI; empty when the game is over
     /// @param pgnTags    an imported game's PGN tags (`White`, `Event`…);
     ///                   empty for a game played here
@@ -56,6 +83,9 @@ final class ApiModel {
             UUID id,
             GameOrigin origin,
             GameStatus status,
+            GameMode mode,
+            PlayerResponse white,
+            PlayerResponse black,
             Color humanColor,
             BotProfile botProfile,
             String fen,
@@ -74,8 +104,9 @@ final class ApiModel {
 
         static GameResponse of(GameView view) {
             var moves = view.moves().stream().map(MoveResponse::of).toList();
-            return new GameResponse(view.id().value(), view.origin(), view.status(), view.humanColor().orElse(null),
-                    view.botProfile().orElse(null),
+            return new GameResponse(view.id().value(), view.origin(), view.status(), view.mode(),
+                    view.white().map(PlayerResponse::of).orElse(null), view.black().map(PlayerResponse::of).orElse(null),
+                    view.humanColor().orElse(null), view.botProfile().orElse(null),
                     view.fen(), view.sideToMove(), view.inCheck(), view.isHumanToMove(), moves,
                     view.lastMove().map(MoveResponse::of).orElse(null),
                     view.legalMoves().stream().map(GameView.LegalMoveView::uci).toList(),
@@ -108,6 +139,8 @@ final class ApiModel {
                 case GameOutcome.InsufficientMaterial _ -> new OutcomeResponse("INSUFFICIENT_MATERIAL", null);
                 case GameOutcome.ThreefoldRepetition _ -> new OutcomeResponse("THREEFOLD_REPETITION", null);
                 case GameOutcome.FiftyMoveRule _ -> new OutcomeResponse("FIFTY_MOVE_RULE", null);
+                case GameOutcome.DrawByAgreement _ -> new OutcomeResponse("DRAW_AGREEMENT", null);
+                case GameOutcome.Inactivity(var winner) -> new OutcomeResponse("INACTIVITY", winner);
                 case GameOutcome.Declared(var result) -> new OutcomeResponse("DECLARED", switch (result) {
                     case WHITE_WIN -> Color.WHITE;
                     case BLACK_WIN -> Color.BLACK;
@@ -122,6 +155,9 @@ final class ApiModel {
             UUID id,
             GameOrigin origin,
             GameStatus status,
+            GameMode mode,
+            PlayerResponse white,
+            PlayerResponse black,
             Color humanColor,
             BotProfile botProfile,
             int plies,
@@ -131,8 +167,9 @@ final class ApiModel {
             Instant finishedAt) {
 
         static GameSummaryResponse of(GameSummary summary) {
-            return new GameSummaryResponse(summary.id().value(), summary.origin(), summary.status(),
-                    summary.humanColor().orElse(null), summary.botProfile().orElse(null), summary.plies(), summary.outcome().map(OutcomeResponse::of).orElse(null),
+            return new GameSummaryResponse(summary.id().value(), summary.origin(), summary.status(), summary.mode(),
+                    summary.white().map(PlayerResponse::of).orElse(null),
+                    summary.black().map(PlayerResponse::of).orElse(null), summary.humanColor().orElse(null), summary.botProfile().orElse(null), summary.plies(), summary.outcome().map(OutcomeResponse::of).orElse(null),
                     summary.result().orElse(null), summary.createdAt(), summary.finishedAt().orElse(null));
         }
     }

@@ -8,7 +8,9 @@
  *
  * The move is sent in the background (fetch to …/live-moves): the server
  * answers with the part of the page that changes (status, move list and a
- * new #board-state, the bot's reply included). The board then slides the
+ * new #board-state, the bot's reply included). Between two people at this
+ * computer the server also turns the board (data-orientation), so each one
+ * plays from their own side. The board then slides the
  * bot's piece from where it was, and the page is never reloaded. If that
  * fails for any reason, the move form is submitted the classic way
  * (Post/Redirect/Get), which works without this script too.
@@ -42,11 +44,12 @@ if (element) {
     const data = state();
     return {
       fen: data.fen.split(' ')[0],
+      orientation: data.orientation,
       turnColor: data.turn,
       lastMove: data.lastMove ? [data.lastMove.slice(0, 2), data.lastMove.slice(2, 4)] : undefined,
       check: data.check === 'true',
       movable: {
-        color: data.movable === 'true' ? element.dataset.orientation : undefined,
+        color: data.movable === 'true' ? data.movableColor : undefined,
         dests: destinations(JSON.parse(data.legalMoves)),
       },
     };
@@ -54,7 +57,6 @@ if (element) {
 
   const board = Chessground(element, {
     ...config(),
-    orientation: element.dataset.orientation,
     coordinates: true,
     // A little slower than the default, so the bot's reply is easy to follow.
     animation: { enabled: true, duration: 320 },
