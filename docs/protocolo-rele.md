@@ -7,7 +7,12 @@ de `kopi-media-admin/documentation/Lambdas/kopi-chess/` y lo que usará el
 futuro `kopi-adapter-relay`, y lo que debe imitar un relé falso en las
 pruebas.
 
-- **Estado:** versión 1, 2026-11-07.
+- **Estado:** versión 1, 2026-11-07. El mismo día, sin cambiar de versión
+  (solo se añaden rutas y mensajes), se añadieron el historial en la cuenta
+  (§9) y el canal entre dispositivos para la app Android (§8 y §10). Están
+  desplegados en AWS y probados contra AWS real
+  (`test-chess-history-devices.ps1` de `kopi-media-admin`, 43 de 43);
+  Kopi Chess todavía no los usa.
 - **Cambios:** un cambio que rompa clientes sube la versión. Añadir campos a
   una respuesta no la sube: el cliente ignora lo que no conoce.
 
@@ -75,6 +80,8 @@ español para depurar, no para la interfaz.
 | 409 | `WRONG_PLY` | el número de jugada no es el siguiente (otra jugada llegó antes) |
 | 409 | `NO_DRAW_OFFER` | no hay oferta de tablas del rival que aceptar o rechazar |
 | 409 | `TOO_MANY_MOVES` | la partida llegó a 1.000 medias jugadas |
+| 409 | `REV_CONFLICT` | historial: la partida cambió en otro equipo (§9.4); trae `current` |
+| 413 | `TOO_LARGE` | historial: `data` pasa de 300.000 caracteres (§9.4) |
 | 426 | `PROTOCOL_MISMATCH` | falta `X-Kopi-Chess-Protocol` o no es `1`: actualizar Kopi Chess |
 | 429 | `TOO_MANY_REQUESTS` | límite por usuario (§6) |
 | 500 | `INTERNAL` | fallo del relé |
@@ -216,7 +223,10 @@ Todas responden `200` con la partida.
 ## 6. Límites por usuario
 
 - 20 invitaciones por hora.
-- 120 operaciones por minuto, todas las rutas juntas.
+- 120 operaciones por minuto, todas las rutas juntas, salvo las de subir y
+  borrar en el historial (§9), que tienen su propio límite: 300 por minuto.
+  Borrar todo el historial: 10 veces por hora.
+- Canal entre dispositivos (§10): 600 mensajes `relay` por minuto.
 - Al pasarse: `429 TOO_MANY_REQUESTS`. Kopi Chess reintenta más tarde.
 
 ## 7. Avisos en tiempo real (WebSocket)
@@ -241,3 +251,209 @@ Todas responden `200` con la partida.
   `{ "type": "ping" }` cada 5 minutos (el relé responde
   `{ "type": "pong" }`) y reconecta al cerrarse, sincronizando después con
   `GET /chess/games`.
+
+## 8. La app Android
+
+La app Android de Kopi Chess (fase F del
+[plan de jugador contra jugador](plan-jugador-contra-jugador.md), §11) usa
+su propio cliente de Cognito. Inicia sesión con SRP desde Amplify, como las
+demás apps Kopi, sin página de login ni URL de vuelta.
+
+| Qué | Valor |
+|---|---|
+| Client ID (`kopi-chess-mobile-client`) | `6kgqvf70nuvmfc89obppl2t398` |
+| Flujos | `ALLOW_USER_SRP_AUTH`, `ALLOW_REFRESH_TOKEN_AUTH` (sin secreto, sin OAuth) |
+| User Pool | `eu-south-2_Yunp5ZGUR` (región `eu-south-2`) |
+| *Tokens* | acceso 1 hora, *refresh* 30 días |
+
+Las rutas HTTP de Kopi Chess (`/kopi-id*`, `/chess/*`) y el WebSocket
+aceptan los *tokens* de los dos clientes de Kopi Chess, y de ningún otro: con
+ellos no se abre el resto de la API de Kopi.
+
+## 9. Historial en la cuenta
+
+Opcional: guardar las partidas de Kopi Chess en la cuenta Kopi y
+sincronizarlas entre los equipos de la misma persona (idea «Historial en la
+cuenta Kopi» de [`ideas-futuro.md`](ideas-futuro.md)). El relé solo guarda y
+ordena; **no mira dentro de las partidas**, y la unión de dos versiones la
+hace Kopi Chess.
+
+### 9.1 La entrada
+
+Una por cuenta y partida:
+
+```json
+{
+  "gameId": "0b6c5a52-4a9e-4d0e-9a51-2f3c7c1d8e10",
+  "rev": 3,
+  "deleted": false,
+  "changedAt": "2026-11-07T18:30:00.000Z",
+  "data": { "format": 1, "…": "lo que decida Kopi Chess" }
+}
+```
+
+- **`gameId`:** el UUID de la partida en Kopi Chess. El relé lo guarda y lo
+  devuelve en minúsculas.
+- **`rev`:** la revisión. Empieza en 1 y cada subida o borrado la sube en 1.
+  Es lo que evita que un equipo pise sin saberlo lo que subió otro
+  (concurrencia optimista).
+- **`deleted`:** `true` en una **lápida**: la partida se borró en algún
+  equipo y los demás deben borrar su copia. Una lápida no lleva `data`
+  (`null`) y caduca a los 180 días.
+- **`data`:** un objeto JSON de hasta 300.000 caracteres. Su forma la decide
+  Kopi Chess (por ejemplo jugadas, jugadores, resultado y fechas), con un
+  campo `format` propio para poder cambiarla. El relé no lo interpreta.
+
+### 9.2 Reglas
+
+- **Solo el dueño** ve y cambia sus entradas: la cuenta sale del *token*,
+  nunca de la petición.
+- **Subir exige la `rev` vista por última vez** (0 si es nueva). Si otro
+  equipo cambió la entrada entretanto, el relé no la pisa: responde
+  `409 REV_CONFLICT` con la entrada actual (`current`). Kopi Chess une las
+  dos versiones y vuelve a subir con la `rev` de `current`.
+- **Subir sobre una lápida** con su `rev` restaura la partida.
+- **Borrar la cuenta Kopi** borra también todo su historial.
+
+### 9.3 Bajar los cambios
+
+`GET /chess/history?since=<cursor>&limit=<n>`
+
+- Sin `since`, todo el historial; con `since`, solo lo que cambió después.
+- `limit` va de 1 a 500 (100 por defecto). Además, una respuesta no pasa de
+  unos 4 MB.
+- La respuesta (`200`):
+
+  ```json
+  {
+    "entries": [ { "gameId": "…", "rev": 3, "deleted": false, "changedAt": "…", "data": { } } ],
+    "cursor": "000017625401234#",
+    "more": false,
+    "tombstoneDays": 180
+  }
+  ```
+
+- **Las entradas llegan en orden de cambio,** las lápidas incluidas.
+- **`cursor` se guarda tal cual** y se manda como `since` la próxima vez. Es
+  opaco: no hay que interpretarlo.
+- **Con `more: true`** hay más páginas: se pide otra vez enseguida con el
+  nuevo `cursor`.
+- **Al terminar (`more: false`)** el cursor se queda 10 segundos atrás, para
+  que una escritura concurrente que se confirme tarde no se pierda. Por eso
+  una entrada puede llegar dos veces con la misma `rev`, y aplicarla dos
+  veces no debe cambiar nada.
+- **Si el último cursor tiene más de `tombstoneDays` días,** puede que las
+  lápidas de lo borrado entretanto ya hayan caducado. Kopi Chess debe
+  sincronizar entonces como la primera vez (§9.6).
+
+### 9.4 Subir una partida
+
+`PUT /chess/history/{gameId}` con `{ "rev": 2, "data": { … } }`
+
+- `200` con la entrada nueva, sin `data`:
+  `{ "gameId": "…", "rev": 3, "deleted": false, "changedAt": "…" }`.
+- `409 REV_CONFLICT` si `rev` ya no es la actual, o es 0 y la entrada existe
+  (aunque sea una lápida). Trae `current`, la entrada actual con su `data`:
+
+  ```json
+  { "status": 409, "error": "Conflict", "code": "REV_CONFLICT", "detail": "…", "current": { "gameId": "…", "rev": 3, "deleted": false, "changedAt": "…", "data": { } } }
+  ```
+
+- `400 BAD_REQUEST` si `gameId` no es un UUID, `rev` no es un entero desde 0
+  o `data` no es un objeto.
+- `413 TOO_LARGE` si `data` pasa de 300.000 caracteres.
+
+### 9.5 Borrar
+
+- **`DELETE /chess/history/{gameId}?rev=<n>`** deja una lápida con
+  `rev = n + 1`. Responde:
+  - `204`, también si la entrada no existe o ya era una lápida (borrar es
+    idempotente);
+  - `409 REV_CONFLICT`, con `current`, si la partida cambió en otro equipo
+    desde `n`. Kopi Chess decide entonces si la borra igualmente (con la
+    `rev` de `current`) o se queda la versión nueva.
+- **`DELETE /chess/history`** borra **todo** el historial de la cuenta, sin
+  lápidas, para dejar de guardarlo en Kopi. Responde `204`. Los equipos que
+  sigan sincronizando lo volverían a subir, así que Kopi Chess debe apagar
+  antes la sincronización en ese equipo y avisar de que los demás también
+  deben apagarla.
+
+### 9.6 Cómo sincroniza Kopi Chess (orientativo)
+
+Esto lo decidirá su ADR. El relé permite, por ejemplo:
+
+1. **La primera vez:** bajar todo (`since` vacío) y unir. Lo que solo está
+   en un lado se copia al otro: se baja lo que falta y se sube con `rev: 0`
+   lo local.
+2. **Después:** subir lo que cambió en local (con la `rev` guardada de cada
+   partida) y bajar desde el último `cursor`.
+3. **Unir dos versiones de una partida:** las partidas solo crecen. Si las
+   jugadas de una son el principio de las de la otra, gana la más larga; si
+   divergen (la misma partida en curso jugada en dos equipos), se guardan las
+   dos, una como partida nueva con otro UUID.
+4. **El análisis** se puede recalcular en cada equipo, o viajar dentro de
+   `data` más adelante (subiendo `format`).
+
+## 10. Canal entre dispositivos (app Android ↔ PC)
+
+El mismo WebSocket de §7 une la app Android con el Kopi Chess del PC de la
+**misma cuenta** en «modo servidor» (fase F del plan). El relé reenvía los
+mensajes sin guardarlos ni mirar dentro. El formato de `payload` (listar
+bots, crear partida, jugar…) lo decidirán el ADR-021 y el
+`kopi-adapter-remote`; para el relé es opaco.
+
+### 10.1 Conectar
+
+`wss://01q3xfi4m6.execute-api.eu-south-2.amazonaws.com/prod?token=<access token>&protocol=1&role=<papel>&name=<nombre>`
+
+| Papel (`role`) | Quién | Para qué |
+|---|---|---|
+| `notify` (por defecto en el PC) | Kopi Chess de escritorio | solo los avisos de partidas de §7, como hasta ahora |
+| `server` | Kopi Chess de escritorio, con el «modo servidor» activo | además, recibir peticiones de la app |
+| `device` (siempre en el móvil) | app Android | hablar con un PC servidor |
+
+- **`server` solo con un *token* de `kopi-chess-client`.** El móvil
+  (`kopi-chess-mobile-client`) siempre es `device`: si pide otro papel, el
+  relé rechaza la conexión (`403`).
+- **`name`** es opcional: hasta 40 caracteres que la app muestra («PC de
+  casa»).
+- **Las conexiones `server` y `device` también reciben los avisos de
+  partidas** de §7. Quien no los use los ignora.
+
+### 10.2 Mensajes
+
+Mensajes al relé y del relé en JSON. Todos los del relé llevan
+`"protocol": 1`.
+
+| Al relé | Respuesta a quien lo envía |
+|---|---|
+| `{ "type": "ping" }` | `{ "type": "pong" }` |
+| `{ "type": "presence" }` | `{ "type": "presence", "servers": [ { "connectionId": "…", "name": "PC de casa", "connectedAt": "…" } ] }` |
+| `{ "type": "relay", "to": "<connectionId>", "id": "q1", "payload": { … } }` | nada si se entregó; si no, `{ "type": "error", "code": "…", "id": "q1" }` |
+
+- **`presence`** dice qué PCs servidores de la cuenta están conectados. El
+  relé también se lo **empuja** a los móviles cada vez que un PC servidor se
+  conecta o se desconecta.
+- **`relay`** solo va de un `device` a un `server`, o de un `server` a un
+  `device`, de la misma cuenta. Quien lo recibe ve:
+
+  ```json
+  { "type": "relay", "from": "<connectionId>", "fromRole": "device", "fromName": "Móvil", "id": "q1", "payload": { }, "protocol": 1 }
+  ```
+
+  Para responder, se envía otro `relay` con `to` = el `from` recibido y el
+  mismo `id`, que sirve para emparejar petición y respuesta.
+- **`payload`** es un objeto JSON de hasta 32.000 caracteres.
+
+| `code` de error | Cuándo |
+|---|---|
+| `DEVICE_NOT_CONNECTED` | `to` no existe, ya se desconectó, es de otra cuenta o no tiene el papel contrario |
+| `ROLE_NOT_ALLOWED` | una conexión `notify` intenta reenviar |
+| `BAD_MESSAGE` | falta `payload` o no es un objeto |
+| `TOO_LARGE` | `payload` pasa de 32.000 caracteres |
+| `TOO_MANY_REQUESTS` | más de 600 `relay` por minuto en la cuenta |
+| `NOT_CONNECTED` | el relé no conoce esta conexión (reconectar) |
+
+- **Sin garantía de entrega:** si el PC se desconecta a mitad, la petición se
+  pierde. La app reintenta, o vuelve a pedir el estado, con su propio
+  tiempo de espera.
