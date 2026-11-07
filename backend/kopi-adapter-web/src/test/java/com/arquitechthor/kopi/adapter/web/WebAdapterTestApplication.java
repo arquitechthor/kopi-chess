@@ -1,6 +1,8 @@
 package com.arquitechthor.kopi.adapter.web;
 
 import com.arquitechthor.kopi.application.analysis.GetAnalysis;
+import com.arquitechthor.kopi.application.account.AccountView;
+import com.arquitechthor.kopi.application.account.KopiAccountUseCase;
 import com.arquitechthor.kopi.application.analysis.GetAnalysisUseCase;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
@@ -34,6 +36,7 @@ import com.arquitechthor.kopi.application.port.BotRecord;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
+import com.arquitechthor.kopi.application.port.KopiOnlineException;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.analysis.GameAnalysis;
 import com.arquitechthor.kopi.domain.chess.Move;
@@ -137,6 +140,67 @@ class WebAdapterTestApplication {
     @Bean
     GetAnalysisUseCase getAnalysis(InMemoryGames games, QueuedAnalyses analyses, SavedAnalyses saved) {
         return new GetAnalysis(games, analyses, saved);
+    }
+
+    /// The Kopi account, faked: tests set what it answers.
+    @Bean
+    FakeAccount fakeAccount() {
+        return new FakeAccount();
+    }
+
+    /// A Kopi account in memory, signed out at first (ADR-019).
+    static final class FakeAccount implements KopiAccountUseCase {
+        AccountView view = AccountView.SIGNED_OUT;
+        KopiOnlineException.Problem failure;
+        String lastCode;
+        String reserved;
+
+        void reset() {
+            view = AccountView.SIGNED_OUT;
+            failure = null;
+            lastCode = null;
+            reserved = null;
+        }
+
+        private void failIfAsked() {
+            if (failure != null) {
+                throw new KopiOnlineException(failure, "fake");
+            }
+        }
+
+        @Override
+        public AccountView account() {
+            return view;
+        }
+
+        @Override
+        public java.net.URI beginLogin() {
+            failIfAsked();
+            return java.net.URI.create("https://login.example/oauth2/authorize?state=s1");
+        }
+
+        @Override
+        public AccountView completeLogin(String code, String state) {
+            failIfAsked();
+            lastCode = code;
+            view = new AccountView(true, java.util.Optional.of("ana@example.com"), java.util.Optional.empty(),
+                    false, false);
+            return view;
+        }
+
+        @Override
+        public AccountView reserveKopiId(String kopiId) {
+            failIfAsked();
+            reserved = kopiId;
+            view = new AccountView(true, view.email(), java.util.Optional.of(kopiId), false, false);
+            return view;
+        }
+
+        @Override
+        public java.net.URI signOut() {
+            view = AccountView.SIGNED_OUT;
+            return java.net.URI.create("https://login.example/logout?client_id=c");
+        }
     }
 
     @Bean
