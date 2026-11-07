@@ -507,7 +507,11 @@ conexión, del orden de un céntimo. Cada jugada son unos pocos mensajes.
 
 - [ ] ADR-021: el móvil como cliente remoto del PC, el «modo servidor» y su
       lista blanca de operaciones.
-- [ ] Relé: canal entre dispositivos de la misma cuenta y presencia del PC.
+- [x] Relé: canal entre dispositivos de la misma cuenta y presencia del PC
+      (2026-11-07, con el cliente de Cognito de la app,
+      `kopi-chess-mobile-client`; contrato en
+      [`protocolo-rele.md`](protocolo-rele.md) §8 y §10, probado contra AWS
+      real). La entrega entre dos WebSocket reales se probará con la app.
 - [ ] `kopi-adapter-remote` con el interruptor de «modo servidor», el aviso
       visible y la lista blanca. Pruebas con un relé falso.
 - [ ] App Android (Capacitor + Chessground + Amplify): entrar, ver si el PC
