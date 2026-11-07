@@ -1,15 +1,21 @@
 # Plan: jugador contra jugador
 
-- **Estado:** propuesta. No está comprometida ni tiene fecha; recoge cómo se
-  haría para que, si se retoma, se empiece con las decisiones a la vista.
+- **Estado:** **prioridad 1** (decisión del usuario, 2026-11-07), seguida de
+  la app Android (§11). El orden de todos los modos está en
+  [`plan-modos-de-juego.md`](plan-modos-de-juego.md) §1.
+- **Dónde se hace cada parte:** la parte de AWS (fases B y C) se prepara en
+  la máquina de desarrollo que tiene acceso a AWS; la otra no lo tiene. Ver
+  §10, «Qué necesita AWS».
 - **Fecha:** 2026-10-29, sobre la versión 1.0.0.
 - **Alcance:** dos modos nuevos, que se entregan **juntos** en una sola
   versión:
   - **Local:** dos personas en la misma máquina, cada una con su nombre.
   - **En línea:** dos personas, cada una con su Kopi Chess en *localhost*,
     con una cuenta Kopi.
-- **Extensión posterior y opcional (§11):** una app Android sencilla para
-  jugar contra los bots de **tu** PC a través del mismo relé.
+- **Después (§11), prioridad 2:** una app Android sencilla para jugar contra
+  los bots de **tu** PC a través del mismo relé. Vive **en este
+  repositorio**, porque está fuertemente acoplada a Kopi Chess (protocolo,
+  casos de uso, versión).
 
 ---
 
@@ -281,6 +287,25 @@ Kopi:
 Se entregan juntas en una versión, pero se construyen en este orden: cada
 fase deja algo que funciona y se prueba.
 
+### Qué necesita AWS
+
+El backend Kopi es compartido y su código vive en `kopi-media-admin`
+(Lambdas en `documentation/Lambdas/`, tablas en
+`documentation/dynamodb-schema.md`, un *script* de *bootstrap* idempotente
+por funcionalidad en `documentation/scripts/`). Ese repositorio va directo a
+`main`; Kopi Chess, con *pull request* (§2.1 del plan de desarrollo).
+
+- **Solo se puede hacer en la máquina con acceso a AWS:** crear y probar de
+  verdad lo de las fases B y C (tabla `KopiIds` y sus rutas, el cliente de
+  aplicación con *callback* a `localhost`, las tablas del relé, sus Lambdas,
+  el API WebSocket, los límites y las alarmas), y la prueba con `curl` de la
+  aceptación de la fase C.
+- **Se puede hacer en cualquier máquina:** la fase A entera, y en las fases B
+  y D todo lo que se prueba con un relé falso (`PvpRelay` y `KopiAccount`
+  falsos). Por eso, cuando se trabaje en la máquina con AWS, se adelanta la
+  parte de AWS de las fases B y C aunque la fase A no esté terminada: deja el
+  relé listo para que la otra máquina programe contra él.
+
 ### Fase A: el dominio con personas, y el modo local
 
 - [ ] ADR-018: jugadores por color (`Player`), tablas de mutuo acuerdo e
@@ -350,7 +375,7 @@ termina igual en los dos PCs.
 
 ---
 
-## 11. Extensión: jugar desde el móvil contra los bots del PC
+## 11. Después: jugar desde el móvil contra los bots del PC (prioridad 2)
 
 Una vez hecho el modo en línea, el relé y la conexión saliente del PC ya
 existen. Esta extensión los usa **entre los dispositivos de una misma
@@ -401,7 +426,9 @@ bot en la misma respuesta, así que basta un ida y vuelta por jugada.
   - ADR-016 sigue en pie: la interfaz web sigue siendo solo local y la
     conexión es saliente.
 - **App Android:** Capacitor + Chessground + Amplify, lo mismo que ya usa
-  `kopi-tools-app`.
+  `kopi-tools-app`. Vive **en este repositorio** (por ejemplo, una carpeta
+  `android-app/` junto a `backend/`), con su propio CI y su versión ligada a
+  la del protocolo del relé.
   - Pantallas: entrar con Kopi → «tu PC está conectado» → elegir bot y
     color, o retomar una partida → tablero → resultado.
   - Publicación en Google Play: ficha, iconos y política de privacidad.
@@ -436,7 +463,7 @@ conexión, del orden de un céntimo. Cada jugada son unos pocos mensajes.
   vuelta, más lo que piense el bot (hasta 1 s con QUEEN). En ajedrez sin
   reloj no se nota.
 
-### Fase F (opcional, después de E)
+### Fase F (después de E)
 
 - [ ] ADR-021: el móvil como cliente remoto del PC, el «modo servidor» y su
       lista blanca de operaciones.

@@ -40,7 +40,9 @@ Las tareas pequeñas y bien acotadas ya están en GitHub como
 
 ## Ideas grandes
 
-Ordenadas por relación valor/esfuerzo (antes en el plan, §11).
+Ordenadas por relación valor/esfuerzo (antes en el plan, §11). El orden de
+entrega propuesto y el plan de los modos de juego (puzzles, entrenador, reloj)
+están en [`plan-modos-de-juego.md`](plan-modos-de-juego.md).
 
 ### Jugador contra jugador
 
@@ -58,11 +60,13 @@ Ordenadas por relación valor/esfuerzo (antes en el plan, §11).
   ejercicio «encuentra la mejor jugada».
 - **Por qué merece la pena:** reutiliza todo el análisis; es la idea con más
   valor por esfuerzo.
+- **Plan detallado:** [`plan-modos-de-juego.md`](plan-modos-de-juego.md) §2.
 
 ### Reloj y controles de tiempo
 
 - **Qué:** partidas con tiempo, como regla del dominio (quien se queda sin
   tiempo pierde, con los matices de material insuficiente).
+- **Plan detallado:** [`plan-modos-de-juego.md`](plan-modos-de-juego.md) §4.
 
 ### *Bitboards*
 
@@ -85,3 +89,4 @@ Ordenadas por relación valor/esfuerzo (antes en el plan, §11).
 
 - **Qué:** durante la partida, una pista opcional cuando la jugada elegida
   sería un error, antes de confirmarla.
+- **Plan detallado:** [`plan-modos-de-juego.md`](plan-modos-de-juego.md) §3.
