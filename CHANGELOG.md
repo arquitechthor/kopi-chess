@@ -5,6 +5,54 @@ from the commit messages by [git-cliff](https://git-cliff.org) (`cliff.toml`);
 each release's highlights are in its
 [GitHub release](https://github.com/arquitechthor/kopi-chess/releases).
 
+## [1.1.0](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.1.0) - 2026-11-07
+
+### Features
+
+- **web:** Play the same bot again from a finished game ([702fa01](https://github.com/arquitechthor/kopi-chess/commit/702fa01fe39957208f4656702b6b3f50f2056e97))
+- **web:** Copy the position's FEN on the review page ([71b8f10](https://github.com/arquitechthor/kopi-chess/commit/71b8f1052879de087b520aa2466832ab965cb979))
+- Filter the game history by bot ([4e4c981](https://github.com/arquitechthor/kopi-chess/commit/4e4c98145b3c1a817081377e9cc96b25824aaf86))
+- Material balance on the game page ([6ce1327](https://github.com/arquitechthor/kopi-chess/commit/6ce132735ab9152385b90c8ef75c582586f4077f))
+- **web:** Spanish names for the most common openings ([24896d5](https://github.com/arquitechthor/kopi-chess/commit/24896d57bc9a8c3ad39eaf516a3e930f08129d59))
+- Two people can play each other at this computer ([892ea1c](https://github.com/arquitechthor/kopi-chess/commit/892ea1cb0e61f74ec329c48dd30e993d73e29f06))
+- Sign in with the Kopi account and choose a Kopi id ([8f36c67](https://github.com/arquitechthor/kopi-chess/commit/8f36c679065c4563f8fa69243d8879e5b02dfdd2))
+- Play online against a friend, each from their own Kopi Chess ([b8f3ff9](https://github.com/arquitechthor/kopi-chess/commit/b8f3ff9abcb4089e6fa548bea96c5b2d662302df))
+
+### Fixes
+
+- **web:** Open the Lichess accuracy formula in a new tab ([9698e5b](https://github.com/arquitechthor/kopi-chess/commit/9698e5b8bab2a5c212a680f7a2f206e19a3d43ca))
+- **online:** A new invitation shows on the open online page at once ([714a287](https://github.com/arquitechthor/kopi-chess/commit/714a2873ad99874f2c2d79c82a94b9a58bb52676))
+
+### Documentation
+
+- Spanish translation of CONTRIBUTING.md ([9557e9c](https://github.com/arquitechthor/kopi-chess/commit/9557e9cbc059c09982eaa666b13a83e65f9bdef5))
+- Plan for puzzles, trainer and clock, and the roadmap with multiplayer first ([e317354](https://github.com/arquitechthor/kopi-chess/commit/e317354208bd9e67bc4a2f2c2372f7ad3b0bbc9d))
+- ADR-019 (Kopi id) and ADR-020 (relay without chess rules), and the relay protocol ([bcd20e0](https://github.com/arquitechthor/kopi-chess/commit/bcd20e051a50e252757cd50db39a417912b1c16e))
+- **pvp:** Relay tested with a real Kopi account ([762e648](https://github.com/arquitechthor/kopi-chess/commit/762e64874ab8820e2b15849dcccf034eefa819a7))
+- ADR-018, a player per colour, and phase A of the PvP plan done ([1540227](https://github.com/arquitechthor/kopi-chess/commit/154022739b8961f7fa4ddc84d361fce70c75fc9f))
+- Phase B of the PvP plan done, and ADR-019 without Spring Security ([8d76e1d](https://github.com/arquitechthor/kopi-chess/commit/8d76e1df93165ed04bb4e1f35bdc4f3de6775ff1))
+- Phase D of the PvP plan done, except the real two-browser test ([76b2f43](https://github.com/arquitechthor/kopi-chess/commit/76b2f4375a64428b58cdc08070d12b97d78b32bc))
+- **pvp:** Phase D tested against the real relay with a real account ([ef19894](https://github.com/arquitechthor/kopi-chess/commit/ef19894b257b118fe0d23672e1871ce73a2489e1))
+- How to work on online play without a real account ([485ca28](https://github.com/arquitechthor/kopi-chess/commit/485ca2856ec504a74fe68fc328686ef7adf77dd8))
+
+### Tests
+
+- **web:** Keep the material tests at the end of GamePageTest ([4f345f8](https://github.com/arquitechthor/kopi-chess/commit/4f345f8440f971274923615d4b141fdf786c1595))
+- **web:** Put the opening name test before the full review test ([b8f3d79](https://github.com/arquitechthor/kopi-chess/commit/b8f3d79622041d98bb56ef76e8af9613c0b02bf7))
+
+### Build and dependencies
+
+- Start 1.1.0-SNAPSHOT ([6e0141b](https://github.com/arquitechthor/kopi-chess/commit/6e0141bfa4d7d7bd550200cf5cab691ff4a2baed))
+- Add an .editorconfig that matches the current style ([3521037](https://github.com/arquitechthor/kopi-chess/commit/35210371a06953b0b7517226fc44f74da70a3246))
+
+### Continuous integration
+
+- Scan every commit for secrets with gitleaks ([d108844](https://github.com/arquitechthor/kopi-chess/commit/d108844f1722d5e11d27ccefdac51cfdd68e356c))
+
+### Other
+
+- Remove the unused source images in tmp/ ([b4b0184](https://github.com/arquitechthor/kopi-chess/commit/b4b0184e38116a2b56a3f962ae07e9ecef22ea6e))
+
 ## [1.0.1](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.1) - 2026-11-05
 
 ### Features
@@ -23,6 +71,10 @@ each release's highlights are in its
 - Bump grafana/grafana from 13.2.5 to 13.3.0 in the compose group ([573d6ea](https://github.com/arquitechthor/kopi-chess/commit/573d6eabd0322d07ad452d81c6afacd660d0c9af))
 - Bump eclipse-temurin in /backend ([ce72b15](https://github.com/arquitechthor/kopi-chess/commit/ce72b159990988dfcf81688a25857d4c00946067))
 - Bump org.apache.maven.plugins:maven-enforcer-plugin ([f621c91](https://github.com/arquitechthor/kopi-chess/commit/f621c914cbaab128d5124ce9925626e201448be8))
+
+### Other
+
+- **release:** 1.0.1 ([b343623](https://github.com/arquitechthor/kopi-chess/commit/b343623da4bf959d1941ed4636656ce2e4839a7c))
 
 ## [1.0.0](https://github.com/arquitechthor/kopi-chess/releases/tag/v1.0.0) - 2026-10-29
 
@@ -43,6 +95,7 @@ each release's highlights are in its
 - Analysis on a modest machine (half a core) ([d6f92bf](https://github.com/arquitechthor/kopi-chess/commit/d6f92bf04fa1af6767ebf9ccb598f7a3dc28863a))
 - CHANGELOG.md, generated from the commits by git-cliff ([d5c9249](https://github.com/arquitechthor/kopi-chess/commit/d5c92495bc39656aea740522517f368b7c280aaa))
 - Ideas for after 1.0, in one place ([4fa3283](https://github.com/arquitechthor/kopi-chess/commit/4fa3283e32a20c2af897c7bed047dde390190a06))
+- Changelog for 1.0.0 ([7fc1936](https://github.com/arquitechthor/kopi-chess/commit/7fc1936b81a8ab9504df5bb462c614326a40d941))
 
 ### Tests
 
