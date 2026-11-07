@@ -408,10 +408,10 @@ termina igual en los dos PCs.
 
 ### Fase E: publicación
 
-- [ ] Documentación: README, CONTRIBUTING (cómo probar sin cuenta real),
-      diseño y este plan actualizado.
-- [ ] Changelog y versión (probablemente 1.1.0: no rompe nada de lo
-      anterior).
+- [x] Documentación: README, CONTRIBUTING (cómo probar sin cuenta real) y
+      este plan actualizado. Los textos legales de Kopi (privacidad y
+      eliminación de cuenta, en `kopi-web`) mencionan el modo en línea.
+- [x] Changelog y versión 1.1.0 (no rompe nada de lo anterior).
 
 ---
 

@@ -51,6 +51,27 @@ cd backend
   ejecución en `kopi-bootstrap/target/playwright/` (ábrela en
   <https://trace.playwright.dev>).
 
+## Jugar en línea sin una cuenta real
+
+El modo en línea habla con el backend Kopi: una cuenta Kopi (Cognito) y un
+relé de partidas en AWS, cuyo contrato es [`docs/protocolo-rele.md`](docs/protocolo-rele.md)
+(ADR-019, ADR-020). No necesitas ninguno de los dos para trabajar en él:
+
+- **Todas las pruebas funcionan sin AWS.** El adaptador del relé se prueba
+  contra un Cognito y un backend falsos en un puerto local (`FakeKopi`, el
+  `HttpServer` del JDK), y las partidas en línea de extremo a extremo con dos
+  Kopi Chess y un relé falso que aplica las reglas del protocolo
+  (`TwoComputersTest`, con `FakeRelay`). Un cambio en el modo en línea debería
+  traer su caso ahí.
+- **Al arrancar la aplicación**, Kopi Chess arranca y juega contra los bots sin
+  red: solo llama a Kopi cuando alguien entra con su cuenta o juega en línea.
+- **Para probarlo de verdad** necesitas una cuenta Kopi aprobada, y Kopi Chess
+  en `http://localhost:8080`: es la única dirección de vuelta registrada en la
+  página de login de Kopi. Las direcciones están en `kopi.online.*`
+  (`application.yml`); no son secretos (un cliente público con PKCE), y cada
+  una se puede cambiar con una variable de entorno (`KOPI_ONLINE_API`…) para
+  apuntar a otro backend.
+
 ## Cómo entra un cambio
 
 1. **Una rama por cambio**, desde `main`: `feat/delete-game`,
