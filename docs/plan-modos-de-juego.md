@@ -23,7 +23,7 @@ modo: ninguno rompe lo anterior.
 
 | Orden | Modo | Infraestructura nueva | Esfuerzo orientativo (tiempo parcial) |
 |---|---|---|---|
-| 1 (1.1.0) | Jugador contra jugador, local y en línea ([plan aparte](plan-jugador-contra-jugador.md), fases A–E) | backend Kopi en AWS (relé, id de Kopi) | 5–8 semanas |
+| 1 (1.1.0, hecho) | Jugador contra jugador, local y en línea ([plan aparte](plan-jugador-contra-jugador.md), fases A–E) | backend Kopi en AWS (relé, id de Kopi) | 5–8 semanas |
 | 2 | App Android contra los bots del PC (plan JcJ, §11, fase F), **en este repositorio** | relé (ya hecho en 1) y Google Play | 3–5 semanas |
 | después | Puzzles desde tus errores (§2) | ninguna | 2–3 semanas |
 | después | Modo entrenador (§3) | ninguna | 1–2 semanas |
@@ -44,6 +44,30 @@ modo: ninguno rompe lo anterior.
 - **Decisiones pospuestas** hasta que les toque: D2 (borrar puzzles con su
   partida), D3 (pista del entrenador sin haber movido) y D4 (controles de
   tiempo a medida). Sus propuestas se quedan como punto de partida.
+
+### Estado al 2026-11-07 y siguientes pasos
+
+Para retomar desde cualquier máquina:
+
+- **Multijugador (1): programado y fusionado** (fases A, B y D: #119–#122).
+  La parte AWS está desplegada (relé, id de Kopi, cliente `kopi-chess-client`;
+  valores reales en [`protocolo-rele.md`](protocolo-rele.md)). Se probó con
+  una cuenta real contra el relé real y una segunda cuenta sintética.
+- **Publicar la 1.1.0:** la PR de la versión (`chore(release): 1.1.0`, #123)
+  está abierta. Tras fusionarla, seguir CONTRIBUTING: etiqueta `v1.1.0` en
+  `main` (publica la imagen en GHCR), *release* de GitHub y el commit
+  `build: start 1.2.0-SNAPSHOT` con la línea de estado del README. No
+  necesita AWS.
+- **Pendiente de probar:** que una invitación nueva aparece al momento en la
+  página en línea abierta (arreglado en #122, sin probar de verdad) y una
+  partida entre dos personas reales en dos PCs (aceptación de la fase D).
+- **Siguiente (2): la app Android, fase F.** Lo primero que necesita AWS es
+  el canal entre dispositivos del relé: conviene hacerlo en la máquina con
+  acceso a AWS. ADR-021, el adaptador del PC y la app se pueden hacer en
+  cualquiera.
+- **Propuesto, sin decidir:** guardar el historial en la cuenta Kopi
+  ([`ideas-futuro.md`](ideas-futuro.md)), antes o después de la app Android.
+  Encaja con ella: el móvil vería las partidas aunque el PC esté apagado.
 
 ---
 

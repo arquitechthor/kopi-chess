@@ -32,6 +32,16 @@ Las tareas pequeñas y bien acotadas ya están en GitHub como
 - **Por qué no ahora:** toca el dominio, la aplicación y la API; demasiado
   para una primera contribución y fuera del alcance de la 1.0.
 
+### Enlace didáctico a la apertura
+
+- **Qué:** en la revisión, que el nombre de la apertura enlace a una página
+  que la explique, en una pestaña nueva.
+- **Cómo:** el nombre y el código ECO salen del conjunto de datos local
+  `lichess-org/chess-openings` (ADR-009), así que el enlace natural es
+  `https://lichess.org/opening/<nombre>` (el nombre con `_` en vez de
+  espacios). Sin red ni dependencia nueva: solo se forma la URL.
+- **Por qué no ahora:** pequeño y aislado; una PR propia cuando toque.
+
 ### Notación española opcional
 
 - **Qué:** elegir `Cf3` en lugar de `♘f3` en la interfaz (diseño §11).
@@ -53,6 +63,37 @@ están en [`plan-modos-de-juego.md`](plan-modos-de-juego.md).
   costes y fases.
 - **Extensión:** una app Android sencilla para jugar desde el móvil contra
   los bots de tu propio PC, por el mismo relé (§11 del plan).
+
+### Historial en la cuenta Kopi
+
+- **Qué:** opcional, con un interruptor en la página de cuenta: guardar las
+  partidas en la cuenta Kopi y sincronizarlas entre todos tus equipos (y,
+  más adelante, con la app Android aunque el PC esté apagado).
+- **Hoy:** el historial vive solo en cada PC (ADR-016); las partidas en línea
+  solo pasan por el relé mientras se juegan. Esto lo cambiaría (de forma
+  opcional), así que necesita su ADR.
+- **Cómo (estimación del 2026-11-07):**
+  - **AWS** (en la máquina con acceso, 1–2 días): tabla
+    `kopi_chess_history` (una fila por cuenta y partida: jugadas, jugadores,
+    resultado, fechas, versión), tres Lambdas (subir cambios, bajar cambios
+    desde una marca, borrar) con el mismo autorizador `kopi-chess-authorizer`,
+    borrado al eliminar la cuenta y su bootstrap. Coste: prácticamente 0 €.
+  - **Kopi Chess** (1–1,5 semanas a tiempo parcial): un puerto
+    `HistorySync` y su caso de uso (sube lo nuevo, baja lo que falta, une),
+    marcas de sincronización y «lápidas» para los borrados en la base local,
+    el interruptor y el estado en la página de cuenta, y pruebas con un
+    backend falso, como `TwoComputersTest`.
+  - Reutiliza la cuenta Kopi, el worker de sincronización y la validación
+    con el dominio: una partida que baja se reconstruye jugada a jugada, así
+    que una corrupta no entra.
+  - **Legal:** ampliar privacidad y eliminación de cuenta en `kopi-web`.
+- **Lo delicado:**
+  - Una partida en curso jugada en dos equipos: si las jugadas de un lado
+    son el principio de las del otro, gana la más larga; si divergen, se
+    guardan las dos como partidas distintas.
+  - Los borrados viajan como lápidas que caducan.
+  - El análisis: al principio se recalcula en cada equipo (Stockfish da lo
+    mismo con los mismos límites); sincronizar su resumen, más adelante.
 
 ### Puzzles desde tus propios errores
 
