@@ -4,8 +4,10 @@ import com.arquitechthor.kopi.application.port.AccountHistory;
 import com.arquitechthor.kopi.application.port.KopiAccount;
 import com.arquitechthor.kopi.application.port.KopiSessionStore;
 import com.arquitechthor.kopi.application.port.PvpRelay;
+import com.arquitechthor.kopi.application.port.RemoteRequestHandler;
 import java.net.http.HttpClient;
 import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,9 +51,19 @@ public class RelayAdapterConfiguration {
         return new RelayAccountHistory(api);
     }
 
-    /// Closed on shutdown (`close()` is inferred), which stops its thread.
+    /// Both the notifications and server mode, over one connection. Closed
+    /// on shutdown (`close()` is inferred), which stops its threads.
+    ///
+    /// The remote adapter's handler is looked up on each request, not at
+    /// start-up: it needs the use cases, and they may need this adapter.
+    /// Without one, every request gets `SERVER_MODE_OFF`.
     @Bean
-    RelayWebSocket relayNotifications(RelayProperties properties, KopiApi api) {
-        return new RelayWebSocket(http, json, properties, api);
+    RelayWebSocket relayWebSocket(RelayProperties properties, KopiApi api,
+            ObjectProvider<RemoteRequestHandler> handler) {
+        RemoteRequestHandler lazy = (device, payload) -> {
+            var actual = handler.getIfAvailable();
+            return actual == null ? RemoteRelayMessages.SERVER_MODE_OFF : actual.handle(device, payload);
+        };
+        return new RelayWebSocket(http, json, properties, api, new RemoteRelayMessages(json, lazy));
     }
 }
