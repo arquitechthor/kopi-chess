@@ -44,6 +44,10 @@
             <artifactId>kopi-adapter-relay</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.arquitechthor.kopi</groupId>
+            <artifactId>kopi-adapter-remote</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
@@ -97,6 +101,8 @@
                 <executions>
                     <execution>
                         <goals>
+                            <!-- build-info: the version the Android app sees in hello (ADR-022). -->
+                            <goal>build-info</goal>
                             <goal>repackage</goal>
                         </goals>
                     </execution>

@@ -16,8 +16,8 @@ spring:
             enabled: true
             paths: /**
   messages:
-    # One bundle per adapter that shows text to people; keys never clash (web: plain, REST: rest.*).
-    basename: i18n/web/messages, i18n/rest/messages
+    # One bundle per adapter that shows text to people; keys never clash (web: plain, REST: rest.*, remote: remote.*).
+    basename: i18n/web/messages, i18n/rest/messages, i18n/remote/messages
     # Unknown language -> messages.properties (English), never the server's OS language.
     fallback-to-system-locale: false
 

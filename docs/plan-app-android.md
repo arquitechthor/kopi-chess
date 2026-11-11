@@ -135,8 +135,11 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 
 ### Fase F2: el PC en modo servidor
 
-- [ ] `kopi-adapter-remote`: conexión `role=server`, lista blanca y
-      traducción a los casos de uso.
+- [x] `kopi-adapter-remote`: lista blanca y traducción de cada `op` a los
+      casos de uso (puerto `RemoteRequestHandler`).
+- [ ] Conexión `role=server` en `kopi-adapter-relay`, que entrega las
+      peticiones a ese puerto y responde `SERVER_MODE_OFF` con el modo
+      apagado.
 - [ ] Interruptor en la página de cuenta, aviso visible y nombre del equipo.
 - [ ] Pruebas con el relé falso.
 
