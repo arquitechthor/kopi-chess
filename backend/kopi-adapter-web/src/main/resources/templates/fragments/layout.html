@@ -38,6 +38,11 @@
         </div>
         <button class="nav-toggle" id="navToggle" type="button" th:aria-label="#{nav.toggle}">☰</button>
     </div>
+    <!--/* Server mode (ADR-022): every page warns while the phone can reach this computer. */-->
+    <div class="server-mode-banner" role="status" th:if="${serverMode != null and serverMode.active()}">
+        <span th:text="#{serverMode.banner}">Server mode is on: your phone can play against the bots of this computer.</span>
+        <a th:href="@{/account#server-mode}" th:text="#{serverMode.manage}">Manage</a>
+    </div>
 </nav>
 
 <footer th:fragment="footer">

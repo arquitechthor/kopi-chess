@@ -25,6 +25,9 @@
             <span th:text="#{office.menu.calendar}">Calendar</span>
             <span th:text="#{office.menu.directory}">Directory</span>
         </nav>
+        <!--/* Server mode (ADR-022): warned here too, in the portal's own style. */-->
+        <span class="portal-note" role="status" th:if="${serverMode != null and serverMode.active()}"
+              th:text="#{office.serverMode}">Remote access: on</span>
     </div>
 </header>
 

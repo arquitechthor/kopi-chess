@@ -374,6 +374,16 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 .account h2 { font-size: 18px; margin: 8px 0 0; }
 .account-reserve { display: grid; gap: 10px; }
 .account-id strong { font-family: var(--font-mono); }
+.account-server { display: grid; gap: 10px; }
+.account-server-form { display: grid; gap: 10px; }
+
+/* Server mode (ADR-022): under the menu on every page while it is on. */
+.server-mode-banner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px;
+  padding: 8px 24px; font-size: 13.5px; color: var(--text);
+  background: rgba(168, 85, 247, 0.16); border-top: 1px solid rgba(168, 85, 247, 0.4);
+}
+.server-mode-banner a { color: var(--violet-strong); font-weight: 600; }
 
 /* ── Import PGN (plan §9) ─────────────────────────────────── */
 .import-form { margin: 40px auto 60px; display: grid; gap: 12px; }

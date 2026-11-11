@@ -140,7 +140,11 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 - [x] Conexión `role=server` en `kopi-adapter-relay` (puerto
       `ServerConnection`), que entrega las peticiones a ese puerto y
       responde `SERVER_MODE_OFF` con el modo apagado.
-- [ ] Interruptor en la página de cuenta, aviso visible y nombre del equipo.
+- [x] Interruptor en la página de cuenta, aviso visible y nombre del equipo
+      (`ServerModeService`, tabla `server_mode`): apagado por defecto, se
+      recuerda al reiniciar y solo vale para la cuenta Kopi que lo encendió
+      (con otra cuenta queda en pausa, como el historial). Todas las páginas
+      lo avisan; el modo oficina, con una línea discreta.
 - [x] Pruebas con el relé falso (`FakeRelay`, un WebSocket mínimo en las
       pruebas de `kopi-adapter-relay`).
 
