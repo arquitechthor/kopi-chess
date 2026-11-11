@@ -5,6 +5,7 @@ import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.application.port.HistorySyncStore;
 import com.arquitechthor.kopi.application.port.KopiSessionStore;
+import com.arquitechthor.kopi.application.port.ServerModeStore;
 import com.arquitechthor.kopi.application.port.OnlineGameStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +42,11 @@ public class PersistenceAdapterConfiguration {
     @Bean
     HistorySyncStore historySyncStore(JdbcClient jdbc) {
         return new JdbcHistorySyncStore(jdbc);
+    }
+
+    @Bean
+    ServerModeStore serverModeStore(JdbcClient jdbc) {
+        return new JdbcServerModeStore(jdbc);
     }
 
     @Bean

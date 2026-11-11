@@ -87,6 +87,26 @@
                 </details>
             </section>
 
+            <!--/* Server mode (ADR-022): play from the phone against this computer's bots. Off by default. */-->
+            <section class="account-server" id="server-mode" aria-labelledby="server-title" th:if="${serverMode != null}">
+                <h2 id="server-title" th:text="#{serverMode.title}">Play from your phone</h2>
+                <p class="muted" th:text="#{serverMode.intro}">Server mode lets the app on your phone play against the bots of this computer.</p>
+                <p class="notice" th:if="${serverMode.active()}" th:text="#{serverMode.on(${serverMode.name})}">Server mode is on.</p>
+                <p class="notice" th:if="${serverMode.otherAccount}" th:text="#{serverMode.otherAccount}">Paused: it was turned on with another Kopi account.</p>
+
+                <form class="account-server-form" method="post" th:action="${serverMode.enabled} ? @{/account/server-mode/name} : @{/account/server-mode/enable}">
+                    <label class="field">
+                        <span class="field-label" th:text="#{serverMode.name}">Name of this computer in the app</span>
+                        <input type="text" name="name" maxlength="40" autocomplete="off" th:value="${serverMode.name}">
+                    </label>
+                    <button class="btn" type="submit" th:classappend="${serverMode.enabled} ? 'btn-secondary' : 'btn-primary'"
+                            th:text="${serverMode.enabled} ? #{serverMode.rename} : #{serverMode.enable}">Turn on server mode</button>
+                </form>
+                <form method="post" th:action="@{/account/server-mode/disable}" th:if="${serverMode.enabled}">
+                    <button class="btn btn-secondary" type="submit" th:text="#{serverMode.disable}">Turn off server mode</button>
+                </form>
+            </section>
+
             <form method="post" th:action="@{/account/logout}">
                 <button class="btn btn-secondary" type="submit" th:text="#{account.signOut}">Sign out</button>
             </form>

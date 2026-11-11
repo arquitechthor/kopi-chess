@@ -38,8 +38,8 @@ import com.arquitechthor.kopi.application.history.HistoryUseCase;
 import com.arquitechthor.kopi.application.online.OnlineGames;
 import com.arquitechthor.kopi.application.online.OnlineService;
 import com.arquitechthor.kopi.application.online.OnlineUseCase;
-import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AccountHistory;
+import com.arquitechthor.kopi.application.port.AnalysisEvents;
 import com.arquitechthor.kopi.application.port.AnalysisJobQueue;
 import com.arquitechthor.kopi.application.port.AnalysisRepository;
 import com.arquitechthor.kopi.application.port.BotPlayer;
@@ -53,6 +53,10 @@ import com.arquitechthor.kopi.application.port.OnlineGameStore;
 import com.arquitechthor.kopi.application.port.OpeningBook;
 import com.arquitechthor.kopi.application.port.PvpRelay;
 import com.arquitechthor.kopi.application.port.RelayNotifications;
+import com.arquitechthor.kopi.application.port.ServerConnection;
+import com.arquitechthor.kopi.application.port.ServerModeStore;
+import com.arquitechthor.kopi.application.servermode.ServerModeService;
+import com.arquitechthor.kopi.application.servermode.ServerModeUseCase;
 import com.arquitechthor.kopi.domain.game.GameId;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
@@ -163,6 +167,18 @@ class UseCaseConfiguration {
     @Bean
     HistorySyncWorker historySyncWorker(HistoryUseCase history) {
         return new HistorySyncWorker(history);
+    }
+
+    /// Server mode (ADR-022): off by default, remembered across restarts.
+    @Bean
+    ServerModeUseCase serverModeUseCase(ServerModeStore store, KopiAccount account, ServerConnection connection) {
+        return new ServerModeService(store, account, connection, ComputerName::local);
+    }
+
+    /// Applies server mode at start-up and every minute (`SmartLifecycle`).
+    @Bean
+    ServerModeWorker serverModeWorker(ServerModeUseCase serverMode) {
+        return new ServerModeWorker(serverMode);
     }
 
     @Bean

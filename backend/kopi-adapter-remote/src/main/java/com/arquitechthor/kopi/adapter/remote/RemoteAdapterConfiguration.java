@@ -7,8 +7,7 @@ import com.arquitechthor.kopi.application.game.ListGamesUseCase;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
 import com.arquitechthor.kopi.application.port.RemoteRequestHandler;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import com.arquitechthor.kopi.application.servermode.ServerModeUseCase;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.MessageSource;
@@ -25,27 +24,11 @@ public class RemoteAdapterConfiguration {
     @Bean
     RemoteRequestHandler remoteRequestHandler(MessageSource messages, ObjectProvider<BuildProperties> build,
             GetBotRecordsUseCase botRecords, ListGamesUseCase listGames, GetGameUseCase getGame,
-            CreateGameUseCase createGame, PlayMoveUseCase playMove, ResignUseCase resign) {
+            CreateGameUseCase createGame, PlayMoveUseCase playMove, ResignUseCase resign,
+            ServerModeUseCase serverMode) {
         var version = build.getIfAvailable() == null ? "dev" : build.getIfAvailable().getVersion();
         return new RemoteProtocol(JsonMapper.builder().build(), messages,
                 new RemoteProtocol.UseCases(botRecords, listGames, getGame, createGame, playMove, resign), version,
-                RemoteAdapterConfiguration::computerName);
-    }
-
-    /// This computer's name, until the person can choose one on the account
-    /// page.
-    static String computerName() {
-        var name = System.getenv("COMPUTERNAME");
-        if (name == null || name.isBlank()) {
-            name = System.getenv("HOSTNAME");
-        }
-        if (name == null || name.isBlank()) {
-            try {
-                name = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException _) {
-                name = "Kopi Chess";
-            }
-        }
-        return name.length() > 40 ? name.substring(0, 40) : name;
+                () -> serverMode.view().name());
     }
 }

@@ -250,6 +250,44 @@ class WebAdapterTestApplication {
         return new FakeHistory();
     }
 
+    @Bean
+    FakeServerMode fakeServerMode() {
+        return new FakeServerMode();
+    }
+
+    /// Server mode (ADR-022), in memory: off at first.
+    static final class FakeServerMode implements com.arquitechthor.kopi.application.servermode.ServerModeUseCase {
+        com.arquitechthor.kopi.application.servermode.ServerModeView view =
+                new com.arquitechthor.kopi.application.servermode.ServerModeView(false, true, false, "DESKTOP-ANA");
+
+        @Override
+        public com.arquitechthor.kopi.application.servermode.ServerModeView view() {
+            return view;
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.servermode.ServerModeView enable(String name) {
+            view = new com.arquitechthor.kopi.application.servermode.ServerModeView(true, true, false,
+                    name.isBlank() ? view.name() : name);
+            return view;
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.servermode.ServerModeView disable() {
+            view = new com.arquitechthor.kopi.application.servermode.ServerModeView(false, true, false, view.name());
+            return view;
+        }
+
+        @Override
+        public com.arquitechthor.kopi.application.servermode.ServerModeView rename(String name) {
+            view = new com.arquitechthor.kopi.application.servermode.ServerModeView(view.enabled(), true, false, name);
+            return view;
+        }
+
+        @Override
+        public void apply() {}
+    }
+
     /// The history in the Kopi account (ADR-021), in memory: off at first.
     static final class FakeHistory implements HistoryUseCase {
         HistoryView view = new HistoryView(false, true, false, java.util.Optional.empty(), java.util.Optional.empty(),
