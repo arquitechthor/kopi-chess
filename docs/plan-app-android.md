@@ -137,11 +137,12 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 
 - [x] `kopi-adapter-remote`: lista blanca y traducción de cada `op` a los
       casos de uso (puerto `RemoteRequestHandler`).
-- [ ] Conexión `role=server` en `kopi-adapter-relay`, que entrega las
-      peticiones a ese puerto y responde `SERVER_MODE_OFF` con el modo
-      apagado.
+- [x] Conexión `role=server` en `kopi-adapter-relay` (puerto
+      `ServerConnection`), que entrega las peticiones a ese puerto y
+      responde `SERVER_MODE_OFF` con el modo apagado.
 - [ ] Interruptor en la página de cuenta, aviso visible y nombre del equipo.
-- [ ] Pruebas con el relé falso.
+- [x] Pruebas con el relé falso (`FakeRelay`, un WebSocket mínimo en las
+      pruebas de `kopi-adapter-relay`).
 
 ### Fase F3: la app
 

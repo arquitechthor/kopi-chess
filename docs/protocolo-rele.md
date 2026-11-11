@@ -400,8 +400,14 @@ Lo fija el [ADR-021](adr/021-historial-en-la-cuenta.md) (`HistorySync`):
 El mismo WebSocket de §7 une la app Android con el Kopi Chess del PC de la
 **misma cuenta** en «modo servidor» (fase F del plan). El relé reenvía los
 mensajes sin guardarlos ni mirar dentro. El formato de `payload` (listar
-bots, crear partida, jugar…) lo decidirán el ADR-021 y el
-`kopi-adapter-remote`; para el relé es opaco.
+bots, crear partida, jugar…) es el [protocolo remoto](protocolo-remoto.md)
+([ADR-022](adr/022-movil-cliente-remoto-del-pc.md)); para el relé es opaco.
+
+En el PC, `RelayWebSocket` usa una sola conexión para todo: `notify` con el
+modo servidor apagado y `server` (con `name`) con él encendido. Al cambiar,
+se reconecta con el nuevo papel. Atiende cada petición en su propio hilo
+virtual y responde `SERVER_MODE_OFF` si le llega alguna con el modo
+apagado.
 
 ### 10.1 Conectar
 

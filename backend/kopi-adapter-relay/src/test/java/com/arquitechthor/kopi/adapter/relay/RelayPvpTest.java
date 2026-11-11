@@ -150,7 +150,8 @@ class RelayPvpTest {
         var json = JsonMapper.builder().build();
         var api = new KopiApi(http, json, kopi.properties(), new FakeKopi.MemorySessions(),
                 new CognitoTokens(http, json, kopi.properties()), Clock.fixed(NOW, ZoneOffset.UTC));
-        var socket = new RelayWebSocket(http, json, kopi.properties(), api);
+        var socket = new RelayWebSocket(http, json, kopi.properties(), api,
+                new RemoteRelayMessages(json, (device, payload) -> RemoteRelayMessages.SERVER_MODE_OFF));
 
         assertThat(socket.address("a.b+c").toString()).isEqualTo("ws://127.0.0.1:1/prod?protocol=1&token=a.b%2Bc");
         socket.close();
