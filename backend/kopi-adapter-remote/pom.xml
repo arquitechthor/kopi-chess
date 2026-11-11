@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.arquitechthor.kopi</groupId>
+        <artifactId>kopi-parent</artifactId>
+        <version>1.2.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>kopi-adapter-remote</artifactId>
+    <name>Kopi Chess :: Adapter :: Remote</name>
+    <description>The Android app's requests in server mode (ADR-022): inbound adapter from the remote protocol to the use cases.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.arquitechthor.kopi</groupId>
+            <artifactId>kopi-application</artifactId>
+        </dependency>
+        <!-- Configuration, MessageSource (bot descriptions) and BuildProperties (the version in hello). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!-- JSON of the remote protocol (docs/protocolo-remoto.md). -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
+</project>

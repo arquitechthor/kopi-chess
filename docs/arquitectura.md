@@ -102,6 +102,8 @@ ninguno conoce a los demás.
 | `kopi-adapter-stockfish` | salida | Habla UCI con el proceso de Stockfish: los bots fuertes (`StockfishBots`) y el análisis (`StockfishAnalysis`). |
 | `kopi-adapter-bots` | salida | Los bots propios para los niveles bajos, `PAWN` y `KNIGHT` (ADR-006). |
 | `kopi-adapter-openings` | salida | El libro de aperturas de Lichess, en memoria (ADR-009). |
+| `kopi-adapter-relay` | salida | La cuenta Kopi (Cognito) y el relé de partidas en línea y del historial (ADR-019, ADR-020, ADR-021). |
+| `kopi-adapter-remote` | entrada | Las peticiones de la app Android en «modo servidor»: el protocolo remoto, con su lista blanca, traducido a los casos de uso (ADR-022). |
 
 ### 4. El arranque: `backend/kopi-bootstrap`
 

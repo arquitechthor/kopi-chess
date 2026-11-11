@@ -6,8 +6,9 @@ El contrato entre la app Android y el Kopi Chess del PC en «modo servidor»
 ([`protocolo-rele.md`](protocolo-rele.md) §10), que el relé reenvía sin
 mirar.
 
-- **Estado:** versión 1, 2026-11-07. Aún no implementado (fases F2 y F3 del
-  [plan](plan-app-android.md)).
+- **Estado:** versión 1, 2026-11-07. El lado del PC lo implementa
+  `kopi-adapter-remote` (fase F2 del [plan](plan-app-android.md)); la app,
+  en la fase F3.
 - **Cambios:** un cambio que rompa clientes sube `v`. Añadir campos a una
   respuesta no la sube: quien la recibe ignora lo que no conoce.
 
@@ -49,7 +50,7 @@ o, si no pudo hacerlo:
 |---|---|---|
 | `hello` | `lang`, `appVersion` | `kopiChessVersion`, `remoteVersion` (1), `name` del equipo |
 | `bots` | — | `bots`: `[{ profile, level, description, record: { won, lost, drawn, unfinished } }]` |
-| `games` | — | `games`: las partidas **en curso contra un bot**, la más reciente primero, como en `game` sin `moves` |
+| `games` | — | `games`: las partidas **en curso contra un bot**, la más reciente primero (como mucho 30), como en `game` sin `moves` |
 | `new` | `botProfile`, `humanColor` (`WHITE`, `BLACK` o `RANDOM`) | `game`: la partida creada, con la jugada del bot si abre él |
 | `game` | `gameId` | `game` |
 | `move` | `gameId`, `uci`, `version` | `game`: tras la jugada y la respuesta del bot |

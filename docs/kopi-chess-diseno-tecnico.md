@@ -331,6 +331,8 @@ kopi-chess/
 │   ├── kopi-adapter-stockfish/       Cliente UCI, pool de procesos.
 │   ├── kopi-adapter-bots/            Bots propios (niveles 1 y 2).
 │   ├── kopi-adapter-openings/        Libro de aperturas (en memoria, desde TSV).
+│   ├── kopi-adapter-relay/           Cuenta Kopi y relé (partidas en línea, historial).
+│   ├── kopi-adapter-remote/          Protocolo remoto de la app Android (modo servidor).
 │   ├── kopi-bootstrap/               @SpringBootApplication, configuración, wiring.
 │   ├── kopi-architecture-tests/      Reglas ArchUnit sobre todos los módulos.
 │   └── kopi-labs/                    Ejemplos con features preview (--enable-preview). Nadie depende de él.
