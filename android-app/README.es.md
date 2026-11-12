@@ -8,7 +8,8 @@ través del relé de Kopi. La app no sabe de ajedrez: el PC (Kopi Chess en
 [`docs/plan-app-android.md`](../docs/plan-app-android.md).
 
 Capacitor + Vite + TypeScript, con Chessground (el mismo tablero que la web).
-En desarrollo (fase F3): por ahora, el esqueleto de la app y un tablero fijo.
+En desarrollo (fase F3): por ahora, el esqueleto de la app, la entrada con la
+cuenta Kopi (Amplify, SRP) y un tablero fijo.
 
 ## Desarrollo
 

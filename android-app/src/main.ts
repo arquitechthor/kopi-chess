@@ -1,27 +1,29 @@
-import { Chessground } from 'chessground';
 import 'chessground/assets/chessground.base.css';
 import 'chessground/assets/chessground.brown.css';
 import 'chessground/assets/chessground.cburnett.css';
 import './style.css';
+import { amplifyKopiAccount, configureKopiAccount } from './auth/kopiAccount';
 import { pickLang, translator } from './i18n';
+import { showHome, showLogin } from './screens';
 
-// First step of phase F3: the app shell and a static board. Login, presence
-// and playing against the PC come in the next steps (docs/plan-app-android.md §7).
+// Phase F3 (docs/plan-app-android.md §7): sign in with the Kopi account. The
+// connection to the PC comes in the next steps.
 
 const lang = pickLang(navigator.languages);
 const t = translator(lang);
 document.documentElement.lang = lang;
 
+configureKopiAccount();
+const account = amplifyKopiAccount;
 const app = document.querySelector<HTMLElement>('#app')!;
-app.innerHTML = `
-  <header class="top">
-    <h1>${t('app.title')}</h1>
-    <p>${t('app.tagline')}</p>
-  </header>
-  <div class="board-wrap"><div id="board" class="board"></div></div>
-`;
 
-Chessground(document.querySelector<HTMLElement>('#board')!, {
-  viewOnly: true,
-  coordinates: true,
-});
+async function start(): Promise<void> {
+  const email = await account.currentEmail();
+  if (email) {
+    showHome(app, account, t, email, start);
+  } else {
+    showLogin(app, account, t, start);
+  }
+}
+
+void start();

@@ -7,7 +7,8 @@ relay. The app knows no chess: the PC (Kopi Chess in "server mode") plays,
 saves and analyses. Plan: [`docs/plan-app-android.md`](../docs/plan-app-android.md).
 
 Capacitor + Vite + TypeScript, with Chessground (the same board as the web
-app). Work in progress (phase F3): for now, the app shell and a static board.
+app). Work in progress (phase F3): for now, the app shell, sign-in with the Kopi account
+(Amplify, SRP) and a static board.
 
 ## Develop
 

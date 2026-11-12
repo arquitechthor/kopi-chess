@@ -46,3 +46,59 @@ body {
   width: 100%;
   aspect-ratio: 1;
 }
+
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+}
+
+.login label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+}
+
+button {
+  font: inherit;
+  padding: 10px 16px;
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+}
+
+button.primary {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.6;
+}
+
+.message:empty {
+  display: none;
+}
+
+.message {
+  margin: 0;
+  color: #c0392b;
+}
+
+a {
+  color: inherit;
+}

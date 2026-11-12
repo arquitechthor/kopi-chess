@@ -22,4 +22,8 @@ describe('translator', () => {
     const es = translator('es');
     expect(en('app.tagline')).not.toBe(es('app.tagline'));
   });
+
+  it('fills the arguments', () => {
+    expect(translator('es')('home.signedInAs', 'ana@example.com')).toBe('Has entrado como ana@example.com');
+  });
 });
