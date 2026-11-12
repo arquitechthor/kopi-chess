@@ -1,16 +1,24 @@
-/* Colours from the Kopi family (see the web app's base stylesheet). */
+/* The Kopi family's tokens, copied by hand from the web app's kopi.css
+   (design §11.6): dark, with the cyan/violet/magenta gradient. */
 :root {
-  --bg: #f7f5f0;
-  --fg: #1f2328;
-  --muted: #5b6168;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171a;
-    --fg: #e8e6e3;
-    --muted: #a0a4a8;
-  }
+  color-scheme: dark;
+  --bg: #070a14;
+  --surface: #10142a;
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --text: #f1f5f9;
+  --text-muted: #a3adc2;
+  --cyan: #22d3ee;
+  --violet: #a855f7;
+  --magenta: #fb7185;
+  --gradient-brand: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 55%, var(--magenta) 100%);
+  --gradient-radial: radial-gradient(circle at 30% 20%, rgba(34, 211, 238, 0.18), transparent 45%),
+                     radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.16), transparent 40%),
+                     radial-gradient(circle at 60% 80%, rgba(251, 113, 133, 0.10), transparent 45%);
+  --radius-sm: 10px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --square-light: #c7cde4;
+  --square-dark: #6f64a8;
+  --square-highlight: rgba(34, 211, 238, 0.42);
 }
 
 * {
@@ -19,20 +27,26 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: var(--bg);
-  color: var(--fg);
-  font-family: system-ui, sans-serif;
+  background: var(--gradient-radial), var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font);
 }
 
 .top h1 {
   margin: 16px 0 4px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .top p {
   margin: 0 0 16px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .board-wrap {
@@ -46,6 +60,14 @@ body {
   width: 100%;
   aspect-ratio: 1;
 }
+
+/* The board in the family's palette, as on the web. */
+.cg-wrap cg-board {
+  background: repeating-conic-gradient(var(--square-dark) 0 25%, var(--square-light) 0 50%) 0 0 / 25% 25%;
+  border-radius: 6px;
+}
+cg-board square.last-move { background-color: var(--square-highlight); }
+.cg-wrap coords { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 0 3px rgba(7, 10, 20, 0.95); }
 
 .login {
   display: flex;
@@ -64,26 +86,31 @@ body {
 input {
   font: inherit;
   padding: 10px 12px;
-  border: 1px solid var(--muted);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--fg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+input:focus {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
 }
 
 button {
   font: inherit;
   padding: 10px 16px;
-  border: 1px solid var(--muted);
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--fg);
+  color: var(--text);
 }
 
 button.primary {
-  border-color: var(--fg);
-  background: var(--fg);
-  color: var(--bg);
-  font-weight: 600;
+  border-color: transparent;
+  background: var(--gradient-brand);
+  color: #04060c;
+  font-weight: 700;
 }
 
 button:disabled {
@@ -96,9 +123,9 @@ button:disabled {
 
 .message {
   margin: 0;
-  color: #c0392b;
+  color: var(--magenta);
 }
 
 a {
-  color: inherit;
+  color: var(--cyan);
 }
