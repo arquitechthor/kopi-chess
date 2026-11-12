@@ -37,7 +37,8 @@ asistente de Android Studio. Paso a paso (versiones, comprobaciones): la
 [skill `release-aab`](../.claude/skills/release-aab/SKILL.md).
 
 1. Copia `android/keystore.properties.example` a `android/keystore.properties`
-   y rellénalo. El *keystore* (`kopi-chess.jks`) vive fuera del repositorio,
+   y rellénalo. El *keystore* es el mismo de `kopi-tools-app`
+   (`arquitechthor.jks`); vive fuera del repositorio,
    en `kopi-keys/`; ninguno de los dos se commitea nunca.
 2. En `android/app/build.gradle`: `versionName` = la versión de Kopi Chess,
    `versionCode` + 1.

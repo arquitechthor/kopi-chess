@@ -16,14 +16,12 @@ firma. Es el mismo procedimiento que `kopi-tools-app` (skill `release-aab` de es
   `keystore.properties.example` y rellenado (`storeFile`, `storePassword`, `keyAlias`,
   `keyPassword`). Si no existe, para y pídeselo al usuario: sin él el build termina bien pero
   produce un AAB **sin firmar**, que Play Console rechaza.
-- **El keystore** vive en `kopi-keys/` (carpeta hermana del repo; plan §6: uno propio para
-  Kopi Chess). Si aún no existe, que lo cree el usuario, nunca Claude ni dentro del repo:
-  ```bash
-  keytool -genkeypair -v -keystore ../kopi-keys/kopi-chess.jks -alias kopi-chess \
-    -keyalg RSA -keysize 2048 -validity 10000
-  ```
-  Si se pierde (o sus contraseñas) no se podrá actualizar la app publicada: copia de
-  seguridad en un lugar seguro.
+- **El keystore** es el mismo de `kopi-tools-app`: `arquitechthor.jks`, en `kopi-keys/`
+  (carpeta hermana de los repositorios, fuera de git). Solo está en la máquina donde se
+  publica `kopi-tools-app`; si no está en esta, para y díselo al usuario. Nunca crees uno
+  nuevo ni lo copies dentro del repositorio: el `keystore.properties` de `kopi-tools-app`
+  en esa máquina tiene los mismos valores (alias y contraseñas) que hacen falta aquí. Si se
+  pierde (o sus contraseñas) no se podrán actualizar las apps publicadas.
 
 ## 2. Versión
 

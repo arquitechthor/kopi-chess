@@ -36,7 +36,8 @@ wizard. Step by step (versions, checks): the
 [`release-aab` skill](../.claude/skills/release-aab/SKILL.md).
 
 1. Copy `android/keystore.properties.example` to `android/keystore.properties`
-   and fill it in. The keystore (`kopi-chess.jks`) lives outside the
+   and fill it in. The keystore is the same as `kopi-tools-app`'s
+   (`arquitechthor.jks`); it lives outside the
    repository, in `kopi-keys/`; neither file is ever committed.
 2. In `android/app/build.gradle`: `versionName` = the Kopi Chess version,
    `versionCode` + 1.
