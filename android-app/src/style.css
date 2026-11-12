@@ -1,0 +1,48 @@
+/* Colours from the Kopi family (see the web app's base stylesheet). */
+:root {
+  --bg: #f7f5f0;
+  --fg: #1f2328;
+  --muted: #5b6168;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --fg: #e8e6e3;
+    --muted: #a0a4a8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+.top h1 {
+  margin: 16px 0 4px;
+  font-size: 1.5rem;
+}
+
+.top p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.board-wrap {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Chessground needs a sized, square container. */
+.board {
+  width: 100%;
+  aspect-ratio: 1;
+}
