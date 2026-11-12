@@ -152,7 +152,8 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 
 - [x] `android-app/` con Capacitor, Vite y Chessground; CI
       (`android-app.yml`: pruebas, compilación web y APK de depuración).
-- [ ] Entrar con la cuenta Kopi (Amplify, SRP).
+- [x] Entrar con la cuenta Kopi (Amplify, SRP; registro y recuperación, en
+      Kopi Tools).
 - [ ] Presencia, elegir PC, elegir bot, jugar, retomar, abandonar.
 - [ ] Prueba real: una partida completa desde el móvil por 4G.
 
