@@ -96,7 +96,7 @@ final class FakeKopi implements AutoCloseable {
     /// The properties of an adapter that talks to this fake.
     RelayProperties properties() {
         return new RelayProperties(uri(), "test-client", uri(), URI.create("ws://127.0.0.1:1/prod"),
-                URI.create("http://localhost:8080/login/oauth2/code/kopi"), URI.create("http://localhost:8080/"),
+                URI.create("http://localhost:6970/login/oauth2/code/kopi"), URI.create("http://localhost:6970/"),
                 Duration.ofSeconds(5));
     }
 

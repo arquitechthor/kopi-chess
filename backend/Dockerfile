@@ -85,5 +85,5 @@ RUN java -XX:AOTCacheOutput=/app/app.aot \
         -Dkopi.analysis.enabled=false \
         -jar /app/app.jar
 USER kopi
-EXPOSE 8080
+EXPOSE 6970
 ENTRYPOINT ["java", "-XX:AOTCache=/app/app.aot", "-jar", "/app/app.jar"]

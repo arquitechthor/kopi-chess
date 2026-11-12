@@ -25,7 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /// - **A change must come from a local page.** `POST`, `PUT`, `PATCH` and
 ///   `DELETE` are refused if their `Origin` is another site, or, without
 ///   `Origin`, if `Sec-Fetch-Site` says another site sent them. Any page
-///   can submit a form to `localhost:8080`; this is what stops it, with no
+///   can submit a form to `localhost:6970`; this is what stops it, with no
 ///   tokens in the forms. A request with neither header (`curl`, a script)
 ///   is not a browser being misused, and goes through.
 ///
@@ -83,8 +83,8 @@ final class LocalAccessFilter extends OncePerRequestFilter {
         return hostName != null && allowedHosts.contains(hostName);
     }
 
-    /// The host name in a `Host` header, without the port: `localhost:8080`
-    /// → `localhost`, `[::1]:8080` → `[::1]`.
+    /// The host name in a `Host` header, without the port: `localhost:6970`
+    /// → `localhost`, `[::1]:6970` → `[::1]`.
     static String hostName(String authority) {
         if (authority == null || authority.isBlank()) {
             return null;
@@ -98,7 +98,7 @@ final class LocalAccessFilter extends OncePerRequestFilter {
         return colon < 0 ? lower : lower.substring(0, colon);
     }
 
-    /// The host name of an `Origin` (`http://localhost:8080` → `localhost`);
+    /// The host name of an `Origin` (`http://localhost:6970` → `localhost`);
     /// `null` for `Origin: null` (a sandboxed page, a file) or nonsense.
     static String originHost(String origin) {
         try {

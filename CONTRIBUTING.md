@@ -63,7 +63,7 @@ of games in AWS, whose contract is [`docs/protocolo-rele.md`](docs/protocolo-rel
 - **Running the app**, Kopi Chess starts and plays against the bots without a
   network: it only calls Kopi when someone signs in or plays online.
 - **To try it for real** you need an approved Kopi account, and Kopi Chess on
-  `http://localhost:8080`: it is the only return address registered for
+  `http://localhost:6970`: it is the only return address registered for
   Kopi's login page. The addresses are in `kopi.online.*` (`application.yml`);
   they are not secrets (a public client with PKCE), and each can be
   overridden with an environment variable (`KOPI_ONLINE_API`…) to point at

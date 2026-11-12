@@ -22,7 +22,7 @@ cd kopi-chess
 docker compose up --build
 ```
 
-Abre <http://localhost:8080>, elige un bot y juega. El primer arranque tarda
+Abre <http://localhost:6970>, elige un bot y juega. El primer arranque tarda
 unos minutos (compila la aplicación); los siguientes, segundos.
 
 ## Qué hace
@@ -89,8 +89,8 @@ empezar a contribuir son las
 
 ## Ejecución
 
-**¿El puerto 8080 está ocupado?** Usa otro: `KOPI_PORT=8090 docker compose up --build`
-(PowerShell: `$env:KOPI_PORT=8090; docker compose up --build`).
+**¿El puerto 6970 está ocupado?** Usa otro: `KOPI_PORT=6971 docker compose up --build`
+(PowerShell: `$env:KOPI_PORT=6971; docker compose up --build`).
 
 **Para parar**: `docker compose down`. Las partidas se conservan;
 `docker compose down -v` también las borra.
@@ -110,7 +110,7 @@ KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:1 docker compose up --no-build
 docker compose --profile metrics up --build
 ```
 
-Las métricas en bruto están en <http://localhost:8080/actuator/prometheus>.
+Las métricas en bruto están en <http://localhost:6970/actuator/prometheus>.
 
 **Los logs** (`docker compose logs app`) son líneas JSON, y cada línea sobre
 una partida lleva su `gameId`. En texto plano: `KOPI_LOG_FORMAT= docker compose up`
@@ -122,9 +122,9 @@ una partida lleva su `gameId`. En texto plano: `KOPI_LOG_FORMAT= docker compose 
 incluye la jugada del bot):
 
 ```shell
-curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json" \
+curl -i -X POST localhost:6970/api/v1/games -H "Content-Type: application/json" \
      -d '{"humanColor": "WHITE", "botProfile": "PAWN"}'
-curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"' \
+curl -X POST localhost:6970/api/v1/games/<id>/moves -H 'If-Match: "0"' \
      -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
 ```
 

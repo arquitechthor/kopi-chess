@@ -1,5 +1,5 @@
-# Kopi Chess, local only: `docker compose up --build`, then open http://localhost:8080
-# Port 8080 taken? Use another one: KOPI_PORT=8090 docker compose up --build
+# Kopi Chess, local only: `docker compose up --build`, then open http://localhost:6970
+# Port 6970 taken? Use another one: KOPI_PORT=6971 docker compose up --build
 # No build, the published image instead ("1": the latest 1.x release):
 #   KOPI_IMAGE=ghcr.io/arquitechthor/kopi-chess:1 docker compose up --no-build
 # With metrics, Prometheus and a Grafana dashboard at http://localhost:3000 (design §14):
@@ -31,7 +31,7 @@ services:
     image: ${KOPI_IMAGE:-kopi-chess:local}
     ports:
       # Bound to localhost only: the app is not exposed to the network.
-      - "127.0.0.1:${KOPI_PORT:-8080}:8080"
+      - "127.0.0.1:${KOPI_PORT:-6970}:6970"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kopi
       SPRING_DATASOURCE_USERNAME: kopi

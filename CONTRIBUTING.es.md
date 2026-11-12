@@ -66,7 +66,7 @@ relé de partidas en AWS, cuyo contrato es [`docs/protocolo-rele.md`](docs/proto
 - **Al arrancar la aplicación**, Kopi Chess arranca y juega contra los bots sin
   red: solo llama a Kopi cuando alguien entra con su cuenta o juega en línea.
 - **Para probarlo de verdad** necesitas una cuenta Kopi aprobada, y Kopi Chess
-  en `http://localhost:8080`: es la única dirección de vuelta registrada en la
+  en `http://localhost:6970`: es la única dirección de vuelta registrada en la
   página de login de Kopi. Las direcciones están en `kopi.online.*`
   (`application.yml`); no son secretos (un cliente público con PKCE), y cada
   una se puede cambiar con una variable de entorno (`KOPI_ONLINE_API`…) para

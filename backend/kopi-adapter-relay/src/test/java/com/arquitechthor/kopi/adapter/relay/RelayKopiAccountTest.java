@@ -69,7 +69,7 @@ class RelayKopiAccountTest {
         assertThat(query(uri)).containsEntry("client_id", "test-client")
                 .containsEntry("response_type", "code")
                 .containsEntry("code_challenge_method", "S256")
-                .containsEntry("redirect_uri", "http://localhost:8080/login/oauth2/code/kopi")
+                .containsEntry("redirect_uri", "http://localhost:6970/login/oauth2/code/kopi")
                 .containsKeys("state", "code_challenge");
     }
 
@@ -213,6 +213,6 @@ class RelayKopiAccountTest {
         assertThat(account.session()).isEmpty();
         assertThat(kopi.requests("POST", "/oauth2/revoke").getFirst().form()).containsEntry("token", "refresh-1");
         assertThat(logout.getPath()).isEqualTo("/logout");
-        assertThat(query(logout)).containsEntry("logout_uri", "http://localhost:8080/");
+        assertThat(query(logout)).containsEntry("logout_uri", "http://localhost:6970/");
     }
 }

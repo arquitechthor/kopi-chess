@@ -32,7 +32,7 @@ pruebas.
   | Client ID | `6fonqj1j1fnaa4ujgk2nf887nv` |
   | *Issuer* (OIDC) | `https://cognito-idp.eu-south-2.amazonaws.com/eu-south-2_Yunp5ZGUR` |
   | Dominio de login | `https://eu-south-2yunp5zgur.auth.eu-south-2.amazoncognito.com` |
-  | URL de vuelta | `http://localhost:8080/login/oauth2/code/kopi` |
+  | URL de vuelta | `http://localhost:6970/login/oauth2/code/kopi` |
   | *Scopes* | `openid email` |
   | API HTTP | `https://api.kopitools.link` |
   | WebSocket | `wss://01q3xfi4m6.execute-api.eu-south-2.amazonaws.com/prod` |

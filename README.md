@@ -21,7 +21,7 @@ cd kopi-chess
 docker compose up --build
 ```
 
-Open <http://localhost:8080>, choose a bot and play. The first start takes a
+Open <http://localhost:6970>, choose a bot and play. The first start takes a
 few minutes (it builds the application); later ones, seconds.
 
 ## What it does
@@ -85,8 +85,8 @@ What may come next is in [`docs/ideas-futuro.md`](docs/ideas-futuro.md)
 
 ## Running it
 
-**Port 8080 taken?** Pick another one: `KOPI_PORT=8090 docker compose up --build`
-(PowerShell: `$env:KOPI_PORT=8090; docker compose up --build`).
+**Port 6970 taken?** Pick another one: `KOPI_PORT=6971 docker compose up --build`
+(PowerShell: `$env:KOPI_PORT=6971; docker compose up --build`).
 
 **Stop** with `docker compose down`. Your games are kept; `docker compose down -v`
 deletes them too.
@@ -106,7 +106,7 @@ dashboard of the bots' move times, the analyses and the JVM, at
 docker compose --profile metrics up --build
 ```
 
-The raw metrics are at <http://localhost:8080/actuator/prometheus>.
+The raw metrics are at <http://localhost:6970/actuator/prometheus>.
 
 **Logs** (`docker compose logs app`) are JSON lines, and every line about a
 game has its `gameId`. Plain text instead: `KOPI_LOG_FORMAT= docker compose up`
@@ -117,9 +117,9 @@ game has its `gameId`. Plain text instead: `KOPI_LOG_FORMAT= docker compose up`
 includes the bot's reply):
 
 ```shell
-curl -i -X POST localhost:8080/api/v1/games -H "Content-Type: application/json" \
+curl -i -X POST localhost:6970/api/v1/games -H "Content-Type: application/json" \
      -d '{"humanColor": "WHITE", "botProfile": "PAWN"}'
-curl -X POST localhost:8080/api/v1/games/<id>/moves -H 'If-Match: "0"' \
+curl -X POST localhost:6970/api/v1/games/<id>/moves -H 'If-Match: "0"' \
      -H "Content-Type: application/json" -d '{"uci": "e2e4"}'
 ```
 
