@@ -67,3 +67,16 @@ updates:
     groups:
       compose:
         update-types: [minor, patch]
+
+  # The Android app (android-app/package.json): Vite, Capacitor, Chessground.
+  - package-ecosystem: npm
+    directory: /android-app
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      npm:
+        update-types: [minor, patch]

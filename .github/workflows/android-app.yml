@@ -1,0 +1,58 @@
+name: Android app
+
+# Builds and tests android-app/ only when it (or this workflow) changes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android-app.yml'
+  pull_request:
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android-app.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test the Android app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Type check and web build
+        run: npm run build
+
+      # Capacitor's Android project builds with JDK 21.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+          cache-dependency-path: android-app/android/**/*.gradle*
+
+      - name: Debug APK
+        run: |
+          npx cap sync android
+          cd android && ./gradlew --no-daemon assembleDebug

@@ -1,0 +1,26 @@
+{
+  "name": "kopi-chess-android",
+  "private": true,
+  "version": "1.2.0-SNAPSHOT",
+  "description": "Kopi Chess for Android: play your own PC's bots from your phone",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "sync": "npm run build && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "chessground": "^9.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
