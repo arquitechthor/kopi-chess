@@ -30,4 +30,25 @@ npm run sync                                 # compila y copia a android/
 cd android && ./gradlew assembleDebug        # app/build/outputs/apk/debug/
 ```
 
-El *keystore* de firma nunca va al repositorio.
+## Versión firmada (AAB para Google Play)
+
+El mismo procedimiento que `kopi-tools-app`, por línea de comandos, sin el
+asistente de Android Studio. Paso a paso (versiones, comprobaciones): la
+[skill `release-aab`](../.claude/skills/release-aab/SKILL.md).
+
+1. Copia `android/keystore.properties.example` a `android/keystore.properties`
+   y rellénalo. El *keystore* es el mismo de `kopi-tools-app`
+   (`arquitechthor.jks`); vive fuera del repositorio,
+   en `kopi-keys/`; ninguno de los dos se commitea nunca.
+2. En `android/app/build.gradle`: `versionName` = la versión de Kopi Chess,
+   `versionCode` + 1.
+3. Compila y comprueba la firma:
+
+   ```bash
+   npm run sync
+   cd android && ./gradlew bundleRelease
+   "$JAVA_HOME/bin/jarsigner" -verify app/build/outputs/bundle/release/app-release.aab   # "jar verified."
+   ```
+
+Sin `keystore.properties`, `bundleRelease` termina bien pero el AAB sale **sin
+firmar**.

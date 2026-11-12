@@ -120,7 +120,8 @@ Un adaptador de entrada nuevo, con su módulo Maven:
 - **Privacidad:** la app guarda la sesión de la cuenta Kopi en el móvil; no
   guarda partidas. Los textos de `kopi-web` (privacidad y eliminación de
   cuenta) añaden la app.
-- **Firma:** un *keystore* nuevo en `kopi-keys/` (nunca en el repositorio).
+- **Firma:** el mismo *keystore* que `kopi-tools-app` (`arquitechthor.jks`,
+  en `kopi-keys/`, nunca en el repositorio).
 
 ## 7. Fases
 

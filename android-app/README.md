@@ -29,4 +29,25 @@ npm run sync                                 # build and copy into android/
 cd android && ./gradlew assembleDebug        # app/build/outputs/apk/debug/
 ```
 
-The signing keystore never goes into the repository.
+## Signed release (AAB for Google Play)
+
+Same procedure as `kopi-tools-app`, from the command line, no Android Studio
+wizard. Step by step (versions, checks): the
+[`release-aab` skill](../.claude/skills/release-aab/SKILL.md).
+
+1. Copy `android/keystore.properties.example` to `android/keystore.properties`
+   and fill it in. The keystore is the same as `kopi-tools-app`'s
+   (`arquitechthor.jks`); it lives outside the
+   repository, in `kopi-keys/`; neither file is ever committed.
+2. In `android/app/build.gradle`: `versionName` = the Kopi Chess version,
+   `versionCode` + 1.
+3. Build and check the signature:
+
+   ```bash
+   npm run sync
+   cd android && ./gradlew bundleRelease
+   "$JAVA_HOME/bin/jarsigner" -verify app/build/outputs/bundle/release/app-release.aab   # "jar verified."
+   ```
+
+Without `keystore.properties`, `bundleRelease` still succeeds but the AAB is
+**unsigned**.
