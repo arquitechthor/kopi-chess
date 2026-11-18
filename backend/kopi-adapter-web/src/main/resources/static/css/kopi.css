@@ -136,6 +136,35 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .nav-links a:hover, .nav-links a[aria-current] { color: var(--text); text-decoration: none; }
 .nav-toggle { display: none; }
 
+/* Drop-down groups ("Play", "Analysis"): opened by nav.js (.is-open), by hover or by focus. */
+.nav-menu { position: relative; }
+.nav-menu-button {
+  font: inherit; font-size: 14px; font-weight: 500; color: var(--text-muted);
+  background: none; border: 0; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.nav-menu-button::after {
+  content: ""; width: 6px; height: 6px; margin-top: -3px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg);
+}
+.nav-menu-button:hover, .nav-menu.is-open .nav-menu-button { color: var(--text); }
+.nav-submenu {
+  display: none; position: absolute; top: 100%; left: -16px; z-index: 60;
+  min-width: 230px; padding: 14px 0 8px; flex-direction: column;
+}
+/* The panel itself, below the hover bridge (the padding above keeps the pointer inside the menu). */
+.nav-submenu::before {
+  content: ""; position: absolute; inset: 8px 0 0; z-index: -1;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px;
+  box-shadow: var(--shadow-glow);
+}
+.nav-submenu a { padding: 9px 16px; white-space: nowrap; }
+.nav-submenu a:hover { background: var(--surface-2); }
+.nav-menu.is-open .nav-submenu { display: flex; }
+@media (hover: hover) and (min-width: 761px) {
+  .nav-menu:hover .nav-submenu, .nav-menu:focus-within .nav-submenu { display: flex; }
+}
+
 /* Language switch: the last item of the menu, "EN · ES". */
 .language-switch { display: flex; align-items: center; gap: 10px; padding-left: 24px; border-left: 1px solid var(--border); }
 .language-switch a { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
@@ -155,6 +184,15 @@ p { color: var(--text-muted); margin: 0 0 16px; }
     color: var(--text); border-radius: 8px; padding: 8px 10px; cursor: pointer;
   }
   .language-switch { padding: 12px 0 0; border-left: 0; border-top: 1px solid var(--border); }
+  /* In the panel a group is a heading over its links, always open. */
+  .nav-menu-button { cursor: default; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  .nav-menu-button::after { display: none; }
+  .nav-submenu, .nav-menu.is-open .nav-submenu {
+    display: flex; position: static; min-width: 0; padding: 8px 0 0 12px; gap: 10px;
+  }
+  .nav-submenu::before { display: none; }
+  .nav-submenu a { padding: 0; }
+  .nav-submenu a:hover { background: none; }
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
@@ -489,3 +527,130 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 .footer-sitios a + a::before { content: "·"; display: inline-block; margin-right: 12px; color: var(--text-faint); }
 .footer-sitios a[aria-current] { color: var(--text); font-weight: 600; }
 .text-view { font-size: 12.5px; justify-self: start; }
+
+/* ── Scoresheet ──────────────────────────────────────────── */
+/* On screen, a Kopi card; printed, one A4 page in ink on white (below). */
+.scoresheet-actions {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px;
+  max-width: 980px; margin: 40px auto 16px;
+}
+.scoresheet-actions p { margin: 0; }
+.scoresheet-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.scoresheet-buttons .btn { padding: 10px 18px; }
+.scoresheet {
+  max-width: 980px; margin: 0 auto 60px; padding: 28px 28px 24px; position: relative; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-glow);
+}
+/* The brand gradient as a thin band along the top, as on the family's cards. */
+.scoresheet::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--gradient-brand);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.scoresheet-head { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.scoresheet-logo { width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.scoresheet-brand {
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan-strong);
+}
+.scoresheet-head h1 { font-size: clamp(24px, 3vw, 32px); margin: 2px 0 0; }
+
+.scoresheet-details {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 16px; margin-bottom: 22px;
+}
+.scoresheet-field { display: grid; gap: 4px; grid-column: span 2; min-width: 0; }
+.scoresheet-field-wide { grid-column: span 6; }
+.scoresheet-player { grid-column: span 2; }
+.scoresheet-rating, .scoresheet-field-short { grid-column: span 1; }
+.scoresheet-field > span {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+}
+.scoresheet input {
+  display: block; width: 100%; font: inherit; color: var(--text); background: var(--bg-alt);
+  border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 10px; color-scheme: dark;
+}
+.scoresheet input:focus { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.scoresheet input::placeholder { color: var(--text-faint); }
+.scoresheet-swatch {
+  width: 11px; height: 11px; border-radius: 3px; border: 1px solid var(--border-strong); flex-shrink: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.scoresheet-swatch-white { background: #f1f5f9; }
+.scoresheet-swatch-black { background: #04060c; border-color: var(--text-faint); }
+
+.scoresheet-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.scoresheet-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.scoresheet-table th, .scoresheet-table td { border-bottom: 1px solid var(--border); padding: 3px 4px; line-height: 1.2; }
+.scoresheet-table thead th {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted); text-align: left; padding-bottom: 8px; border-bottom-color: var(--border-strong);
+}
+.scoresheet-table .scoresheet-number {
+  width: 3em; text-align: right; padding-right: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--text-faint);
+}
+.scoresheet-table thead .scoresheet-number { text-align: right; }
+.scoresheet-table tbody tr:nth-child(5n) th, .scoresheet-table tbody tr:nth-child(5n) td { border-bottom-color: var(--border-strong); }
+.scoresheet-table input {
+  font-family: var(--font-mono); font-size: 14px; padding: 5px 8px;
+  background: rgba(148, 163, 184, 0.05); border-color: transparent;
+}
+.scoresheet-table input:hover { border-color: var(--border-strong); }
+.scoresheet-table input:focus { background: var(--bg-alt); }
+
+.scoresheet-foot {
+  display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 16px 24px; align-items: end; margin-top: 22px;
+}
+.scoresheet-foot .scoresheet-field { grid-column: auto; }
+.scoresheet-signature {
+  border-top: 1px solid var(--border-strong); padding-top: 6px; margin-top: 34px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint);
+}
+
+/* "screen": printed, the page is narrower than 760px too, and must keep the two columns. */
+@media screen and (max-width: 760px) {
+  /* Four columns: event, date and site full width; round · board; each player with their rating. */
+  .scoresheet-details { grid-template-columns: repeat(4, 1fr); }
+  .scoresheet-field, .scoresheet-field-wide { grid-column: span 4; }
+  .scoresheet-field-short { grid-column: span 2; }
+  .scoresheet { padding: 22px 16px 18px; }
+  .scoresheet-player { grid-column: span 3; }
+  .scoresheet-rating { grid-column: span 1; }
+  .scoresheet-moves { grid-template-columns: 1fr; }
+  .scoresheet-foot { grid-template-columns: 1fr; }
+}
+
+/* Printed: only the sheet, black on white, the moves of both columns on one A4 page. */
+@media print {
+  @page { size: A4; margin: 10mm 12mm; }
+  html:has(.scoresheet), body:has(.scoresheet) { background: #fff; color: #000; }
+  body:has(.scoresheet) .nav, body:has(.scoresheet) > footer, .scoresheet-actions { display: none !important; }
+  body:has(.scoresheet) main.container { padding: 0; max-width: none; }
+  .scoresheet { margin: 0; padding: 4mm 0 0; max-width: none; background: #fff; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+  .scoresheet::before { height: 2mm; border-radius: 1mm; }
+  .scoresheet-head { margin: 3mm 0 4mm; gap: 4mm; }
+  .scoresheet-logo { width: 15mm; height: 15mm; }
+  .scoresheet-brand { color: #6d28d9; }
+  .scoresheet-head h1 { color: #000; font-size: 20pt; }
+  .scoresheet-details { gap: 2mm 5mm; margin-bottom: 4mm; }
+  /* Three rows: event · date; site · round · board; each player with their rating. */
+  .scoresheet-field-wide, .scoresheet-field:has([name=site]) { grid-column: span 4; }
+  .scoresheet-field { gap: 0.5mm; line-height: 1.2; }
+  .scoresheet-field > span, .scoresheet-table thead th, .scoresheet-signature { color: #333; font-size: 8pt; }
+  .scoresheet input {
+    color: #000; background: transparent; border: 0; border-bottom: 0.3mm solid #555; border-radius: 0;
+    padding: 1mm 1.5mm; font-size: 11pt; color-scheme: light;
+  }
+  .scoresheet input::placeholder { color: transparent; }
+  .scoresheet input::-webkit-calendar-picker-indicator { display: none; }
+  .scoresheet-swatch { border-color: #555; }
+  .scoresheet-swatch-black { background: #000; }
+  .scoresheet-moves { gap: 0 8mm; }
+  .scoresheet-table th, .scoresheet-table td { border-bottom: 0.2mm solid #bbb; padding: 0 1mm; height: 5.9mm; }
+  .scoresheet-table td + td { border-left: 0.2mm solid #bbb; }
+  .scoresheet-table tbody tr:nth-child(5n) th, .scoresheet-table tbody tr:nth-child(5n) td { border-bottom: 0.3mm solid #555; }
+  .scoresheet-table thead th { border-bottom: 0.4mm solid #000; padding-bottom: 1mm; }
+  .scoresheet-table .scoresheet-number { color: #444; font-size: 9pt; }
+  .scoresheet-table input { border: 0; font-size: 10.5pt; padding: 0 1mm; height: 5mm; line-height: 1; }
+  .scoresheet-foot { margin-top: 4mm; gap: 3mm 8mm; }
+  .scoresheet-signature { border-top: 0.3mm solid #555; margin-top: 10mm; padding-top: 1mm; }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/layout :: head(#{scoresheet.title}, ~{::script})}">
+    <script th:src="@{/js/scoresheet.js}" defer></script>
+</head>
+<body>
+<nav th:replace="~{fragments/layout :: header}"></nav>
+
+<!--/* A sheet to write a game down over the board: on screen, or printed (kopi.css, @media print,
+       turns it into one A4 page). Nothing is stored: it is blank every time it opens. */-->
+<main class="container">
+    <div class="scoresheet-actions">
+        <p class="muted" th:text="#{scoresheet.intro}">Write the game down here, or print the sheet and fill it in by hand.</p>
+        <div class="scoresheet-buttons">
+            <button class="btn btn-primary" type="button" id="scoresheetPrint" th:text="#{scoresheet.print}">Print</button>
+            <button class="btn btn-danger-quiet" type="button" id="scoresheetClear"
+                    th:data-confirm="#{scoresheet.clearConfirm}" th:text="#{scoresheet.clear}">Clear</button>
+        </div>
+    </div>
+
+    <form class="scoresheet" id="scoresheet" autocomplete="off" onsubmit="return false">
+        <header class="scoresheet-head">
+            <img class="scoresheet-logo" th:src="@{/img/logo.svg}" alt="" width="56" height="56">
+            <div>
+                <span class="scoresheet-brand" th:text="#{app.name}">Kopi Chess</span>
+                <h1 th:text="#{scoresheet.title}">Scoresheet</h1>
+            </div>
+        </header>
+
+        <div class="scoresheet-details">
+            <label class="scoresheet-field scoresheet-field-wide">
+                <span th:text="#{scoresheet.event}">Event</span>
+                <input type="text" name="event" maxlength="80">
+            </label>
+            <label class="scoresheet-field">
+                <span th:text="#{scoresheet.date}">Date</span>
+                <input type="date" name="date">
+            </label>
+            <label class="scoresheet-field">
+                <span th:text="#{scoresheet.site}">Site</span>
+                <input type="text" name="site" maxlength="60">
+            </label>
+            <label class="scoresheet-field scoresheet-field-short">
+                <span th:text="#{scoresheet.round}">Round</span>
+                <input type="text" name="round" maxlength="10">
+            </label>
+            <label class="scoresheet-field scoresheet-field-short">
+                <span th:text="#{scoresheet.board}">Board</span>
+                <input type="text" name="board" maxlength="10">
+            </label>
+            <label class="scoresheet-field scoresheet-player">
+                <span><i class="scoresheet-swatch scoresheet-swatch-white" aria-hidden="true"></i><span th:text="#{scoresheet.white}">White</span></span>
+                <input type="text" name="white" maxlength="60">
+            </label>
+            <label class="scoresheet-field scoresheet-rating">
+                <span th:text="#{scoresheet.rating}">Rating</span>
+                <input type="text" name="whiteRating" maxlength="6" inputmode="numeric">
+            </label>
+            <label class="scoresheet-field scoresheet-player">
+                <span><i class="scoresheet-swatch scoresheet-swatch-black" aria-hidden="true"></i><span th:text="#{scoresheet.black}">Black</span></span>
+                <input type="text" name="black" maxlength="60">
+            </label>
+            <label class="scoresheet-field scoresheet-rating">
+                <span th:text="#{scoresheet.rating}">Rating</span>
+                <input type="text" name="blackRating" maxlength="6" inputmode="numeric">
+            </label>
+        </div>
+
+        <div class="scoresheet-moves">
+            <table class="scoresheet-table" th:each="column : ${columns}">
+                <thead>
+                <tr>
+                    <th scope="col" class="scoresheet-number">#</th>
+                    <th scope="col" th:text="#{scoresheet.white}">White</th>
+                    <th scope="col" th:text="#{scoresheet.black}">Black</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="n : ${column}">
+                    <th scope="row" class="scoresheet-number" th:text="${n}">1</th>
+                    <td><input type="text" th:name="|w${n}|" maxlength="10" spellcheck="false"
+                               th:aria-label="#{scoresheet.whiteMove(${n})}"></td>
+                    <td><input type="text" th:name="|b${n}|" maxlength="10" spellcheck="false"
+                               th:aria-label="#{scoresheet.blackMove(${n})}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="scoresheet-foot">
+            <label class="scoresheet-field">
+                <span th:text="#{scoresheet.result}">Result</span>
+                <input type="text" name="result" maxlength="7" th:placeholder="#{scoresheet.resultHint}">
+            </label>
+            <div class="scoresheet-signature">
+                <span th:text="#{scoresheet.whiteSignature}">White's signature</span>
+            </div>
+            <div class="scoresheet-signature">
+                <span th:text="#{scoresheet.blackSignature}">Black's signature</span>
+            </div>
+        </div>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
