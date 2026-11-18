@@ -67,7 +67,7 @@ class LocalGamePageTest {
         assertThat(page("/games/{id}?lang=en", id))
                 .contains("Two people · Ana – Luis", "Ana to move", "Ana resigns", "Agree to a draw")
                 .contains("data-orientation=\"white\"", "data-movable=\"true\"", "data-movable-color=\"white\"")
-                .doesNotContain("Against");
+                .doesNotContainPattern("class=\"eyebrow\">Against");
     }
 
     @Test

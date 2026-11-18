@@ -22,9 +22,24 @@
         </a>
         <div class="nav-links">
             <a th:href="@{/}" th:text="#{nav.home}">Home</a>
-            <a th:href="@{/games}" th:text="#{nav.history}">History</a>
-            <a th:href="@{/games/import}" th:text="#{nav.import}">Import PGN</a>
-            <a th:href="@{/online}" th:text="#{nav.online}">Play online</a>
+            <!--/* Two drop-down groups (nav.js opens them on click; hover and focus open them too).
+                   In the phone's menu panel they are just headed lists, always open. */-->
+            <div class="nav-menu">
+                <button class="nav-menu-button" type="button" aria-expanded="false" th:text="#{nav.play}">Play</button>
+                <div class="nav-submenu">
+                    <a th:href="@{/#new-game}" th:text="#{nav.play.bot}">Against a bot (local)</a>
+                    <a th:href="@{/online}" th:text="#{nav.play.online}">Against a friend (online)</a>
+                    <a th:href="@{/#local-game}" th:text="#{nav.play.local}">Against a friend (local)</a>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <button class="nav-menu-button" type="button" aria-expanded="false" th:text="#{nav.analysis}">Analysis</button>
+                <div class="nav-submenu">
+                    <a th:href="@{/games}" th:text="#{nav.history}">History</a>
+                    <a th:href="@{/games/import}" th:text="#{nav.import}">Import PGN</a>
+                    <a th:href="@{/scoresheet}" th:text="#{nav.scoresheet}">Scoresheet</a>
+                </div>
+            </div>
             <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{nav.source}">Source code</a>
             <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">Arquitechthor</a>
             <span class="language-switch" th:aria-label="#{language.label}" role="group">

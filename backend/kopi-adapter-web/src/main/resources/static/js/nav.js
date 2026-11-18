@@ -18,3 +18,32 @@
     toggle.setAttribute('aria-expanded', String(open));
   });
 })();
+
+/**
+ * The drop-down groups of the menu ("Play", "Analysis"): a click opens one and
+ * closes the others; a click elsewhere or Escape closes them. Hover and focus
+ * also open them, in kopi.css.
+ */
+(function () {
+  const menus = Array.from(document.querySelectorAll('.nav-menu'));
+  if (!menus.length) return;
+
+  const setOpen = (menu, open) => {
+    menu.classList.toggle('is-open', open);
+    menu.querySelector('.nav-menu-button').setAttribute('aria-expanded', String(open));
+  };
+  const closeAll = (except) => menus.forEach((menu) => { if (menu !== except) setOpen(menu, false); });
+
+  menus.forEach((menu) => {
+    menu.querySelector('.nav-menu-button').addEventListener('click', () => {
+      closeAll(menu);
+      setOpen(menu, !menu.classList.contains('is-open'));
+    });
+  });
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.nav-menu')) closeAll();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeAll();
+  });
+})();
