@@ -81,6 +81,58 @@ class LocalGamePageTest {
     }
 
     @Test
+    void undoAndRedoAreUnderTheBoardWithTheLock() {
+        var id = newLocalGame();
+
+        assertThat(page("/games/{id}?lang=es", id))
+                .contains("action=\"/games/" + id + "/undo\"", "action=\"/games/" + id + "/redo\"",
+                        "Deshacer jugada", "Rehacer jugada", "No girar el tablero", "id=\"lock-orientation\"",
+                        "data-can-undo=\"false\"", "data-can-redo=\"false\"");
+    }
+
+    @Test
+    void undoTakesTheMoveBackAndRedoPlaysItAgain() throws UnsupportedEncodingException {
+        var id = newLocalGame();
+        play(id, "e2e4");
+
+        assertThat(mvc.post().uri("/games/{id}/undo", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", String.valueOf(games.latest().version())))
+                .hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/games/" + id);
+        assertThat(games.latest().moves()).isEmpty();
+        assertThat(page("/games/{id}?lang=en", id))
+                .contains("Ana to move", "data-can-undo=\"false\"", "data-can-redo=\"true\"");
+
+        var redo = mvc.post().uri("/games/{id}/live-redo", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", String.valueOf(games.latest().version())).exchange();
+        assertThat(redo).hasStatusOk();
+        assertThat(games.latest().moves()).hasSize(1);
+        assertThat(redo.getResponse().getContentAsString(StandardCharsets.UTF_8))
+                .contains("id=\"game-live\"", "data-last-move=\"e2e4\"", "data-can-undo=\"true\"",
+                        "data-can-redo=\"false\"");
+    }
+
+    @Test
+    void nothingToUndoSaysSo() {
+        var id = newLocalGame();
+
+        assertThat(mvc.post().uri("/games/{id}/undo", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", "0"))
+                .flash().containsEntry(GameController.ERROR, "NOTHING_TO_UNDO");
+    }
+
+    @Test
+    void noUndoAgainstABot() {
+        assertThat(mvc.post().uri("/games").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("bot", "PAWN").param("color", "WHITE")).hasStatus(HttpStatus.FOUND);
+        var id = games.latest().id().toString();
+
+        assertThat(page("/games/{id}?lang=en", id)).doesNotContain("Undo move", "lock-orientation");
+        assertThat(mvc.post().uri("/games/{id}/undo", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("version", "0"))
+                .flash().containsEntry(GameController.ERROR, "NOT_A_LOCAL_GAME");
+    }
+
+    @Test
     void aMissingNameSendsTheFormBack() {
         assertThat(mvc.post().uri("/games/local").contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("white", "Ana").param("black", "  "))

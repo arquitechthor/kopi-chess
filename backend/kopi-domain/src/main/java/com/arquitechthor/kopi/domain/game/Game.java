@@ -28,6 +28,9 @@ import java.util.Optional;
 /// - after each move the game checks whether it has ended;
 /// - every change increases the version (optimistic locking).
 ///
+/// Two people here may also take moves back and play them again ([#undo],
+/// [#redo]) while the game is in progress.
+///
 /// Immutable, like [Position]: [#play] and [#resign] return the game as it
 /// is afterwards and leave this one untouched. The time of each change is
 /// passed in (from the application's `Clock` port) instead of read here,
@@ -47,6 +50,8 @@ public final class Game {
     private final Player black;
     private final Position initialPosition;
     private final List<PlayedMove> moves;
+    /// The moves taken back by [#undo], the next one to [#redo] first.
+    private final List<Move> undone;
     private final Optional<GameOutcome> outcome;
     private final long version;
     private final Instant createdAt;
@@ -54,7 +59,7 @@ public final class Game {
     private final Map<String, String> pgnTags;
 
     private Game(GameId id, GameOrigin origin, Player white, Player black, Position initialPosition,
-            List<PlayedMove> moves, Optional<GameOutcome> outcome, long version,
+            List<PlayedMove> moves, List<Move> undone, Optional<GameOutcome> outcome, long version,
             Instant createdAt, Optional<Instant> finishedAt, Map<String, String> pgnTags) {
         this.id = id;
         this.origin = origin;
@@ -62,6 +67,7 @@ public final class Game {
         this.black = black;
         this.initialPosition = initialPosition;
         this.moves = List.copyOf(moves);
+        this.undone = List.copyOf(undone);
         this.outcome = outcome;
         this.version = version;
         this.createdAt = createdAt;
@@ -103,7 +109,7 @@ public final class Game {
         Objects.requireNonNull(now, "now");
         mode(white, black); // validates the pair
         var outcome = ending(initialPosition, List.of(initialPosition));
-        return new Game(id, GameOrigin.PLAYED, white, black, initialPosition, List.of(), outcome, 0, now,
+        return new Game(id, GameOrigin.PLAYED, white, black, initialPosition, List.of(), List.of(), outcome, 0, now,
                 outcome.map(_ -> now), Map.of());
     }
 
@@ -190,7 +196,8 @@ public final class Game {
             outcome = onBoard.orElseThrow(() -> new InvalidImportException(
                     InvalidImportException.Problem.NOT_FINISHED, "* and no ending on the board"));
         }
-        return new Game(id, GameOrigin.IMPORTED, null, null, pgn.initialPosition(), played, Optional.of(outcome),
+        return new Game(id, GameOrigin.IMPORTED, null, null, pgn.initialPosition(), played, List.of(),
+                Optional.of(outcome),
                 0, now, Optional.of(now), pgn.tags());
     }
 
@@ -249,6 +256,9 @@ public final class Game {
     }
 
     /// The game after the legal `move` is played from `position` at `now`.
+    ///
+    /// The move that was undone last, played again, keeps the other undone
+    /// moves for [#redo]; any other move forgets them, as in an editor.
     private Game apply(Position position, Move move, Instant now) {
         var after = position.apply(move);
         var played = new ArrayList<>(moves);
@@ -258,8 +268,90 @@ public final class Game {
         played.forEach(each -> history.add(each.positionAfter()));
 
         var nextOutcome = ending(after, history);
-        return new Game(id, origin, white, black, initialPosition, played, nextOutcome, version + 1,
+        var stillUndone = !undone.isEmpty() && undone.getFirst().equals(move) && nextOutcome.isEmpty()
+                ? undone.subList(1, undone.size())
+                : List.<Move>of();
+        return new Game(id, origin, white, black, initialPosition, played, stillUndone, nextOutcome, version + 1,
                 createdAt, nextOutcome.map(_ -> now), pgnTags);
+    }
+
+    /// The game after the two people here take back the last move: the
+    /// position before it, with the same side to move again. The move is
+    /// kept for [#redo] until another one is played.
+    ///
+    /// Only while the game is in progress: a finished game (mate, a
+    /// resignation, a draw) has had its analysis queued and stays as it
+    /// ended.
+    ///
+    /// @throws GameNotInProgressException if the game is over
+    /// @throws IllegalStateException      if it is not a game between two
+    ///                                    people here
+    /// @throws NothingToUndoException     if no move has been played
+    public Game undo() {
+        requireInProgress();
+        requireLocal("undo");
+        if (moves.isEmpty()) {
+            throw new NothingToUndoException(id, NothingToUndoException.Direction.UNDO);
+        }
+        var nextUndone = new ArrayList<Move>(undone.size() + 1);
+        nextUndone.add(moves.getLast().move());
+        nextUndone.addAll(undone);
+        return new Game(id, origin, white, black, initialPosition, moves.subList(0, moves.size() - 1), nextUndone,
+                outcome, version + 1, createdAt, finishedAt, pgnTags);
+    }
+
+    /// The game after the move undone last is played again at `now`.
+    ///
+    /// @throws GameNotInProgressException if the game is over
+    /// @throws IllegalStateException      if it is not a game between two
+    ///                                    people here
+    /// @throws NothingToUndoException     if no move is waiting to be redone
+    public Game redo(Instant now) {
+        Objects.requireNonNull(now, "now");
+        requireInProgress();
+        requireLocal("redo");
+        if (undone.isEmpty()) {
+            throw new NothingToUndoException(id, NothingToUndoException.Direction.REDO);
+        }
+        return apply(currentPosition(), undone.getFirst(), now);
+    }
+
+    private void requireLocal(String action) {
+        if (mode() != GameMode.LOCAL) {
+            throw new IllegalStateException("Only two people here can " + action + " a move, not in a "
+                    + mode() + " game");
+        }
+    }
+
+    /// Whether [#undo] would take a move back now.
+    public boolean canUndo() {
+        return outcome.isEmpty() && mode() == GameMode.LOCAL && !moves.isEmpty();
+    }
+
+    /// Whether [#redo] would play a move again now.
+    public boolean canRedo() {
+        return outcome.isEmpty() && mode() == GameMode.LOCAL && !undone.isEmpty();
+    }
+
+    /// The moves taken back and not played again, the next one to [#redo]
+    /// first. Unmodifiable; empty unless two people here undid a move.
+    public List<Move> undone() {
+        return undone;
+    }
+
+    /// This game at `storedVersion`, for a repository that rebuilds a game
+    /// by replaying it. Moves undone and redone, or undone and replaced,
+    /// leave no trace in the moves, but each one raised the version: the
+    /// replay alone gives a lower one.
+    ///
+    /// @throws IllegalArgumentException if `storedVersion` is lower than the
+    ///                                  replayed one
+    public Game atStoredVersion(long storedVersion) {
+        if (storedVersion < version) {
+            throw new IllegalArgumentException("Stored version " + storedVersion + " is lower than " + version);
+        }
+        return storedVersion == version ? this : new Game(id, origin, white, black, initialPosition, moves, undone,
+                outcome, storedVersion, createdAt, finishedAt, pgnTags);
     }
 
     /// The game after `color` resigns at `now`. Either side may resign at
@@ -304,7 +396,7 @@ public final class Game {
 
     private Game finish(GameOutcome ending, Instant now) {
         Objects.requireNonNull(now, "now");
-        return new Game(id, origin, white, black, initialPosition, moves, Optional.of(ending), version + 1,
+        return new Game(id, origin, white, black, initialPosition, moves, List.of(), Optional.of(ending), version + 1,
                 createdAt, Optional.of(now), pgnTags);
     }
 
@@ -432,8 +524,9 @@ public final class Game {
         return outcome.map(GameOutcome::result);
     }
 
-    /// 0 for a new game, plus one for every move or resignation. The
-    /// repository saves only if the stored version is the one it loaded.
+    /// 0 for a new game, plus one for every move, resignation, undo or
+    /// redo. The repository saves only if the stored version is the one it
+    /// loaded.
     public long version() {
         return version;
     }

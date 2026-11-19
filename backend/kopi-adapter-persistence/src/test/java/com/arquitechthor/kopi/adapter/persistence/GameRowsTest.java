@@ -63,7 +63,7 @@ class GameRowsTest {
         var row = GameRows.gameRow(game);
 
         assertThat(row).isEqualTo(new GameRow(ID.value(), "PLAYED", "IN_PROGRESS", "LOCAL:", "BOT:PAWN", "WHITE", "PAWN", Fen.INITIAL,
-                null, null, 2, START, null, null));
+                null, null, 2, START, null, null, ""));
         assertThat(GameRows.moveRows(game)).extracting(GameRows.MoveRow::ply, GameRows.MoveRow::uci,
                         GameRows.MoveRow::san)
                 .containsExactly(
@@ -123,12 +123,12 @@ class GameRowsTest {
     }
 
     @Test
-    void refusesRowsWhoseVersionDoesNotReplay() {
+    void refusesRowsWhoseVersionIsLowerThanTheReplay() {
         var game = play(newGame(Color.WHITE), "e2e4");
         var row = GameRows.gameRow(game);
         var tampered = new GameRow(row.id(), row.origin(), row.status(), row.whitePlayer(), row.blackPlayer(), row.humanColor(),
                 row.botProfile(),
-                row.initialFen(), row.result(), row.termination(), 7, row.createdAt(), row.finishedAt(), null);
+                row.initialFen(), row.result(), row.termination(), 0, row.createdAt(), row.finishedAt(), null, "");
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
     }
@@ -140,9 +140,41 @@ class GameRowsTest {
         var row = GameRows.gameRow(game);
         var tampered = new GameRow(row.id(), row.origin(), "FINISHED", row.whitePlayer(), row.blackPlayer(), row.humanColor(),
                 row.botProfile(),
-                row.initialFen(), "WHITE_WIN", "CHECKMATE", row.version(), row.createdAt(), START, null);
+                row.initialFen(), "WHITE_WIN", "CHECKMATE", row.version(), row.createdAt(), START, null, "");
 
         assertThatIllegalStateException().isThrownBy(() -> GameRows.game(tampered, GameRows.moveRows(game)));
+    }
+
+    @Test
+    void movesTakenBackComeBackReadyToRedoAtTheStoredVersion() {
+        var game = Game.start(ID, new Player.Local("Ana"), new Player.Local("Luis"), Position.initial(), START);
+        game = game.play("e2e4", Color.WHITE, START.plusSeconds(1)).play("e7e5", Color.BLACK, START.plusSeconds(2))
+                .play("g1f3", Color.WHITE, START.plusSeconds(3));
+        game = game.undo().undo(); // e7e5 and g1f3 wait to be redone
+        game = game.play("d7d5", Color.BLACK, START.plusSeconds(4)).undo(); // version 7, d7d5 waits alone
+
+        var row = GameRows.gameRow(game);
+        var restored = GameRows.game(row, GameRows.moveRows(game));
+
+        assertThat(row.undoneMoves()).isEqualTo("d7d5");
+        assertSameGame(restored, game);
+        assertThat(restored.version()).isEqualTo(7);
+        assertThat(restored.undone()).isEqualTo(game.undone());
+    }
+
+    @Test
+    void severalMovesTakenBackKeepTheirOrder() {
+        var game = Game.start(ID, new Player.Local("Ana"), new Player.Local("Luis"), Position.initial(), START);
+        game = game.play("e2e4", Color.WHITE, START.plusSeconds(1)).play("e7e5", Color.BLACK, START.plusSeconds(2))
+                .undo().undo();
+
+        var row = GameRows.gameRow(game);
+        var restored = GameRows.game(row, GameRows.moveRows(game));
+
+        assertThat(row.undoneMoves()).isEqualTo("e2e4 e7e5");
+        assertThat(restored.undone()).isEqualTo(game.undone());
+        assertThat(restored.moves()).isEmpty();
+        assertThat(restored.version()).isEqualTo(4);
     }
 
     @Test

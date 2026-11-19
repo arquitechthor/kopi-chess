@@ -10,6 +10,8 @@ import com.arquitechthor.kopi.application.analysis.RequestAnalysis;
 import com.arquitechthor.kopi.application.analysis.RequestAnalysisUseCase;
 import com.arquitechthor.kopi.application.game.AgreeDraw;
 import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
+import com.arquitechthor.kopi.application.game.UndoMove;
+import com.arquitechthor.kopi.application.game.UndoMoveUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.CreateLocalGame;
@@ -414,6 +416,11 @@ class WebAdapterTestApplication {
     @Bean
     AgreeDrawUseCase agreeDraw(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
         return new AgreeDraw(games, analyses, clock);
+    }
+
+    @Bean
+    UndoMoveUseCase undoMove(InMemoryGames games, QueuedAnalyses analyses, Clock clock) {
+        return new UndoMove(games, analyses, clock);
     }
 
     @Bean

@@ -449,6 +449,15 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 .review-nav .btn { padding: 8px 14px; font-size: 16px; }
 .review-nav .review-copy-fen { font-size: 13.5px; min-width: 9.5em; justify-content: center; }
 
+/* Two people here: undo, redo and the lock on the board's turning, under the board. */
+.local-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 20px; margin-top: 12px; }
+.local-controls .review-nav { margin-top: 0; }
+.local-controls form { margin: 0; }
+.local-controls .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.board-lock { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
+.board-lock[hidden] { display: none; }
+.board-lock input { width: 18px; height: 18px; accent-color: var(--cyan-strong); cursor: pointer; }
+
 .eval-graph { margin: 16px 0 0; }
 .eval-graph svg { display: block; width: 100%; height: 110px; border-radius: var(--radius-sm); }
 .eval-graph figcaption { margin-top: 6px; }

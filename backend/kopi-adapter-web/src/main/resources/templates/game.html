@@ -22,6 +22,32 @@
             <input type="hidden" name="version" th:value="${game.version}">
         </form>
 
+        <!--/* Two people here: take a move back, play it again, and keep the board from
+               turning. The forms work without board.js too (Post/Redirect/Get); with it,
+               they are sent in the background like a move, and the buttons follow
+               #board-state (data-can-undo, data-can-redo). The lock is board.js's alone,
+               remembered in this browser, so it stays hidden without it. */-->
+        <div class="local-controls" th:if="${game.mode.name() == 'LOCAL'}">
+            <div class="review-nav local-undo">
+                <form method="post" th:action="@{/games/{id}/undo(id=${game.id})}"
+                      th:data-live-action="@{/games/{id}/live-undo(id=${game.id})}">
+                    <input type="hidden" name="version" th:value="${game.version}">
+                    <button type="submit" class="btn btn-secondary" data-undo th:disabled="${!game.canUndo}"
+                            th:aria-label="#{game.undo}" th:title="#{game.undo}">◀</button>
+                </form>
+                <form method="post" th:action="@{/games/{id}/redo(id=${game.id})}"
+                      th:data-live-action="@{/games/{id}/live-redo(id=${game.id})}">
+                    <input type="hidden" name="version" th:value="${game.version}">
+                    <button type="submit" class="btn btn-secondary" data-redo th:disabled="${!game.canRedo}"
+                            th:aria-label="#{game.redo}" th:title="#{game.redo}">▶</button>
+                </form>
+            </div>
+            <label class="board-lock" th:title="#{game.lockBoardHint}" hidden>
+                <input type="checkbox" id="lock-orientation">
+                <span th:text="#{game.lockBoard}">Don't turn the board</span>
+            </label>
+        </div>
+
         <dialog id="promotion" class="promotion" th:aria-label="#{game.promotion}">
             <p th:text="#{game.promotion}">Promote to</p>
             <div class="promotion-pieces">
@@ -54,6 +80,8 @@
                  th:data-legal-moves="${game.legalMovesJson}"
                  th:data-last-move="${game.lastMove}"
                  th:data-version="${game.version}"
+                 th:data-can-undo="${game.canUndo}"
+                 th:data-can-redo="${game.canRedo}"
                  th:data-thinking="${game.mode.name() == 'AGAINST_BOT'} ? #{status.botToMove} : #{status.sending}"></div>
             <h1 class="game-status" aria-live="polite" th:text="#{${game.statusKey}(${game.statusArg})}">Your move</h1>
             <p class="notice-error" role="alert" th:if="${error}" th:text="#{|error.${error}|}">Illegal move.</p>

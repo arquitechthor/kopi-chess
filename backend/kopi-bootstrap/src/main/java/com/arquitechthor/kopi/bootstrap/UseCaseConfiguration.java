@@ -13,6 +13,8 @@ import com.arquitechthor.kopi.application.analysis.RunAnalysisJob;
 import com.arquitechthor.kopi.application.analysis.RunAnalysisJobUseCase;
 import com.arquitechthor.kopi.application.game.AgreeDraw;
 import com.arquitechthor.kopi.application.game.AgreeDrawUseCase;
+import com.arquitechthor.kopi.application.game.UndoMove;
+import com.arquitechthor.kopi.application.game.UndoMoveUseCase;
 import com.arquitechthor.kopi.application.game.CreateGame;
 import com.arquitechthor.kopi.application.game.CreateGameUseCase;
 import com.arquitechthor.kopi.application.game.CreateLocalGame;
@@ -122,6 +124,11 @@ class UseCaseConfiguration {
     @Bean
     AgreeDrawUseCase agreeDraw(GameRepository games, AnalysisJobQueue analyses, Clock clock) {
         return new AgreeDraw(games, analyses, clock);
+    }
+
+    @Bean
+    UndoMoveUseCase undoMove(GameRepository games, AnalysisJobQueue analyses, Clock clock) {
+        return new UndoMove(games, analyses, clock);
     }
 
     @Bean

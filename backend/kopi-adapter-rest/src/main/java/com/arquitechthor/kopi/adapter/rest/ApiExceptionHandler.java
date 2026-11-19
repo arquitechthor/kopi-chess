@@ -17,6 +17,7 @@ import com.arquitechthor.kopi.domain.game.GameRuleException;
 import com.arquitechthor.kopi.domain.game.IllegalMoveException;
 import com.arquitechthor.kopi.domain.game.InvalidImportException;
 import com.arquitechthor.kopi.domain.game.NotYourTurnException;
+import com.arquitechthor.kopi.domain.game.NothingToUndoException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
@@ -150,6 +151,9 @@ class ApiExceptionHandler {
             case GameNotInProgressException _ ->
                 problem(HttpStatus.CONFLICT, "GAME_NOT_IN_PROGRESS", request, e.gameId());
             case NotYourTurnException _ -> problem(HttpStatus.CONFLICT, "NOT_YOUR_TURN", request, e.gameId());
+            case NothingToUndoException nothing -> problem(HttpStatus.CONFLICT,
+                    nothing.direction() == NothingToUndoException.Direction.UNDO ? "NOTHING_TO_UNDO" : "NOTHING_TO_REDO",
+                    request, e.gameId());
             case IllegalMoveException illegal ->
                 problem(HttpStatus.UNPROCESSABLE_CONTENT, "ILLEGAL_MOVE", request, illegal.uci());
         };

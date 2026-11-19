@@ -3,15 +3,15 @@ package com.arquitechthor.kopi.domain.game;
 import java.io.Serial;
 import java.util.Objects;
 
-/// Something a game does not allow. A sealed family: these three are the
+/// Something a game does not allow. A sealed family: these four are the
 /// only ways to break the rules of the [Game] aggregate, so adapters can
 /// `switch` over them exhaustively (REST: `409` for a finished game or the
-/// wrong turn, `422` for an illegal move).
+/// wrong turn or nothing to undo, `422` for an illegal move).
 ///
 /// Like every domain error, the type is the code; the message is for logs
 /// and developers, never shown to people (ADR-011).
 public abstract sealed class GameRuleException extends RuntimeException
-        permits GameNotInProgressException, NotYourTurnException, IllegalMoveException {
+        permits GameNotInProgressException, NotYourTurnException, IllegalMoveException, NothingToUndoException {
 
     @Serial
     private static final long serialVersionUID = 1L;
