@@ -87,6 +87,7 @@ class LocalGamePageTest {
         assertThat(page("/games/{id}?lang=es", id))
                 .contains("action=\"/games/" + id + "/undo\"", "action=\"/games/" + id + "/redo\"",
                         "Deshacer jugada", "Rehacer jugada", "No girar el tablero", "id=\"lock-orientation\"",
+                        "data-game=\"" + id + "\"",
                         "data-can-undo=\"false\"", "data-can-redo=\"false\"");
     }
 
@@ -109,6 +110,46 @@ class LocalGamePageTest {
         assertThat(redo.getResponse().getContentAsString(StandardCharsets.UTF_8))
                 .contains("id=\"game-live\"", "data-last-move=\"e2e4\"", "data-can-undo=\"true\"",
                         "data-can-redo=\"false\"");
+    }
+
+    @Test
+    void everyGameInProgressOffersTheSimulationMode() {
+        var id = newLocalGame();
+        assertThat(mvc.post().uri("/games").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("bot", "PAWN").param("color", "WHITE")).hasStatus(HttpStatus.FOUND);
+        var botGame = games.latest().id().toString();
+
+        for (var game : new String[] {id, botGame}) {
+            assertThat(page("/games/{id}?lang=es", game))
+                    .contains("id=\"simulation-toggle\"", "data-action=\"/games/" + game + "/simulation\"",
+                            "data-start=\"Modo Simulacro\"", "data-end=\"Fin Simulacro\"", "id=\"simulation\"");
+        }
+    }
+
+    @Test
+    void theSimulationShowsTheMovesAndSavesNothing() throws UnsupportedEncodingException {
+        var id = newLocalGame();
+        play(id, "e2e4");
+        var version = games.latest().version();
+
+        var simulated = mvc.post().uri("/games/{id}/simulation?lang=es", id)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED).param("moves", "e7e5 g1f3").exchange();
+
+        assertThat(simulated).hasStatusOk();
+        assertThat(simulated.getResponse().getContentAsString(StandardCharsets.UTF_8))
+                .contains("id=\"simulation-state\"", "data-last-move=\"g1f3\"", "data-turn=\"black\"",
+                        "Simulacro", "Mueven negras", "1… e5 2. ♘f3")
+                .doesNotContain("id=\"game-live\"");
+        assertThat(games.latest().moves()).hasSize(1);
+        assertThat(games.latest().version()).isEqualTo(version);
+    }
+
+    @Test
+    void anIllegalSimulatedMoveIsRefused() {
+        var id = newLocalGame();
+
+        assertThat(mvc.post().uri("/games/{id}/simulation", id).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("moves", "e2e5")).hasStatus(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test

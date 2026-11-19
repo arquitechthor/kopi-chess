@@ -227,7 +227,7 @@ record GamePage(
         };
     }
 
-    private static String colorName(Color color) {
+    static String colorName(Color color) {
         return color.name().toLowerCase(Locale.ROOT);
     }
 }

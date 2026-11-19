@@ -12,7 +12,7 @@
         <!--/* The position and legal moves are in #board-state, in the panel below,
                so a move can update both without reloading the page. */-->
         <!--/* Online, the page listens for the friend's moves (data-events, Server-Sent Events). */-->
-        <div id="board" class="board" th:data-orientation="${game.orientation}"
+        <div id="board" class="board" th:data-game="${game.id}" th:data-orientation="${game.orientation}"
              th:data-events="${game.mode.name() == 'ONLINE' and !game.finished} ? @{/games/{id}/events(id=${game.id})}"
              th:data-live="@{/games/{id}/live(id=${game.id})}"></div>
 
@@ -22,13 +22,14 @@
             <input type="hidden" name="version" th:value="${game.version}">
         </form>
 
-        <!--/* Two people here: take a move back, play it again, and keep the board from
-               turning. The forms work without board.js too (Post/Redirect/Get); with it,
-               they are sent in the background like a move, and the buttons follow
-               #board-state (data-can-undo, data-can-redo). The lock is board.js's alone,
-               remembered in this browser, so it stays hidden without it. */-->
-        <div class="local-controls" th:if="${game.mode.name() == 'LOCAL'}">
-            <div class="review-nav local-undo">
+        <!--/* Under the board, while the game goes on: the simulation mode (moves tried out for
+               both sides, never saved, board.js's alone, so hidden without it) and, between
+               two people here, Undo, Redo and the lock on the board's turning.
+               Undo and Redo work without board.js too (Post/Redirect/Get); with it, they are
+               sent in the background like a move, and the buttons follow #board-state
+               (data-can-undo, data-can-redo). Each game's lock is remembered in this browser. */-->
+        <div class="board-controls" th:unless="${game.finished}">
+            <div class="review-nav local-undo" th:if="${game.mode.name() == 'LOCAL'}">
                 <form method="post" th:action="@{/games/{id}/undo(id=${game.id})}"
                       th:data-live-action="@{/games/{id}/live-undo(id=${game.id})}">
                     <input type="hidden" name="version" th:value="${game.version}">
@@ -42,7 +43,13 @@
                             th:aria-label="#{game.redo}" th:title="#{game.redo}">▶</button>
                 </form>
             </div>
-            <label class="board-lock" th:title="#{game.lockBoardHint}" hidden>
+            <button type="button" class="btn btn-secondary simulation-toggle" id="simulation-toggle" hidden
+                    aria-pressed="false"
+                    th:data-action="@{/games/{id}/simulation(id=${game.id})}"
+                    th:data-start="#{game.simulation.start}" th:data-end="#{game.simulation.end}"
+                    th:title="#{game.simulation.hint}"
+                    th:text="#{game.simulation.start}">Simulation mode</button>
+            <label class="board-lock" th:if="${game.mode.name() == 'LOCAL'}" th:title="#{game.lockBoardHint}" hidden>
                 <input type="checkbox" id="lock-orientation">
                 <span th:text="#{game.lockBoard}">Don't turn the board</span>
             </label>
@@ -66,6 +73,10 @@
         <span class="eyebrow" th:if="${game.mode.name() == 'IMPORTED'}"
               th:text="${game.players.isEmpty()} ? #{game.importedAnonymous} : #{game.imported(${game.players})}">Imported game</span>
 
+        <!--/* The simulation mode: board.js fills this with the "simulation" fragment below
+               and hides #game-live meanwhile; "End simulation" empties it again. */-->
+        <div id="simulation" class="simulation" hidden></div>
+
         <!--/* Everything that changes with a move. board.js asks the server for just
                this fragment (POST …/live-moves) instead of reloading the page. */-->
         <div id="game-live" class="game-live" th:fragment="live">
@@ -80,6 +91,7 @@
                  th:data-legal-moves="${game.legalMovesJson}"
                  th:data-last-move="${game.lastMove}"
                  th:data-version="${game.version}"
+                 th:data-finished="${game.finished}"
                  th:data-can-undo="${game.canUndo}"
                  th:data-can-redo="${game.canRedo}"
                  th:data-thinking="${game.mode.name() == 'AGAINST_BOT'} ? #{status.botToMove} : #{status.sending}"></div>
@@ -159,6 +171,24 @@
                    th:text="#{game.newGame}">New game</a>
             </div>
             <details th:replace="~{fragments/delete-game :: control(${game.id})}"></details>
+        </div>
+        <!--/* The simulated position (POST …/simulation), never part of the page itself. */-->
+        <div id="simulation" class="simulation" th:fragment="simulation" th:if="${simulation != null}">
+            <div id="simulation-state" hidden
+                 th:data-fen="${simulation.fen}"
+                 th:data-turn="${simulation.turnColor}"
+                 th:data-check="${simulation.inCheck}"
+                 th:data-legal-moves="${simulation.legalMovesJson}"
+                 th:data-last-move="${simulation.lastMove}"></div>
+            <span class="eyebrow eyebrow-simulation" th:text="#{game.simulation.title}">Simulation</span>
+            <h1 class="game-status" aria-live="polite"
+                th:text="${simulation.checkmate} ? #{game.simulation.checkmate}
+                         : (${simulation.stalemate} ? #{game.simulation.stalemate}
+                         : #{|game.simulation.toMove.${simulation.sideToMove}|})">White to move</h1>
+            <p class="muted" th:text="#{game.simulation.notice}">None of this counts.</p>
+            <h2 class="panel-title" th:text="#{game.simulation.moves}">Simulated moves</h2>
+            <p class="muted" th:if="${simulation.line.isEmpty()}" th:text="#{game.simulation.noMoves}">Move any piece.</p>
+            <p class="simulation-line" th:unless="${simulation.line.isEmpty()}" th:text="${simulation.line}">12. e4 e5</p>
         </div>
         <!--/* Discreet on purpose: office mode is for not being noticed (design §11.5). */-->
         <a class="muted text-view" th:href="@{/games/{id}(id=${game.id}, view='office')}"
