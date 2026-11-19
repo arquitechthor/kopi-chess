@@ -57,6 +57,10 @@ import java.util.stream.Collectors;
 /// @param statusArg       the argument of that message (the name of the
 ///                        person to move, between two people here), or
 ///                        `null`
+/// @param canUndo         between two people here, whether *Undo* takes a
+///                        move back now
+/// @param canRedo         whether *Redo* plays again the move taken back
+///                        last
 record GamePage(
         String id,
         long version,
@@ -80,7 +84,9 @@ record GamePage(
         String rematchWhite,
         String rematchBlack,
         String statusKey,
-        String statusArg) {
+        String statusArg,
+        boolean canUndo,
+        boolean canRedo) {
 
     /// One side's lead in material: the opponent's pieces it is ahead by,
     /// as figurines (`♞♟`: what it has taken, net), and its points ahead,
@@ -122,7 +128,9 @@ record GamePage(
                 finished && local ? Players.name(view.black()) : null,
                 finished && local ? Players.name(view.white()) : null,
                 statusKey(view),
-                statusArg(view));
+                statusArg(view),
+                view.canUndo(),
+                view.canRedo());
     }
 
     /// The side at the bottom of the board: the one person's colour against
@@ -219,7 +227,7 @@ record GamePage(
         };
     }
 
-    private static String colorName(Color color) {
+    static String colorName(Color color) {
         return color.name().toLowerCase(Locale.ROOT);
     }
 }

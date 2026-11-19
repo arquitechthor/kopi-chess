@@ -449,6 +449,23 @@ table.choice-record td { font-weight: 700; color: var(--text); font-size: 14px; 
 .review-nav .btn { padding: 8px 14px; font-size: 16px; }
 .review-nav .review-copy-fen { font-size: 13.5px; min-width: 9.5em; justify-content: center; }
 
+/* Under the board: the simulation mode and, two people here, undo, redo and the lock. */
+.board-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 20px; margin-top: 12px; }
+.board-controls .review-nav { margin-top: 0; }
+.board-controls form { margin: 0; }
+.board-controls .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.board-controls [hidden] { display: none; }
+.simulation-toggle { padding: 8px 16px; font-size: 14.5px; }
+.simulation-toggle[aria-pressed="true"] { border-color: var(--cyan-strong); color: var(--cyan-strong); }
+/* While simulating: a dashed frame round the board, so it is plain that nothing counts. */
+.board.is-simulating { outline: 3px dashed var(--cyan-strong); outline-offset: 4px; }
+.simulation-line { line-height: 1.7; word-spacing: 0.15em; }
+/* The real panel hides while simulating, whatever display it has. */
+.game-live[hidden], .simulation[hidden] { display: none; }
+.board-lock { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
+.board-lock[hidden] { display: none; }
+.board-lock input { width: 18px; height: 18px; accent-color: var(--cyan-strong); cursor: pointer; }
+
 .eval-graph { margin: 16px 0 0; }
 .eval-graph svg { display: block; width: 100%; height: 110px; border-radius: var(--radius-sm); }
 .eval-graph figcaption { margin-top: 6px; }

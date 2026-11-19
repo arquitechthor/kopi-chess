@@ -9,6 +9,7 @@ import com.arquitechthor.kopi.domain.chess.Color;
 import com.arquitechthor.kopi.domain.game.BotProfile;
 import com.arquitechthor.kopi.domain.game.GameId;
 import com.arquitechthor.kopi.domain.game.GameMode;
+import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
 import com.arquitechthor.kopi.domain.game.GameOutcome;
 import com.arquitechthor.kopi.domain.game.GameResult;
 import com.arquitechthor.kopi.domain.game.GameStatus;
@@ -130,6 +131,62 @@ class LocalGameUseCasesTest {
 
             assertThatThrownBy(() -> new AgreeDraw(repository, analyses, clock)
                     .agree(new AgreeDrawCommand(game.id(), game.version())))
+                    .isInstanceOf(NotALocalGameException.class);
+        }
+    }
+
+    @Nested
+    class UndoAndRedo {
+
+        private UndoMove undoMove() {
+            return new UndoMove(repository, analyses, clock);
+        }
+
+        @Test
+        void undoAndRedoAreSaved() {
+            var game = play(play(createLocal(), "e2e4"), "e7e5");
+
+            var undone = undoMove().undo(new UndoMoveCommand(game.id(), game.version()));
+
+            assertThat(undone.moves()).extracting(GameView.PlayedMoveView::uci).containsExactly("e2e4");
+            assertThat(undone.sideToMove()).isEqualTo(Color.BLACK);
+            assertThat(undone.canRedo()).isTrue();
+            assertThat(repository.findById(game.id()).orElseThrow().version()).isEqualTo(undone.version());
+
+            var redone = undoMove().redo(new UndoMoveCommand(game.id(), undone.version()));
+
+            assertThat(redone.moves()).extracting(GameView.PlayedMoveView::uci).containsExactly("e2e4", "e7e5");
+            assertThat(redone.canRedo()).isFalse();
+            assertThat(redone.version()).isEqualTo(game.version() + 2);
+        }
+
+        @Test
+        void aFinishedGameStaysAsItEnded() {
+            var game = createLocal();
+            for (var uci : new String[] {"f2f3", "e7e5", "g2g4"}) {
+                game = play(game, uci);
+            }
+            game = play(game, "d8h4"); // mate
+            assertThat(game.status()).isEqualTo(GameStatus.FINISHED);
+            var finished = game;
+            assertThatThrownBy(() -> undoMove().undo(new UndoMoveCommand(finished.id(), finished.version())))
+                    .isInstanceOf(GameNotInProgressException.class);
+        }
+
+        @Test
+        void aStaleVersionIsRefused() {
+            var game = play(createLocal(), "e2e4");
+
+            assertThatThrownBy(() -> undoMove().undo(new UndoMoveCommand(game.id(), game.version() - 1)))
+                    .isInstanceOf(VersionMismatchException.class);
+        }
+
+        @Test
+        void notAgainstABot() {
+            var game = new CreateGame(repository, bot, LocalGameUseCasesTest.this::newId, clock)
+                    .create(new CreateGameCommand(Color.WHITE, BotProfile.PAWN));
+
+            assertThatThrownBy(() -> undoMove().undo(new UndoMoveCommand(game.id(), game.version())))
                     .isInstanceOf(NotALocalGameException.class);
         }
     }

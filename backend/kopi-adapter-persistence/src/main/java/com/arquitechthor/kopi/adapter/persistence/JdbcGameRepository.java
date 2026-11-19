@@ -30,8 +30,10 @@ import org.springframework.transaction.support.TransactionOperations;
 
 /// [GameRepository] on PostgreSQL, with plain SQL through `JdbcClient`.
 ///
-/// Moves are append-only: an update stores the game row and inserts the
-/// moves played since the loaded version. Both happen in one transaction,
+/// An update stores the game row and brings `game_move` in line with the
+/// game's moves: usually it inserts the moves played since the loaded
+/// version; moves two people here took back are deleted (V10). All of it
+/// happens in one transaction,
 /// so a game is never stored with half of its moves. If the use case runs
 /// inside a transaction already, this one joins it.
 ///
@@ -41,7 +43,7 @@ public final class JdbcGameRepository implements GameRepository {
 
     private static final String GAME_COLUMNS = """
             id, origin, status, white_player, black_player, human_color, bot_profile, initial_fen, result,
-            termination, version, created_at, finished_at, pgn_tags""";
+            termination, version, created_at, finished_at, pgn_tags, undone_moves""";
 
     private final JdbcClient jdbc;
     private final TransactionOperations transactions;
@@ -66,9 +68,11 @@ public final class JdbcGameRepository implements GameRepository {
         transactions.executeWithoutResult(_ -> {
             jdbc.sql("""
                     insert into game (id, origin, status, white_player, black_player, human_color, bot_profile,
-                                      initial_fen, result, termination, version, created_at, finished_at, pgn_tags)
+                                      initial_fen, result, termination, version, created_at, finished_at, pgn_tags,
+                                      undone_moves)
                     values (:id, :origin, :status, :whitePlayer, :blackPlayer, :humanColor, :botProfile,
-                            :initialFen, :result, :termination, :version, :createdAt, :finishedAt, :pgnTags)""")
+                            :initialFen, :result, :termination, :version, :createdAt, :finishedAt, :pgnTags,
+                            :undoneMoves)""")
                     .param("id", row.id())
                     .param("origin", row.origin())
                     .param("status", row.status())
@@ -83,6 +87,7 @@ public final class JdbcGameRepository implements GameRepository {
                     .param("createdAt", timestamp(row.createdAt()))
                     .param("finishedAt", timestamp(row.finishedAt()))
                     .param("pgnTags", row.pgnTags())
+                    .param("undoneMoves", row.undoneMoves())
                     .update();
             insertMoves(row.id(), GameRows.moveRows(game));
         });
@@ -95,24 +100,37 @@ public final class JdbcGameRepository implements GameRepository {
             var updated = jdbc.sql("""
                     update game
                        set status = :status, result = :result, termination = :termination,
-                           version = :version, finished_at = :finishedAt
+                           version = :version, finished_at = :finishedAt, undone_moves = :undoneMoves
                      where id = :id and version = :loadedVersion""")
                     .param("status", row.status())
                     .param("result", row.result())
                     .param("termination", row.termination())
                     .param("version", row.version())
                     .param("finishedAt", timestamp(row.finishedAt()))
+                    .param("undoneMoves", row.undoneMoves())
                     .param("id", row.id())
                     .param("loadedVersion", loadedVersion)
                     .update();
             if (updated == 0) {
                 throw new ConcurrentGameUpdateException(game.id(), loadedVersion);
             }
-            var stored = jdbc.sql("select coalesce(max(ply), 0) from game_move where game_id = :id")
+            // The stored moves the game still begins with stay; the rest go
+            // (moves taken back) and the new ones are added.
+            var stored = jdbc.sql("select uci from game_move where game_id = :id order by ply")
                     .param("id", row.id())
-                    .query(Integer.class)
-                    .single();
-            insertMoves(row.id(), GameRows.moveRows(game).stream().filter(move -> move.ply() > stored).toList());
+                    .query(String.class)
+                    .list();
+            var moves = GameRows.moveRows(game);
+            var kept = 0;
+            while (kept < stored.size() && kept < moves.size() && stored.get(kept).equals(moves.get(kept).uci())) {
+                kept++;
+            }
+            var unchanged = kept;
+            jdbc.sql("delete from game_move where game_id = :id and ply > :kept")
+                    .param("id", row.id())
+                    .param("kept", unchanged)
+                    .update();
+            insertMoves(row.id(), moves.stream().filter(move -> move.ply() > unchanged).toList());
         });
     }
 
@@ -272,7 +290,8 @@ public final class JdbcGameRepository implements GameRepository {
                 rs.getLong("version"),
                 instant(rs, "created_at"),
                 instant(rs, "finished_at"),
-                rs.getString("pgn_tags"));
+                rs.getString("pgn_tags"),
+                rs.getString("undone_moves"));
     }
 
     private static Instant instant(ResultSet rs, String column) throws SQLException {

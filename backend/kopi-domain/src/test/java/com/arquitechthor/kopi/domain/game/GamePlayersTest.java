@@ -162,6 +162,94 @@ class GamePlayersTest {
     }
 
     @Nested
+    class UndoAndRedo {
+
+        @Test
+        void undoTakesTheLastMoveBackAndGivesTheTurnBack() {
+            var game = play(start(ANA, LUIS), "e4 e5");
+            var undone = game.undo();
+
+            assertThat(undone.moves()).hasSize(1);
+            assertThat(undone.currentPosition()).isEqualTo(game.moves().getFirst().positionAfter());
+            assertThat(undone.currentPosition().sideToMove()).isEqualTo(Color.BLACK);
+            assertThat(undone.version()).isEqualTo(game.version() + 1);
+            assertThat(undone.canUndo()).isTrue();
+            assertThat(undone.canRedo()).isTrue();
+        }
+
+        @Test
+        void redoPlaysTheMovesAgainInOrder() {
+            var game = play(start(ANA, LUIS), "e4 e5 Nf3");
+            var back = game.undo().undo();
+
+            var again = back.redo(START.plusSeconds(60)).redo(START.plusSeconds(61));
+
+            assertThat(again.moves()).extracting(PlayedMove::san).containsExactly("e4", "e5", "Nf3");
+            assertThat(again.currentPosition()).isEqualTo(game.currentPosition());
+            assertThat(again.version()).isEqualTo(game.version() + 4);
+            assertThat(again.canRedo()).isFalse();
+            assertThat(again.moves().getLast().playedAt()).isEqualTo(START.plusSeconds(61));
+        }
+
+        @Test
+        void anotherMoveForgetsTheMovesTakenBack() {
+            var back = play(start(ANA, LUIS), "e4 e5 Nf3").undo().undo();
+
+            var other = play(back, "c5");
+
+            assertThat(other.undone()).isEmpty();
+            assertThat(other.canRedo()).isFalse();
+        }
+
+        @Test
+        void theSameMovePlayedByHandKeepsTheRestForRedo() {
+            var back = play(start(ANA, LUIS), "e4 e5 Nf3").undo().undo();
+
+            var same = play(back, "e5");
+
+            assertThat(same.undone()).hasSize(1);
+            assertThat(same.redo(START).moves()).extracting(PlayedMove::san).containsExactly("e4", "e5", "Nf3");
+        }
+
+        @Test
+        void nothingToUndoOrRedo() {
+            var game = start(ANA, LUIS);
+
+            assertThat(game.canUndo()).isFalse();
+            assertThatThrownBy(game::undo).isInstanceOfSatisfying(NothingToUndoException.class,
+                    e -> assertThat(e.direction()).isEqualTo(NothingToUndoException.Direction.UNDO));
+            assertThatThrownBy(() -> play(game, "e4").redo(START)).isInstanceOfSatisfying(
+                    NothingToUndoException.class,
+                    e -> assertThat(e.direction()).isEqualTo(NothingToUndoException.Direction.REDO));
+        }
+
+        @Test
+        void onlyTwoPeopleHere() {
+            assertThatThrownBy(() -> play(start(ANA, PAWN), "e4").undo()).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> play(start(ANA, FRIEND), "e4").undo()).isInstanceOf(IllegalStateException.class);
+            assertThat(play(start(ANA, PAWN), "e4").canUndo()).isFalse();
+        }
+
+        @Test
+        void notInAFinishedGameAndFinishingForgetsTheMovesTakenBack() {
+            var back = play(start(ANA, LUIS), "e4 e5").undo();
+            var resigned = back.resign(Color.BLACK, START);
+
+            assertThat(resigned.undone()).isEmpty();
+            assertThatThrownBy(resigned::undo).isInstanceOf(GameNotInProgressException.class);
+            assertThatThrownBy(() -> resigned.redo(START)).isInstanceOf(GameNotInProgressException.class);
+        }
+
+        @Test
+        void aStoredVersionMayOnlyBeHigher() {
+            var game = play(start(ANA, LUIS), "e4");
+
+            assertThat(game.atStoredVersion(5).version()).isEqualTo(5);
+            assertThatThrownBy(() -> game.atStoredVersion(0)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
     class Inactivity {
 
         @Test

@@ -11,6 +11,7 @@ import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
 import com.arquitechthor.kopi.application.port.GameFilter;
 import com.arquitechthor.kopi.application.port.GameRepository;
 import com.arquitechthor.kopi.domain.chess.Color;
+import com.arquitechthor.kopi.domain.chess.Move;
 import com.arquitechthor.kopi.domain.chess.Pgn;
 import com.arquitechthor.kopi.domain.chess.Position;
 import com.arquitechthor.kopi.domain.game.BotProfile;
@@ -118,6 +119,30 @@ class JdbcGameRepositoryIT {
         assertThat(repository.findById(game.id())).hasValueSatisfying(loaded -> assertSameGame(loaded, later));
         assertThat(jdbc.sql("select san from game_move where game_id = :id order by ply")
                 .param("id", game.id().value()).query(String.class).list()).containsExactly("e4", "e5");
+    }
+
+    @Test
+    void movesTakenBackAreDeletedAndAnotherLineReplacesThem() {
+        var game = Game.start(new GameId(UUID.randomUUID()), new Player.Local("Ana"), new Player.Local("Luis"),
+                Position.initial(), START);
+        repository.insert(game);
+        var played = play(game, "e2e4 e7e5 g1f3");
+        repository.update(played, 0);
+
+        var undone = played.undo().undo();
+        repository.update(undone, played.version());
+        var loadedUndone = repository.findById(game.id()).orElseThrow();
+        var other = loadedUndone.play("c7c5", Color.BLACK, START.plusSeconds(9));
+        repository.update(other, loadedUndone.version());
+
+        assertThat(loadedUndone.undone()).extracting(Move::toUci).containsExactly("e7e5", "g1f3");
+        assertThat(loadedUndone.version()).isEqualTo(5);
+        assertThat(jdbc.sql("select uci from game_move where game_id = :id order by ply")
+                .param("id", game.id().value()).query(String.class).list()).containsExactly("e2e4", "c7c5");
+        assertThat(repository.findById(game.id())).hasValueSatisfying(loaded -> {
+            assertSameGame(loaded, other);
+            assertThat(loaded.undone()).isEmpty();
+        });
     }
 
     @Test

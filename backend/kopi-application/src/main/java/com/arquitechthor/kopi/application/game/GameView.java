@@ -50,6 +50,8 @@ import java.util.Optional;
 /// @param finishedAt  when it ended, once it has
 /// @param pgnTags     an imported game's PGN tags (`White`, `Event`…); empty
 ///                    for a game played here
+/// @param canUndo     whether two people here may take back a move now
+/// @param canRedo     whether they may play again the move taken back last
 public record GameView(
         GameId id,
         GameOrigin origin,
@@ -71,7 +73,9 @@ public record GameView(
         long version,
         Instant createdAt,
         Optional<Instant> finishedAt,
-        Map<String, String> pgnTags) {
+        Map<String, String> pgnTags,
+        boolean canUndo,
+        boolean canRedo) {
 
     public GameView {
         moves = List.copyOf(moves);
@@ -124,6 +128,6 @@ public record GameView(
                 game.player(Color.BLACK), game.humanColor(), game.botProfile(), position.toFen(),
                 position.sideToMove(), position.isInCheck(), game.isLocalToMove(), position.materialBalance(), moves,
                 legalMoves, game.outcome(), game.result(), game.version(), game.createdAt(), game.finishedAt(),
-                game.pgnTags());
+                game.pgnTags(), game.canUndo(), game.canRedo());
     }
 }

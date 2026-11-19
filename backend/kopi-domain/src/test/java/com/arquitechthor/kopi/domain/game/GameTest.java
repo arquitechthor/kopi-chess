@@ -308,6 +308,7 @@ class GameTest {
             case GameNotInProgressException _ -> "finished";
             case NotYourTurnException _ -> "turn";
             case IllegalMoveException _ -> "illegal";
+            case NothingToUndoException _ -> "nothing to undo";
         };
 
         assertThat(code).isEqualTo("turn");

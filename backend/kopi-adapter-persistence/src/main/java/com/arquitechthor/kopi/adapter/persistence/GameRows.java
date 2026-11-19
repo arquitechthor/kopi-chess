@@ -27,8 +27,10 @@ import java.util.UUID;
 /// position through the aggregate itself (`Game.start` and `Game.play`, or
 /// `Game.imported` for an imported game). The domain needs no back door
 /// for persistence, and a row that does not add up (a move that is not
-/// legal, a version or an ending that the replay does not reproduce) fails
-/// loudly instead of loading a corrupt game.
+/// legal, an ending that the replay does not reproduce, a version lower
+/// than the replay's) fails loudly instead of loading a corrupt game. Only
+/// the version can be higher than the replay gives: undoing and redoing
+/// moves raise it without leaving moves behind (`Game.atStoredVersion`).
 ///
 /// An imported game's PGN tags are stored as PGN text, the tag pairs alone
 /// (`[White "Morphy, Paul"]` lines), and read back with [Pgn].
@@ -58,7 +60,8 @@ final class GameRows {
             long version,
             Instant createdAt,
             Instant finishedAt,
-            String pgnTags) {}
+            String pgnTags,
+            String undoneMoves) {}
 
     /// A row of `game_move`.
     record MoveRow(int ply, String uci, String san, String fenAfter, Instant playedAt) {}
@@ -78,7 +81,14 @@ final class GameRows {
                 game.version(),
                 stored(game.createdAt()),
                 game.finishedAt().map(GameRows::stored).orElse(null),
-                game.origin() == GameOrigin.IMPORTED ? tagText(game) : null);
+                game.origin() == GameOrigin.IMPORTED ? tagText(game) : null,
+                undoneText(game));
+    }
+
+    /// The moves two people here took back (V10), the next one to redo
+    /// first, as UCI separated by spaces; empty if there are none.
+    private static String undoneText(Game game) {
+        return String.join(" ", game.undone().stream().map(Move::toUci).toList());
     }
 
     /// The tag pairs of an imported game as PGN, without movetext.
@@ -118,13 +128,26 @@ final class GameRows {
             game = game.endByInactivity(row.finishedAt());
         }
 
+        // The moves taken back (V10): played again and taken back again,
+        // the last one first, so the next one to redo ends up first.
+        var undone = row.undoneMoves() == null || row.undoneMoves().isBlank()
+                ? List.<String>of() : List.of(row.undoneMoves().trim().split(" "));
+        for (var uci : undone) {
+            game = game.play(uci, game.currentPosition().sideToMove(), row.createdAt());
+        }
+        for (var _ : undone) {
+            game = game.undo();
+        }
+
+        // Undoing and redoing raise the version without leaving moves, so
+        // the stored version may be higher than the replay's, never lower.
         var termination = game.outcome().map(GameRows::termination).orElse(null);
-        if (!Objects.equals(termination, row.termination()) || game.version() != row.version()) {
+        if (!Objects.equals(termination, row.termination()) || game.version() > row.version()) {
             throw new IllegalStateException("Stored game " + id + " does not replay as stored: termination "
                     + row.termination() + " and version " + row.version() + ", replayed " + termination
                     + " and version " + game.version());
         }
-        return game;
+        return game.atStoredVersion(row.version());
     }
 
     /// An imported game, rebuilt through `Game.imported` from its tags, its

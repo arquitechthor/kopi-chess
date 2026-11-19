@@ -5,7 +5,7 @@ import com.arquitechthor.kopi.domain.game.GameMode;
 import java.io.Serial;
 
 /// An action only two people at this computer can take (agreeing to a draw
-/// on the spot), asked of another kind of game (REST: `409`).
+/// on the spot, undoing a move), asked of another kind of game (REST: `409`).
 public final class NotALocalGameException extends RuntimeException {
 
     @Serial

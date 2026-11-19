@@ -11,6 +11,7 @@ import com.arquitechthor.kopi.application.game.CreateLocalGameCommand;
 import com.arquitechthor.kopi.application.game.CreateLocalGameUseCase;
 import com.arquitechthor.kopi.application.game.DeleteGameUseCase;
 import com.arquitechthor.kopi.application.game.GameNotFoundException;
+import com.arquitechthor.kopi.application.game.GameView;
 import com.arquitechthor.kopi.application.game.GetGameUseCase;
 import com.arquitechthor.kopi.application.game.InvalidPlayerNameException;
 import com.arquitechthor.kopi.application.game.InvalidUciException;
@@ -19,6 +20,10 @@ import com.arquitechthor.kopi.application.game.PlayMoveCommand;
 import com.arquitechthor.kopi.application.game.PlayMoveUseCase;
 import com.arquitechthor.kopi.application.game.ResignCommand;
 import com.arquitechthor.kopi.application.game.ResignUseCase;
+import com.arquitechthor.kopi.application.game.IllegalSimulatedMoveException;
+import com.arquitechthor.kopi.application.game.SimulateMovesUseCase;
+import com.arquitechthor.kopi.application.game.UndoMoveCommand;
+import com.arquitechthor.kopi.application.game.UndoMoveUseCase;
 import com.arquitechthor.kopi.application.game.VersionMismatchException;
 import com.arquitechthor.kopi.application.port.BotUnavailableException;
 import com.arquitechthor.kopi.application.port.ConcurrentGameUpdateException;
@@ -29,11 +34,15 @@ import com.arquitechthor.kopi.domain.game.GameNotInProgressException;
 import com.arquitechthor.kopi.domain.game.GameRuleException;
 import com.arquitechthor.kopi.domain.game.IllegalMoveException;
 import com.arquitechthor.kopi.domain.game.NotYourTurnException;
+import com.arquitechthor.kopi.domain.game.NothingToUndoException;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -44,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
 /// The game pages. Classic forms with Post/Redirect/Get: a move is a `POST`
 /// that redirects back to the game, so reloading the page never plays a
@@ -67,6 +77,8 @@ class GameController {
     private final CreateGameUseCase createGame;
     private final CreateLocalGameUseCase createLocalGame;
     private final AgreeDrawUseCase agreeDraw;
+    private final UndoMoveUseCase undoMove;
+    private final SimulateMovesUseCase simulateMoves;
     private final GetGameUseCase getGame;
     private final PlayMoveUseCase playMove;
     private final ResignUseCase resign;
@@ -76,13 +88,15 @@ class GameController {
     private final SseOnlineEvents events;
 
     GameController(CreateGameUseCase createGame, CreateLocalGameUseCase createLocalGame, AgreeDrawUseCase agreeDraw,
-            GetGameUseCase getGame, PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
+            UndoMoveUseCase undoMove, SimulateMovesUseCase simulateMoves, GetGameUseCase getGame, PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
             MessageSource messages, OnlineUseCase online, SseOnlineEvents events) {
         this.online = online;
         this.events = events;
         this.createGame = createGame;
         this.createLocalGame = createLocalGame;
         this.agreeDraw = agreeDraw;
+        this.undoMove = undoMove;
+        this.simulateMoves = simulateMoves;
         this.getGame = getGame;
         this.playMove = playMove;
         this.resign = resign;
@@ -133,6 +147,69 @@ class GameController {
             redirect.addFlashAttribute(ERROR, refusal(e));
         }
         return "redirect:/games/" + id;
+    }
+
+    /// Two people here take back the last move.
+    @PostMapping("/games/{id}/undo")
+    String undo(@PathVariable UUID id, @RequestParam long version, RedirectAttributes redirect) {
+        try {
+            undoMove.undo(new UndoMoveCommand(new GameId(id), version));
+        } catch (RuntimeException e) {
+            redirect.addFlashAttribute(ERROR, refusal(e));
+        }
+        return "redirect:/games/" + id;
+    }
+
+    /// Two people here play again the move they took back last.
+    @PostMapping("/games/{id}/redo")
+    String redo(@PathVariable UUID id, @RequestParam long version, RedirectAttributes redirect) {
+        try {
+            undoMove.redo(new UndoMoveCommand(new GameId(id), version));
+        } catch (RuntimeException e) {
+            redirect.addFlashAttribute(ERROR, refusal(e));
+        }
+        return "redirect:/games/" + id;
+    }
+
+    /// [#undo] for `board.js`: the part of the page that changes, as
+    /// [#playLive] answers, so the board slides the piece back.
+    @PostMapping("/games/{id}/live-undo")
+    String undoLive(@PathVariable UUID id, @RequestParam long version, Model model) {
+        return live(id, model, () -> undoMove.undo(new UndoMoveCommand(new GameId(id), version)));
+    }
+
+    /// [#redo] for `board.js`.
+    @PostMapping("/games/{id}/live-redo")
+    String redoLive(@PathVariable UUID id, @RequestParam long version, Model model) {
+        return live(id, model, () -> undoMove.redo(new UndoMoveCommand(new GameId(id), version)));
+    }
+
+    private String live(UUID id, Model model, Supplier<GameView> action) {
+        var gameId = new GameId(id);
+        try {
+            model.addAttribute("game", GamePage.of(action.get()));
+        } catch (RuntimeException e) {
+            model.addAttribute(ERROR, refusal(e));
+            model.addAttribute("game", GamePage.of(getGame.get(gameId)));
+        }
+        model.addAttribute("online", online.status(gameId).orElse(null));
+        return "game :: live";
+    }
+
+    /// The simulation mode, for `board.js`: where the game would stand after
+    /// `moves` (UCI separated by spaces, empty for none), played in turn
+    /// from its current position. Nothing is saved; the answer is the
+    /// simulation panel of `game.html`. A move that is not legal answers
+    /// `422`, and the board keeps what it had.
+    @PostMapping("/games/{id}/simulation")
+    String simulate(@PathVariable UUID id, @RequestParam(defaultValue = "") String moves, Model model) {
+        var uci = moves.isBlank() ? List.<String>of() : List.of(moves.trim().split("\\s+"));
+        try {
+            model.addAttribute("simulation", SimulationPage.of(simulateMoves.simulate(new GameId(id), uci)));
+        } catch (IllegalSimulatedMoveException e) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage(), e);
+        }
+        return "game :: simulation";
     }
 
     /// The game, on the board or in office mode (design §11.5).
@@ -262,6 +339,8 @@ class GameController {
                 case IllegalMoveException _ -> "ILLEGAL_MOVE";
                 case NotYourTurnException _ -> "NOT_YOUR_TURN";
                 case GameNotInProgressException _ -> "GAME_NOT_IN_PROGRESS";
+                case NothingToUndoException nothing ->
+                    nothing.direction() == NothingToUndoException.Direction.UNDO ? "NOTHING_TO_UNDO" : "NOTHING_TO_REDO";
             };
             case InvalidUciException _ -> "INVALID_UCI";
             case VersionMismatchException _, ConcurrentGameUpdateException _ -> "VERSION_MISMATCH";
