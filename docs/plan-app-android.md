@@ -155,7 +155,8 @@ Un adaptador de entrada nuevo, con su módulo Maven:
       (`android-app.yml`: pruebas, compilación web y APK de depuración).
 - [x] Entrar con la cuenta Kopi (Amplify, SRP; registro y recuperación, en
       Kopi Tools).
-- [ ] Presencia, elegir PC, elegir bot, jugar, retomar, abandonar.
+- [x] Presencia, elegir PC, elegir bot, jugar, retomar, abandonar
+      (`src/remote/` con pruebas de un relé falso; `src/screens.ts`).
 - [ ] Prueba real: una partida completa desde el móvil por 4G.
 
 ### Fase F4: publicación
