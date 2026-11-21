@@ -40,6 +40,8 @@
                     <a th:href="@{/scoresheet}" th:text="#{nav.scoresheet}">Scoresheet</a>
                 </div>
             </div>
+            <!--/* Not only for online play: server mode (ADR-022) and the history in the account live there too. */-->
+            <a th:href="@{/account}" th:text="#{nav.account}">Kopi account</a>
             <a href="https://github.com/arquitechthor/kopi-chess" th:text="#{nav.source}">Source code</a>
             <a href="https://arquitechthor.github.io/" th:text="#{sites.about}">Arquitechthor</a>
             <span class="language-switch" th:aria-label="#{language.label}" role="group">
