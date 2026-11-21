@@ -1167,7 +1167,7 @@ services:
 
   app:
     build: ./backend
-    ports: ["127.0.0.1:${KOPI_PORT:-8080}:8080"]     # interfaz web + API REST, solo en local
+    ports: ["127.0.0.1:${KOPI_PORT:-6970}:6970"]     # interfaz web + API REST, solo en local
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kopi
       SPRING_DATASOURCE_USERNAME: kopi

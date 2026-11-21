@@ -24,8 +24,8 @@ public record RelayProperties(
         String clientId,
         URI api,
         URI webSocket,
-        @DefaultValue("http://localhost:8080/login/oauth2/code/kopi") URI callback,
-        @DefaultValue("http://localhost:8080/") URI logoutReturn,
+        @DefaultValue("http://localhost:6970/login/oauth2/code/kopi") URI callback,
+        @DefaultValue("http://localhost:6970/") URI logoutReturn,
         @DefaultValue("10s") Duration timeout) {
 
     public RelayProperties {
