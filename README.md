@@ -24,6 +24,13 @@ docker compose up --build
 Open <http://localhost:8080>, choose a bot and play. The first start takes a
 few minutes (it builds the application); later ones, seconds.
 
+**On your phone:** the Android app plays your PC's bots from anywhere, with
+your Kopi account and the PC in server mode (account page). Until it is on
+Google Play, install the
+[newest APK](https://github.com/arquitechthor/kopi-chess/releases/download/android-latest/kopi-chess.apk)
+(a test build, rebuilt on every change; to update it, uninstall the previous
+one first). More in [`android-app/`](android-app/README.md).
+
 ## What it does
 
 - **Five bots**, from `PAWN` (plays like a child who has just learnt the

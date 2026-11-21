@@ -11,6 +11,7 @@ on:
     paths:
       - 'android-app/**'
       - '.github/workflows/android-app.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -56,3 +57,40 @@ jobs:
         run: |
           npx cap sync android
           cd android && ./gradlew --no-daemon assembleDebug
+
+      - name: Keep the APK for the next job
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: kopi-chess-apk
+          path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
+
+  # Until the app is on Google Play, the README links to the newest APK:
+  # https://github.com/<repo>/releases/download/android-latest/kopi-chess.apk
+  # A pre-release, never "Latest", so the v* releases stay the newest ones.
+  # It is the debug build: CI has no release keystore (kopi-docs/politicas.md,
+  # keystores never leave kopi-keys/).
+  publish-apk:
+    name: Publish the newest APK
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: kopi-chess-apk
+
+      - name: Replace the android-latest pre-release
+        run: |
+          mv app-debug.apk kopi-chess.apk
+          gh release delete android-latest --cleanup-tag --yes || true
+          gh release create android-latest kopi-chess.apk \
+            --prerelease --latest=false --target "$GITHUB_SHA" \
+            --title "Kopi Chess for Android (newest build)" \
+            --notes "Debug build of android-app/ from ${GITHUB_SHA::7}, rebuilt on every change to main until the app is on Google Play. It needs Kopi Chess on your PC in server mode (account page). Android may ask you to allow installing apps from your browser; to update, uninstall the previous build first (each build is signed with a different debug key)."
