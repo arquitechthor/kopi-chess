@@ -8,8 +8,19 @@ través del relé de Kopi. La app no sabe de ajedrez: el PC (Kopi Chess en
 [`docs/plan-app-android.md`](../docs/plan-app-android.md).
 
 Capacitor + Vite + TypeScript, con Chessground (el mismo tablero que la web).
-En desarrollo (fase F3): por ahora, el esqueleto de la app, la entrada con la
-cuenta Kopi (Amplify, SRP) y un tablero fijo.
+En desarrollo (fase F3): la entrada con la cuenta Kopi (Amplify, SRP), los PCs
+en modo servidor, retomar una partida o empezar otra contra un bot, jugar y
+abandonar. Falta la prueba real de una partida completa por 4G.
+
+El código:
+
+- `src/remote/relayClient.ts`: el WebSocket con el relé (`role=device`):
+  reconexión, *ping*, `presence` y cada petición emparejada con su respuesta.
+- `src/remote/remotePc.ts`: las operaciones del
+  [protocolo remoto](../docs/protocolo-remoto.md), con tipos.
+- `src/play/board.ts`: lo que el tablero necesita de la respuesta del PC
+  (jugadas legales, coronación, resultado). La app no sabe reglas de ajedrez.
+- `src/screens.ts`: entrar, inicio, PC y tablero.
 
 ## Desarrollo
 

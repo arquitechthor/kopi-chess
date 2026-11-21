@@ -7,8 +7,19 @@ relay. The app knows no chess: the PC (Kopi Chess in "server mode") plays,
 saves and analyses. Plan: [`docs/plan-app-android.md`](../docs/plan-app-android.md).
 
 Capacitor + Vite + TypeScript, with Chessground (the same board as the web
-app). Work in progress (phase F3): for now, the app shell, sign-in with the Kopi account
-(Amplify, SRP) and a static board.
+app). Work in progress (phase F3): sign-in with the Kopi account (Amplify, SRP),
+the PCs in server mode, resuming a game or starting one against a bot, playing
+and resigning. Still to do: the real test of a whole game over 4G.
+
+The code:
+
+- `src/remote/relayClient.ts`: the WebSocket with the relay (`role=device`):
+  reconnection, ping, `presence`, and each request paired with its answer.
+- `src/remote/remotePc.ts`: the operations of the
+  [remote protocol](../docs/protocolo-remoto.md), typed.
+- `src/play/board.ts`: what the board needs from the PC's answer (legal
+  moves, promotion, result). The app knows no chess rules.
+- `src/screens.ts`: sign-in, home, PC and board.
 
 ## Develop
 
